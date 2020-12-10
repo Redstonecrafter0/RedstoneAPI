@@ -1,14 +1,16 @@
 package net.redstonecraft.redstoneapi.sql.obj;
 
-public interface Base {
+public abstract class Base {
 
     String tablename = null;
-    Column[] columns = new Column[]{};
+    Column[] columns = null;
 
-    default Column getColumn(String name) {
-        for (Column i : columns) {
-            if (i.name.equals(name)) {
-                return i;
+    Column getColumn(String name) {
+        if (columns != null) {
+            for (Column i : columns) {
+                if (i.name.equals(name)) {
+                    return i;
+                }
             }
         }
         return null;
