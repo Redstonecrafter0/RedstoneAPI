@@ -4,6 +4,9 @@
  */
 package net.redstonecraft.redstoneapi.json;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -147,5 +150,9 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 
 	public JSONArray getArray(String key) {
 		return (JSONArray) get(key);
+	}
+
+	public String toPrettyJsonString() {
+		return new GsonBuilder().setPrettyPrinting().create().toJson(new JsonParser().parse(toJSONString()));
 	}
 }

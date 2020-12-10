@@ -4,6 +4,9 @@
  */
 package net.redstonecraft.redstoneapi.json;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -405,5 +408,9 @@ public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
 
 	public JSONArray getArray(int index) {
 		return (JSONArray) get(index);
+	}
+
+	public String toPrettyJsonString() {
+		return new GsonBuilder().setPrettyPrinting().create().toJson(new JsonParser().parse(toJSONString()));
 	}
 }
