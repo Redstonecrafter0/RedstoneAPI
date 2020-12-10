@@ -1,5 +1,7 @@
 package net.redstonecraft.redstoneapi.ipc;
 
+import net.redstonecraft.redstoneapi.ipc.interfaces.ServerProcessor;
+import net.redstonecraft.redstoneapi.ipc.options.ServerOptions;
 import net.redstonecraft.redstoneapi.json.JSONObject;
 import net.redstonecraft.redstoneapi.json.parser.JSONParser;
 
@@ -9,16 +11,19 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Server {
 
     private final ServerSocket serverSocket;
     private final Thread thread;
-    private boolean run;
+    private HashMap<Object, ServerProcessor> processors = new HashMap<>();
+    private final ServerOptions options;
 
-    public Server(String host, int port, String target) throws IOException {
+    public Server(String host, int port, String target, ServerOptions options) throws IOException {
         serverSocket = new ServerSocket(port, 0, InetAddress.getByName(host));
+        this.options = options;
         thread = new Thread(() -> {
             while (true) {
                 try {
