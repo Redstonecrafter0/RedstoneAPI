@@ -7,7 +7,10 @@ public enum ResponseStatus {
     WARNING("warning"),
     EMPTY("empty");
 
+    public final String name;
+
     ResponseStatus(String name) {
+        this.name = name;
     }
 
 }

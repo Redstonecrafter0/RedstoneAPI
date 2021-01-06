@@ -6,4 +6,6 @@ public interface ServerProcessor {
 
     public Response onProcess();
 
+    public String getPacketName();
+
 }
