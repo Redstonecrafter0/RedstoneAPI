@@ -5,7 +5,8 @@ public enum ResponseStatus {
     SUCCESS("success"),
     ERROR("error"),
     WARNING("warning"),
-    EMPTY("empty");
+    EMPTY("empty"),
+    UNAUTHORIZED("unauthorized");
 
     public final String name;
 
