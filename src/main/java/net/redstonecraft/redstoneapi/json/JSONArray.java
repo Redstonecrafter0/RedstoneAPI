@@ -410,6 +410,10 @@ public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
 		return (JSONArray) get(index);
 	}
 
+	public boolean getBoolen(int index) {
+		return (boolean) get(index);
+	}
+
 	public String toPrettyJsonString() {
 		return new GsonBuilder().setPrettyPrinting().create().toJson(new JsonParser().parse(toJSONString()));
 	}

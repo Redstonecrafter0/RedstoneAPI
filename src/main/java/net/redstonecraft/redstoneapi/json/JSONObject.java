@@ -152,6 +152,10 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 		return (JSONArray) get(key);
 	}
 
+	public boolean getBoolean(String key) {
+		return (boolean) get(key);
+	}
+
 	public String toPrettyJsonString() {
 		return new GsonBuilder().setPrettyPrinting().create().toJson(new JsonParser().parse(toJSONString()));
 	}
