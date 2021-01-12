@@ -4,12 +4,8 @@ import net.redstonecraft.redstoneapi.json.JSONObject;
 
 public abstract class Request {
 
-    public final JSONObject payload;
-
-    public Request(JSONObject payload) {
-        this.payload = payload;
-    }
-
     abstract public String getPacketName();
+
+    abstract public JSONObject getPayload();
 
 }

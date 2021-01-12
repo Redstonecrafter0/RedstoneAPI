@@ -34,8 +34,9 @@ public class IPCClient {
             JSONObject requestObj = new JSONObject();
             requestObj.put("token", token);
             requestObj.put("packet", request.getPacketName());
-            requestObj.put("payload", request.payload);
+            requestObj.put("payload", request.getPayload());
             out.write(requestObj.toJSONString().getBytes(StandardCharsets.UTF_8));
+            out.write(0);
             out.flush();
             StringBuilder sb = new StringBuilder();
             int c;
@@ -48,7 +49,7 @@ public class IPCClient {
             } catch (Exception ignored) {
             }
             return new Response(ResponseStatus.valueOf(response.getString("status")), response.getObject("payload"));
-        } catch (ParseException e) {
+        } catch (ParseException | IllegalArgumentException e) {
             try {
                 socket.close();
             } catch (Exception ignored) {

@@ -25,7 +25,12 @@ public class HttpRequest {
         for (HttpHeader i : header) {
             con.addRequestProperty(i.key, i.value);
         }
-        byte[] response = IOUtils.readAllBytes(con.getInputStream());
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = IOUtils.readAllBytes(con.getInputStream());
+        } else {
+            response = IOUtils.readAllBytes(con.getErrorStream());
+        }
         int code = con.getResponseCode();
         String mime = con.getContentType();
         con.disconnect();
@@ -38,10 +43,16 @@ public class HttpRequest {
         for (HttpHeader i : header) {
             con.addRequestProperty(i.key, i.value);
         }
+        con.setDoOutput(true);
         OutputStream out = con.getOutputStream();
         out.write(content);
         out.flush();
-        byte[] response = IOUtils.readAllBytes(con.getInputStream());
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = IOUtils.readAllBytes(con.getInputStream());
+        } else {
+            response = IOUtils.readAllBytes(con.getErrorStream());
+        }
         int code = con.getResponseCode();
         String mime = con.getContentType();
         con.disconnect();

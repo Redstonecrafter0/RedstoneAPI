@@ -4,6 +4,8 @@ import java.sql.*;
 
 public class SQLite {
 
+    public static final String MEMORY = ":memory:";
+
     private Connection connection;
     private Statement statement;
 

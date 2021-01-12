@@ -1,12 +1,10 @@
 package net.redstonecraft.redstoneapi.ipc.exceptions;
 
-import net.redstonecraft.redstoneapi.json.parser.ParseException;
-
 public class InvalidResponse extends Exception {
 
-    public final ParseException parseException;
+    public final Exception exception;
 
-    public InvalidResponse(ParseException e) {
-        parseException = e;
+    public InvalidResponse(Exception e) {
+        exception = e;
     }
 }

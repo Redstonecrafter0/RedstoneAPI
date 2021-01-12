@@ -40,8 +40,12 @@ public class IPCServer {
                             OutputStream out = sock.getOutputStream();
                             StringBuilder sb = new StringBuilder();
                             int c;
-                            while ((c = in.read()) != -1) {
-                                    sb.append((char) c);
+                            while (true) {
+                                c = in.read();
+                                if (c == -1 || c == 0) {
+                                    break;
+                                }
+                                sb.append((char) c);
                             }
                             JSONObject obj = Objects.requireNonNull(JSONParser.parseObject(sb.toString()));
                             String token = obj.getString("token");
@@ -52,7 +56,7 @@ public class IPCServer {
                                 response = processRequest(token, packet, payload).toJSONString();
                             } else {
                                 JSONObject uResponse = new JSONObject();
-                                uResponse.put("status", ResponseStatus.ERROR.name);
+                                uResponse.put("status", ResponseStatus.ERROR.name());
                                 JSONObject epayload = new JSONObject();
                                 uResponse.put("payload", epayload);
                                 response = uResponse.toJSONString();
@@ -72,6 +76,7 @@ public class IPCServer {
                 }
             }
         });
+        thread.start();
     }
 
     public void addProcessor(ServerProcessor processor) {
@@ -97,16 +102,16 @@ public class IPCServer {
             ServerProcessor processor = processors.get(packet);
             if (processor != null) {
                 Response respObj = processor.onProcess(payload);
-                response.put("status", respObj.responseStatus.name);
+                response.put("status", respObj.responseStatus.name());
                 response.put("payload", respObj.payload);
             } else {
-                response.put("status", ResponseStatus.ERROR.name);
+                response.put("status", ResponseStatus.ERROR.name());
                 JSONObject errorBody = new JSONObject();
                 response.put("error", "notFound");
                 response.put("payload", errorBody);
             }
         } catch (Exception e) {
-            response.put("status", ResponseStatus.ERROR.name);
+            response.put("status", ResponseStatus.ERROR.name());
             JSONObject epayload = new JSONObject();
             JSONObject report = new JSONObject();
             report.put("error", "exception");
