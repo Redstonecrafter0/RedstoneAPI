@@ -1,0 +1,4 @@
+name: RedstoneAPI
+main: net.redstonecraft.redstoneapi.spigot.Main
+version: 1.0
+author: Redstonecrafter0
