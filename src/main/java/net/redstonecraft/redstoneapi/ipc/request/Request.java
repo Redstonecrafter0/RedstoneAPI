@@ -2,10 +2,10 @@ package net.redstonecraft.redstoneapi.ipc.request;
 
 import net.redstonecraft.redstoneapi.json.JSONObject;
 
-public abstract class Request {
+public interface Request {
 
-    abstract public String getPacketName();
+    String getPacketName();
 
-    abstract public JSONObject getPayload();
+    JSONObject getPayload();
 
 }
