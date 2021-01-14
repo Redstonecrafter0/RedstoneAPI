@@ -2,7 +2,7 @@ package net.redstonecraft.redstoneapi.sql;
 
 import java.sql.*;
 
-public class MySQL {
+public class MySQL extends SQL {
 
     private final Connection connection;
     private final Statement statement;

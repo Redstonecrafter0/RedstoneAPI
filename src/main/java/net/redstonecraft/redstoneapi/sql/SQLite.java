@@ -2,21 +2,17 @@ package net.redstonecraft.redstoneapi.sql;
 
 import java.sql.*;
 
-public class SQLite {
+public class SQLite extends SQL {
 
     public static final String MEMORY = ":memory:";
 
     private Connection connection;
     private Statement statement;
 
-    public SQLite(String dbname) {
-        try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbname);
-            statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
+    public SQLite(String dbname) throws SQLException {
+        connection = DriverManager.getConnection("jdbc:sqlite:" + dbname);
+        statement = connection.createStatement();
+        statement.setQueryTimeout(30);
     }
 
     public void update(String sql) {
