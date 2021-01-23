@@ -36,8 +36,11 @@ public class ServerListPing {
 
     public static ServerListPing ping(String host, int port) {
         try {
-            SRVRecord srvRecord = (SRVRecord) lookupRecord("_minecraft._tcp." + host, Type.SRV);
-            host = srvRecord.getTarget().toString().replaceFirst("\\.$","");
+            try {
+                SRVRecord srvRecord = (SRVRecord) lookupRecord("_minecraft._tcp." + host, Type.SRV);
+                host = srvRecord.getTarget().toString().replaceFirst("\\.$","");
+            } catch (UnknownHostException ignored) {
+            }
             Socket socket = new Socket(host, port);
             DataInputStream in = new DataInputStream(socket.getInputStream());
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -111,7 +114,11 @@ public class ServerListPing {
             String motdColored = sb.toString();
             String motd = removeColor(motdColored);
             String b64favicon = root.getString("favicon");
-            RenderedImage favicon = b64toImage(b64favicon);
+            RenderedImage favicon = null;
+            try {
+                favicon = b64toImage(b64favicon);
+            } catch (NullPointerException ignored) {
+            }
             return new ServerListPing(motd, motdColored, b64favicon, favicon, versionName, online, maxPlayers);
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
@@ -185,7 +192,7 @@ public class ServerListPing {
     }
 
     private static String getColorCode(String input) {
-        String key = MinecraftColors.valueOf(input).key;
+        String key = MinecraftColors.getColorByName(input).key;
         return key.equals("") ? "" : "§" + key;
     }
 

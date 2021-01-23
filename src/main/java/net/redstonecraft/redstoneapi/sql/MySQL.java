@@ -8,7 +8,7 @@ public class MySQL extends SQL {
     private final Statement statement;
 
     public MySQL(String host, int port, String database, String username, String password) throws SQLException {
-        connection = DriverManager.getConnection("jdbc:mysql://" + host+ ":" + port + "/" + database, username, password);
+        connection = DriverManager.getConnection("jdbc:mysql://" + host+ ":" + port + "/" + database + "?autoReconnect=true", username, password);
         statement = connection.createStatement();
     }
 
