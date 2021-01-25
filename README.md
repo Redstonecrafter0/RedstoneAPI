@@ -23,8 +23,8 @@
 ![Discord](https://img.shields.io/discord/391551622297157632?color=7289DA&label=discord&style=for-the-badge)
 
 ## Maven
-To use the RedstoneAPI in your projects you can use Maven to implement it.
-Implement the Github repository by pasting this in your pom.xml
+To implement the RedstoneAPI in your projects you can use primarily Maven.
+Implement the RedstoneAPI by pasting this code in your pom.xml
 
 Replace {VERSION} with the current version.
 ```xml
@@ -44,3 +44,20 @@ Replace {VERSION} with the current version.
     </dependency>
 </dependencies>
    ```
+
+## Gradle
+To implement the RedstoneAPI in your projects you could also use Gradle.
+Just paste this in your build.gradle
+
+Replace {VERSION} with the current version.
+```
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://maven.pkg.github.com/Redstonecrafter0/RedstoneAPI'
+    }
+    dependencies {
+        classpath 'net.redstonecraft:redstoneapi:{VERSION}'
+    }
+}
+```
