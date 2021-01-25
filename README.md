@@ -32,7 +32,7 @@ Support is provided on [Discord](https://discord.gg/aZKuas4).
 To implement the RedstoneAPI in your projects you can use primarily Maven.
 Implement the RedstoneAPI by pasting this code in your pom.xml
 
-Replace {VERSION} with the current version.
+Replace {VERSION} with the current version but don't keep the prefix `v`.
 ```xml
 <repositories>
     <repository>
@@ -55,7 +55,7 @@ Replace {VERSION} with the current version.
 To implement the RedstoneAPI in your projects you could also use Gradle.
 Just paste this in your build.gradle
 
-Replace {VERSION} with the current version.
+Replace {VERSION} with the current version but don't keep the prefix `v`.
 ```
 repositories {
     mavenCentral()
