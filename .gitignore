@@ -3,3 +3,4 @@ target
 RedstoneAPI.iml
 dependency-reduced-pom.xml
 src/main/test
+settings.xml
