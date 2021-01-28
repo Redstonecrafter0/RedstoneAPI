@@ -1,0 +1,18 @@
+usermanager:
+  enabled: true
+  fetchonmissing: true
+  persistance: 30 # days
+  storage:
+    type: SQLITE # SQLITE or MYSQL
+    mysql:
+      host: 'localhost'
+      port: 3306
+      database: 'redstoneapi'
+      username: 'redstoneapi'
+      password: 'redstoneapi'
+    sqlite:
+      name: 'redstoneapi.db'
+update:
+  notify:
+    console: true
+    adminjoin: true

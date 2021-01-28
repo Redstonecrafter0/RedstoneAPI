@@ -3,14 +3,40 @@ package net.redstonecraft.redstoneapi.sql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-public abstract class SQL {
+/**
+ * SQL interface for easy use
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ */
+public interface SQL {
 
-    public abstract void update(String sql);
+    /**
+     * Method used for unsafe updates
+     *
+     * @param sql SQL-string
+     */
+    public void update(String sql);
 
-    public abstract ResultSet query(String sql);
+    /**
+     * Method used for unsafe query
+     *
+     * @param sql SQL-string
+     *
+     * @return ResultSet
+     */
+    public ResultSet query(String sql);
 
-    public abstract PreparedStatement prepareStatement(String sql);
+    /**
+     * Method used for typesafe querys and updates
+     *
+     * @param sql SQL-string
+     */
+    public PreparedStatement prepareStatement(String sql);
 
-    public abstract void close();
+    /**
+     * Method to close the connection
+     */
+    public void close();
 
 }

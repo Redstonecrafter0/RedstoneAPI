@@ -18,16 +18,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The server for the {@link IPCClient}
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
 public class IPCServer {
 
     private final ServerSocket socket;
     private final Thread thread;
-    private final String serverToken;
     private final List<String> whitelistedTokens;
     private HashMap<String, ServerProcessor> processors = new HashMap<>();
 
-    public IPCServer(String host, int port, String serverToken) throws IOException {
-        this.serverToken = serverToken;
+    /**
+     * Contructor for the Server
+     *
+     * @param host serverhost (0.0.0.0) for all ips
+     * @param port server port
+     * */
+    public IPCServer(String host, int port) throws IOException {
         whitelistedTokens = new ArrayList<>();
         socket = new ServerSocket(port, 0, InetAddress.getByName(host));
         thread = new Thread(() -> {
@@ -79,25 +89,53 @@ public class IPCServer {
         thread.start();
     }
 
+    /**
+     * Register a {@link ServerProcessor}
+     *
+     * @param processor {@link ServerProcessor} to register
+     * */
     public void addProcessor(ServerProcessor processor) {
         processors.put(processor.getPacketName(), processor);
     }
 
+    /**
+     * Unregister a {@link ServerProcessor}
+     *
+     * @param processor {@link ServerProcessor} to unregister
+     * */
     public void removeProcessor(ServerProcessor processor) {
         processors.remove(processor.getPacketName(), processor);
     }
 
+    /**
+     * Whitelist add token
+     *
+     * @param token token to whitelist
+     * */
     public void whitelistAdd(String token) {
         whitelistedTokens.add(token);
     }
 
+    /**
+     * Remove token from the whitelist
+     *
+     * @param token token to remove from the whitelist
+     * */
     public void whitelistRemove(String token) {
         whitelistedTokens.remove(token);
     }
 
+    /**
+     * Internal process method
+     *
+     * @param token token provided
+     * @param packet packet name
+     * @param payload payload provided
+     *
+     * @return returned payload
+     * */
     private JSONObject processRequest(String token, String packet, JSONObject payload) {
         JSONObject response = new JSONObject();
-        response.put("token", serverToken);
         try {
             ServerProcessor processor = processors.get(packet);
             if (processor != null) {
@@ -123,6 +161,9 @@ public class IPCServer {
         return response;
     }
 
+    /**
+     * Stop the Server
+     * */
     public void stop() throws IOException {
         thread.stop();
         socket.close();

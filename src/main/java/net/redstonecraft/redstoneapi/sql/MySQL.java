@@ -2,12 +2,28 @@ package net.redstonecraft.redstoneapi.sql;
 
 import java.sql.*;
 
-public class MySQL extends SQL {
+/**
+ * MySQL class to control a MySQL database
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
+public class MySQL implements SQL {
 
     private final Connection connection;
     private final Statement statement;
 
-    public MySQL(String host, int port, String database, String username, String password) throws SQLException {
+    /**
+     * Constructor to create a MySQL connection.
+     *
+     * @param host hostname of the mysql server
+     * @param port port of the mysql server
+     * @param database database name to use
+     * @param username username for the connection
+     * @param password password for the username
+     */
+    public MySQL(String host, int port, String database, String username, String password) throws SQLException, ClassNotFoundException {
+        Class.forName("com.mysql.jdbc.Driver");
         connection = DriverManager.getConnection("jdbc:mysql://" + host+ ":" + port + "/" + database + "?autoReconnect=true", username, password);
         statement = connection.createStatement();
     }

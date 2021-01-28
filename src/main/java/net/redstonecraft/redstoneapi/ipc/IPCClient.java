@@ -14,18 +14,38 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * The client that connects to an {@link IPCServer}
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
 public class IPCClient {
 
     private final String host;
     private final int port;
     private final String token;
 
+    /**
+     * Constructor to create a {@link IPCClient}
+     *
+     * @param host hostname
+     * @param port host port
+     * @param token client token that needs to be whitelistet on the {@link IPCServer}
+     * */
     public IPCClient(String host, int port, String token) {
         this.host = host;
         this.port = port;
         this.token = token;
     }
 
+    /**
+     * Make a request to a {@link IPCServer}
+     *
+     * @param request a request object
+     *
+     * @return the {@link Response} sent by the server
+     * */
     public Response request(Request request) throws IOException, InvalidResponse {
         Socket socket = new Socket(this.host, this.port);
         try {

@@ -3,7 +3,8 @@ package net.redstonecraft.redstoneapi.tools;
 import net.redstonecraft.redstoneapi.json.JSONArray;
 import net.redstonecraft.redstoneapi.json.JSONObject;
 import net.redstonecraft.redstoneapi.json.parser.JSONParser;
-import net.redstonecraft.redstoneapi.tools.mojangapi.*;
+import net.redstonecraft.redstoneapi.tools.mojangapi.MojangProfile;
+import net.redstonecraft.redstoneapi.tools.mojangapi.NameHistory;
 import sun.misc.BASE64Decoder;
 
 import java.io.IOException;
@@ -14,13 +15,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * A class to provide the basics of the MojangAPI
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
 public class MojangAPI {
 
+    /**
+     * Get the players {@link UUID} by the players name
+     *
+     * @param name playername
+     *
+     * @return the uuid of the player
+     * */
     public static UUID getUnigueIdByName(String name) {
         try {
             HttpRequest req = HttpRequest.get("https://api.mojang.com/users/profiles/minecraft/" + URLEncoder.encode(name, StandardCharsets.UTF_8.toString()));
-            if (req.responseCode == 200) {
-                JSONObject resp = JSONParser.parseObject(new String(req.content, StandardCharsets.UTF_8));
+            if (req.getResponseCode() == 200) {
+                JSONObject resp = JSONParser.parseObject(new String(req.getContent(), StandardCharsets.UTF_8));
                 if (resp == null) {
                     return null;
                 }
@@ -36,11 +50,18 @@ public class MojangAPI {
         return null;
     }
 
+    /**
+     * Get all names a player had
+     *
+     * @param uuid the players uuid
+     *
+     * @return a object containing all the names and the change timestamps
+     * */
     public static List<NameHistory> getNameHistory(UUID uuid) {
         try {
             HttpRequest req = HttpRequest.get("https://api.mojang.com/user/profiles/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "/names");
-            if (req.responseCode == 200) {
-                JSONArray obj = JSONParser.parseArray(new String(req.content, StandardCharsets.UTF_8));
+            if (req.getResponseCode() == 200) {
+                JSONArray obj = JSONParser.parseArray(new String(req.getContent(), StandardCharsets.UTF_8));
                 if (obj != null) {
                     List<NameHistory> list = new ArrayList<>();
                     for (Object o : obj) {
@@ -65,11 +86,18 @@ public class MojangAPI {
         return new ArrayList<>();
     }
 
+    /**
+     * Get the full profile of a player
+     *
+     * @param uuid the players uuid
+     *
+     * @return a {@link MojangProfile} object that provides all the information
+     * */
     public static MojangProfile getProfile(UUID uuid) {
         try {
             HttpRequest req = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()));
-            if (req.responseCode == 200) {
-                JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(req.content, StandardCharsets.UTF_8)));
+            if (req.getResponseCode() == 200) {
+                JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(req.getContent(), StandardCharsets.UTF_8)));
                 UUID uuid1 = getUniqueIdByString(resp.getString("id"));
                 String name = resp.getString("name");
                 JSONObject textures = Objects.requireNonNull(JSONParser.parseObject(new String(new BASE64Decoder().decodeBuffer(resp.getArray("properties").getObject(0).getString("value")), StandardCharsets.UTF_8)));
@@ -86,7 +114,14 @@ public class MojangAPI {
         return null;
     }
 
-    private static UUID getUniqueIdByString(String uuid) {
+    /**
+     * A small utlitity to convert the uuid
+     *
+     * @param uuid uuid
+     *
+     * @return uuid
+     * */
+    public static UUID getUniqueIdByString(String uuid) {
         StringBuffer sb = new StringBuffer(uuid);
         sb.insert(8, "-");
         sb = new StringBuffer(sb.toString());
@@ -98,7 +133,14 @@ public class MojangAPI {
         return UUID.fromString(sb.toString());
     }
 
-    private static String uniqueIdToString(UUID uuid) {
+    /**
+     * A small utlitity to convert the uuid
+     *
+     * @param uuid uuid
+     *
+     * @return uuid
+     * */
+    public static String uniqueIdToString(UUID uuid) {
         return uuid.toString().replaceAll("-", "");
     }
 

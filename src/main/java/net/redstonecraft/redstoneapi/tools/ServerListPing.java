@@ -14,6 +14,12 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * Class to ping a Minecraft server to get some data
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
 public class ServerListPing {
 
     public final String faviconB64;
@@ -24,6 +30,17 @@ public class ServerListPing {
     public final long onlinePlayers;
     public final long maxPlayers;
 
+    /**
+     * Minecraft server list ping response object
+     *
+     * @param motd server motd
+     * @param motdColored colored server motd
+     * @param faviconB64 server favicon as base64 {@link String}
+     * @param favicon server favicon as {@link RenderedImage}
+     * @param version server version
+     * @param onlinePlayers online player count
+     * @param maxPlayers max players online
+     * */
     public ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers) {
         this.motd = motd;
         this.motdColored = motdColored;
@@ -34,6 +51,14 @@ public class ServerListPing {
         this.maxPlayers = maxPlayers;
     }
 
+    /**
+     * Ping the server
+     *
+     * @param host server hostname
+     * @param port server port
+     *
+     * @return response object as {@link ServerListPing}
+     * */
     public static ServerListPing ping(String host, int port) {
         try {
             try {
@@ -126,12 +151,25 @@ public class ServerListPing {
         return null;
     }
 
+    /**
+     * Convert the base64 favicon to a {@link RenderedImage}
+     *
+     * @param base64 favicon as base64
+     *
+     * @return favicon as {@link RenderedImage}
+     * */
     private static RenderedImage b64toImage(String base64) throws IOException {
         String imageString = base64.split(",")[1];
         byte[] imageBytes = new BASE64Decoder().decodeBuffer(imageString);
         return ImageIO.read(new ByteArrayInputStream(imageBytes));
     }
 
+    /**
+     * Util to write var int to datastream
+     *
+     * @param out datastream
+     * @param paramInt value
+     * */
     private static void writeVarInt(DataOutputStream out, int paramInt) {
         try {
             while (true) {
@@ -147,6 +185,13 @@ public class ServerListPing {
         }
     }
 
+    /**
+     * Util to read var int from datastream
+     *
+     * @param in datastream
+     *
+     * @return var int
+     * */
     private static int readVarInt(DataInputStream in) {
         int i = 0;
         int j = 0;
@@ -166,6 +211,13 @@ public class ServerListPing {
         return i;
     }
 
+    /**
+     * Strip the color codes from a string
+     *
+     * @param input input {@link String}
+     *
+     * @return uncolored {@link String}
+     * */
     private static String removeColor(String input) {
         return input.replaceAll("§0", "")
                 .replaceAll("§1", "")
@@ -191,11 +243,26 @@ public class ServerListPing {
                 .replaceAll("§r", "");
     }
 
+    /**
+     * Internal utility wrapper
+     *
+     * @param input input
+     *
+     * @return color code
+     * */
     private static String getColorCode(String input) {
         String key = MinecraftColors.getColorByName(input).key;
         return key.equals("") ? "" : "§" + key;
     }
 
+    /**
+     * lookup DNS
+     *
+     * @param hostName hostname
+     * @param type type of record to lookup
+     *
+     * @return the record result
+     * */
     private static Record lookupRecord(String hostName, int type) throws UnknownHostException {
         Record record;
         Lookup lookup;
@@ -225,4 +292,15 @@ public class ServerListPing {
         }
     }
 
+    @Override
+    public String toString() {
+        return "ServerListPing{" +
+                "faviconB64='" + faviconB64 + '\'' +
+                ", motd='" + motd + '\'' +
+                ", motdColored='" + motdColored + '\'' +
+                ", version='" + version + '\'' +
+                ", onlinePlayers=" + onlinePlayers +
+                ", maxPlayers=" + maxPlayers +
+                '}';
+    }
 }

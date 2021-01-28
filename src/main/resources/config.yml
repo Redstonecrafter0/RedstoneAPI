@@ -1,0 +1,4 @@
+update:
+  notify:
+    console: true
+    adminjoin: true

@@ -2,14 +2,29 @@ package net.redstonecraft.redstoneapi.sql;
 
 import java.sql.*;
 
-public class SQLite extends SQL {
+/**
+ * SQLite class to control a SQLite database
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ * */
+public class SQLite implements SQL {
 
+    /**
+     * DBName for a database in memory
+     */
     public static final String MEMORY = ":memory:";
 
     private Connection connection;
     private Statement statement;
 
-    public SQLite(String dbname) throws SQLException {
+    /**
+     * Contructor to create the database connection to a sqlite database by filename
+     *
+     * @param dbname filename of the database
+     */
+    public SQLite(String dbname) throws SQLException, ClassNotFoundException {
+        Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:" + dbname);
         statement = connection.createStatement();
         statement.setQueryTimeout(30);

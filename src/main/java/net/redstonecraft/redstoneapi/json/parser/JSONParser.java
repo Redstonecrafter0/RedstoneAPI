@@ -4,6 +4,9 @@
  */
 package net.redstonecraft.redstoneapi.json.parser;
 
+import net.redstonecraft.redstoneapi.json.JSONArray;
+import net.redstonecraft.redstoneapi.json.JSONObject;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -11,14 +14,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import net.redstonecraft.redstoneapi.json.JSONArray;
-import net.redstonecraft.redstoneapi.json.JSONObject;
-
 
 /**
  * Parser for JSON text. Please note that JSONParser is NOT thread-safe.
  * 
- * @author FangYidong<fangyidong@yahoo.com.cn>
+ * @author FangYidong fangyidong@yahoo.com.cn
  */
 public class JSONParser {
 	public static final int S_INIT=0;
@@ -56,8 +56,6 @@ public class JSONParser {
      * Reset the parser to the initial state with a new character reader.
      * 
      * @param in - The new character reader.
-     * @throws IOException
-     * @throws ParseException
      */
 	public void reset(Reader in){
 		lexer.yyreset(in);

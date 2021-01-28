@@ -34,6 +34,14 @@ public enum MinecraftColors {
         this.backgroundColor = backgroundColor;
     }
 
+    /**
+     * Get the color from the full name
+     *
+     * @param name full name of the color
+     *
+     * @return color object
+     * @since 1.0
+     * */
     public static MinecraftColors getColorByName(String name) {
         for (MinecraftColors i : MinecraftColors.values()) {
             if (name.equals(i.name)) {
@@ -43,6 +51,14 @@ public enum MinecraftColors {
         return MinecraftColors.NONE;
     }
 
+    /**
+     * Get the color from the color key
+     *
+     * @param key key of the color
+     *
+     * @return color object
+     * @since 1.0
+     * */
     public static MinecraftColors getColorByKey(String key) {
         for (MinecraftColors i : MinecraftColors.values()) {
             if (key.equals(i.key)) {
