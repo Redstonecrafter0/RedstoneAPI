@@ -38,7 +38,7 @@ public class UpdateListener implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (event.getPlayer().hasPermission("redstoneapi.admin.notifyupdate")) {
+                if (event.getPlayer().hasPermission("redstoneapi.admin.notifyupdate") && newVersion != null) {
                     event.getPlayer().sendMessage(RedstoneAPISpigot.prefix + RedstoneAPISpigot.renderColors("&aThere is a newer version [" + newVersion.toString() + "] of this plugin available. Current version is [" + RedstoneAPI.getVersion().toString() + "]."));
                 }
             }

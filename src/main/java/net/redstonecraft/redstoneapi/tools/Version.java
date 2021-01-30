@@ -12,13 +12,20 @@ public class Version {
 
     private final int[] version;
     private final boolean includeV;
+    private final boolean preRelease;
 
     public Version(String version) {
         if (version.startsWith("v")) {
             version = version.substring(1);
             includeV = true;
+            preRelease = false;
+        } else if (version.startsWith("pre-")) {
+            version = version.substring(4);
+            includeV = false;
+            preRelease = true;
         } else {
             includeV = false;
+            preRelease = false;
         }
         if (!version.matches("[0-9]+(\\.[0-9]+)*")) {
             throw new IllegalArgumentException("Invalid Version");
@@ -33,27 +40,29 @@ public class Version {
     public Version(int[] numbers) {
         version = numbers;
         includeV = false;
+        preRelease = false;
     }
 
-    public Version(int[] numbers, boolean includeV) {
+    public Version(int[] numbers, boolean includeV, boolean preRelease) {
         version = numbers;
         this.includeV = includeV;
+        this.preRelease = preRelease;
     }
 
-    public Integer getMajor() {
-        return getOnPos(0);
+    public int getMajor() {
+        return getOnPos(0) == null ? 0 : getOnPos(0);
     }
 
-    public Integer getMinor() {
-        return getOnPos(1);
+    public int getMinor() {
+        return getOnPos(1) == null ? 0 : getOnPos(1);
     }
 
-    public Integer getPatch() {
-        return getOnPos(2);
+    public int getPatch() {
+        return getOnPos(2) == null ? 0 : getOnPos(2);
     }
 
-    public Integer getBuild() {
-        return getOnPos(3);
+    public int getBuild() {
+        return getOnPos(3) == null ? 0 : getOnPos(3);
     }
 
     public Integer getOnPos(int pos) {
@@ -86,6 +95,10 @@ public class Version {
         return !isOlderThan(compare) && !equals(compare);
     }
 
+    public boolean isPreRelease() {
+        return preRelease;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -109,6 +122,6 @@ public class Version {
         for (int i = 0; i < version.length; i++) {
             nums[i] = String.valueOf(version[i]);
         }
-        return includeV ? "v" + String.join(".", nums) : String.join(".", nums);
+        return includeV ? "v" + String.join(".", nums) : (preRelease ? "pre-" + String.join(".", nums) : String.join(".", nums));
     }
 }

@@ -1,6 +1,6 @@
 name: RedstoneAPI
 main: net.redstonecraft.redstoneapi.spigot.RedstoneAPISpigot
-version: 1.1
+version: 1.1.1
 author: Redstonecrafter0
 permissions:
   redstoneapi.admin.notifyupdate:
