@@ -6,6 +6,7 @@ import net.redstonecraft.redstoneapi.bungee.BungeecordPlugin;
 import net.redstonecraft.redstoneapi.bungee.listeners.UpdateListener;
 import net.redstonecraft.redstoneapi.bungee.listeners.UserListener;
 import net.redstonecraft.redstoneapi.bungee.manager.UserManager;
+import net.redstonecraft.redstoneapi.ipc.IPCServer;
 import net.redstonecraft.redstoneapi.sql.MySQL;
 import net.redstonecraft.redstoneapi.sql.SQL;
 import net.redstonecraft.redstoneapi.sql.SQLTypes;
@@ -13,6 +14,7 @@ import net.redstonecraft.redstoneapi.sql.SQLite;
 import net.redstonecraft.redstoneapi.tools.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +26,7 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
 
     private SQL sql;
     private UserManager userManager;
+    private IPCServer ipcServer;
 
     @Override
     public void onLoad() {
@@ -51,7 +54,7 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
         } catch (Exception ignored) {
             getLogger().warning(prefix + renderColors("&cError while initializing bStats."));
         }
-        if (getConfig().getBoolean("usermanager.enabled")) {
+        if (isUserManagerEnabled()) {
             switch (SQLTypes.valueOf(getConfig().getString("usermanager.storage.type"))) {
                 case SQLITE:
                     try {
@@ -75,6 +78,13 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
         }
         if (getConfig().getBoolean("update.notify.adminjoin")) {
             registerListeners(new UpdateListener(this));
+        }
+        if (isIpcEnabled()) {
+            try {
+                ipcServer = new IPCServer(getConfig().getString("ipc.host"), getConfig().getInt("ipc.port"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         String[] msg = {
                 "&b╓" + StringUtils.sameChar('─', 31 + getDescription().getVersion().length()) + "╖",
@@ -129,5 +139,32 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
      * */
     public UserManager getUserManager() {
         return userManager;
+    }
+
+    /**
+     * Return true if the UserManager is enabled
+     *
+     * @return false if disabled by config
+     * */
+    public boolean isUserManagerEnabled() {
+        return getConfig().getBoolean("usermanager.enabled");
+    }
+
+    /**
+     * Return true if the IPCServer is enabled
+     *
+     * @return false if disabled by config
+     * */
+    public boolean isIpcEnabled() {
+        return getConfig().getBoolean("ipc.enabled");
+    }
+
+    /**
+     * Return the instance of the IPCServer
+     *
+     * @return null if disabled by config
+     * */
+    public IPCServer getIpcServer() {
+        return ipcServer;
     }
 }

@@ -1,6 +1,7 @@
 package net.redstonecraft.redstoneapi.spigot;
 
 import net.redstonecraft.redstoneapi.RedstoneAPI;
+import net.redstonecraft.redstoneapi.spigot.listeners.JumpListener;
 import net.redstonecraft.redstoneapi.spigot.listeners.UpdateListener;
 import net.redstonecraft.redstoneapi.tools.StringUtils;
 import org.bukkit.Bukkit;

@@ -61,15 +61,31 @@ public abstract class BungeecordPlugin extends Plugin {
         }
     }
 
+    /**
+     * @deprecated use {@link BungeecordPlugin#registerListeners(Listener...)} instead
+     * */
+    @Deprecated
+    public void registerCommand(Command command) {
+        ProxyServer.getInstance().getPluginManager().registerCommand(this, command);
+    }
+
     public void registerCommands(Command... command) {
         for (Command i : command) {
-            ProxyServer.getInstance().getPluginManager().registerCommand(this, i);
+            registerCommand(i);
         }
+    }
+
+    /**
+     * @deprecated use {@link BungeecordPlugin#registerListeners(Listener...)} instead
+     * */
+    @Deprecated
+    public void registerListener(Listener listener) {
+        ProxyServer.getInstance().getPluginManager().registerListener(this, listener);
     }
 
     public void registerListeners(Listener... listener) {
         for (Listener i : listener) {
-            ProxyServer.getInstance().getPluginManager().registerListener(this, i);
+            registerListener(i);
         }
     }
 

@@ -11,12 +11,14 @@ public class IntUtils {
     /**
      * Shortcut for a random integer between 2 numbers
      *
-     * @param min smaller number
-     * @param max bigger number
+     * @param a a number
+     * @param b b number
      *
      * @return random number between min and max
      * */
-    public static int random(int min, int max) {
+    public static int random(int a, int b) {
+        int min = Math.min(a, b);
+        int max = Math.max(a, b);
         return min + (int) (Math.random() * (max - min));
     }
 

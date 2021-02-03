@@ -22,13 +22,14 @@ import java.util.Objects;
  * */
 public class ServerListPing {
 
-    public final String faviconB64;
-    public final String motd;
-    public final String motdColored;
-    public final RenderedImage favicon;
-    public final String version;
-    public final long onlinePlayers;
-    public final long maxPlayers;
+    private final String faviconB64;
+    private final String motd;
+    private final String motdColored;
+    private final RenderedImage favicon;
+    private final String version;
+    private final long onlinePlayers;
+    private final long maxPlayers;
+    private final int protocol;
 
     /**
      * Minecraft server list ping response object
@@ -41,7 +42,7 @@ public class ServerListPing {
      * @param onlinePlayers online player count
      * @param maxPlayers max players online
      * */
-    public ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers) {
+    public ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers, int protocol) {
         this.motd = motd;
         this.motdColored = motdColored;
         this.faviconB64 = faviconB64;
@@ -49,6 +50,18 @@ public class ServerListPing {
         this.version = version;
         this.onlinePlayers = onlinePlayers;
         this.maxPlayers = maxPlayers;
+        this.protocol = protocol;
+    }
+
+    /**
+     * Ping the server with port 25565
+     *
+     * @param host server hostname
+     *
+     * @return response object as {@link ServerListPing}
+     * */
+    public static ServerListPing ping(String host) {
+        return ping(host, 25565);
     }
 
     /**
@@ -88,6 +101,7 @@ public class ServerListPing {
             JSONObject root = new JSONParser().parseObject(json);
             JSONObject version = Objects.requireNonNull(root).getObject("version");
             String versionName = version.getString("name");
+            int protocol = version.getInt("protocol");
             JSONObject players = root.getObject("players");
             long online = players.getLong("online");
             long maxPlayers = players.getLong("max");
@@ -144,7 +158,7 @@ public class ServerListPing {
                 favicon = b64toImage(b64favicon);
             } catch (NullPointerException ignored) {
             }
-            return new ServerListPing(motd, motdColored, b64favicon, favicon, versionName, online, maxPlayers);
+            return new ServerListPing(motd, motdColored, b64favicon, favicon, versionName, online, maxPlayers, protocol);
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
@@ -251,7 +265,7 @@ public class ServerListPing {
      * @return color code
      * */
     private static String getColorCode(String input) {
-        String key = MinecraftColors.getColorByName(input).key;
+        String key = MinecraftColors.getColorByName(input).getKey();
         return key.equals("") ? "" : "§" + key;
     }
 
@@ -290,6 +304,38 @@ public class ServerListPing {
                     throw new UnknownHostException(String.format("Unknown error %d in host lookup of '%s'", result, hostName));
             }
         }
+    }
+
+    public String getFaviconB64() {
+        return faviconB64;
+    }
+
+    public RenderedImage getFavicon() {
+        return favicon;
+    }
+
+    public long getMaxPlayers() {
+        return maxPlayers;
+    }
+
+    public long getOnlinePlayers() {
+        return onlinePlayers;
+    }
+
+    public String getMotd() {
+        return motd;
+    }
+
+    public String getMotdColored() {
+        return motdColored;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public int getProtocol() {
+        return protocol;
     }
 
     @Override

@@ -22,10 +22,10 @@ public enum MinecraftColors {
     WHITE("f", "white", Color.decode("#FFFFFF"), Color.decode("#3F3F3F")),
     NONE("", "", Color.decode("#000000"), Color.decode("#000000"));
 
-    public final String key;
-    public final String name;
-    public final Color foregroundColor;
-    public final Color backgroundColor;
+    private final String key;
+    private final String name;
+    private final Color foregroundColor;
+    private final Color backgroundColor;
 
     MinecraftColors(String key, String name, Color foregroundColor, Color backgroundColor) {
         this.key = key;
@@ -44,7 +44,7 @@ public enum MinecraftColors {
      * */
     public static MinecraftColors getColorByName(String name) {
         for (MinecraftColors i : MinecraftColors.values()) {
-            if (name.equals(i.name)) {
+            if (name.equals(i.getName())) {
                 return i;
             }
         }
@@ -61,11 +61,27 @@ public enum MinecraftColors {
      * */
     public static MinecraftColors getColorByKey(String key) {
         for (MinecraftColors i : MinecraftColors.values()) {
-            if (key.equals(i.key)) {
+            if (key.equals(i.getKey())) {
                 return i;
             }
         }
         return MinecraftColors.NONE;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public Color getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public Color getForegroundColor() {
+        return foregroundColor;
     }
 
 }

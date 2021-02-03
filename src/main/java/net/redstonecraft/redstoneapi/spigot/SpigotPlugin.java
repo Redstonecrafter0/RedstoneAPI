@@ -25,8 +25,18 @@ public abstract class SpigotPlugin extends JavaPlugin {
     public void onServerLoaded() {
     }
 
+    /**
+     * @deprecated use {@link SpigotPlugin#registerListeners(Listener...)} instead
+     * */
+    @Deprecated
     public void registerListener(Listener listener) {
         Bukkit.getPluginManager().registerEvents(listener, this);
+    }
+
+    public void registerListeners(Listener... listener) {
+        for (Listener i : listener) {
+            registerListener(i);
+        }
     }
 
     /**

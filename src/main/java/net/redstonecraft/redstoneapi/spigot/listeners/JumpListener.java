@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.spigot;
+package net.redstonecraft.redstoneapi.spigot.listeners;
 
 import net.redstonecraft.redstoneapi.spigot.events.PlayerJumpEvent;
 import org.bukkit.Bukkit;
