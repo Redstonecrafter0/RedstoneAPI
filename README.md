@@ -54,7 +54,7 @@ Replace {VERSION} with the current version and **keep** the prefix `v`.
 To implement the RedstoneAPI in your projects you could also use Gradle.
 Just paste this in your build.gradle
 
-Replace {VERSION} with the current version but don't keep the prefix `v`.
+Replace {VERSION} with the current version but **keep** the prefix `v`.
 ```
 maven {
     url 'https://jitpack.io'
