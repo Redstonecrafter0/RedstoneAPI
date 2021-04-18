@@ -36,6 +36,8 @@ public class IPCServer {
      *
      * @param host serverhost (0.0.0.0) for all ips
      * @param port server port
+     *
+     * @throws IOException when an I/O exception occurs
      * */
     public IPCServer(String host, int port) throws IOException {
         whitelistedTokens = new ArrayList<>();
@@ -163,6 +165,8 @@ public class IPCServer {
 
     /**
      * Stop the Server
+     *
+     * @throws IOException when an I/O exception occurs
      * */
     public void stop() throws IOException {
         thread.stop();

@@ -1,8 +1,12 @@
 name: RedstoneAPI
-main: net.redstonecraft.redstoneapi.spigot.RedstoneAPISpigot
-version: 1.1.2
+main: net.redstonecraft.redstoneapi.spigot.plugin.RedstoneAPISpigot
+version: 1.2
 author: Redstonecrafter0
+softdepend:
+  - ProtocolLib
 permissions:
   redstoneapi.admin.notifyupdate:
     default: op
     description: 'Get notified when a new version of the RedstoneAPI is available.'
+commands:
+  test:

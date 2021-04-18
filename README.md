@@ -32,20 +32,19 @@ Support is provided on [Discord](https://discord.gg/aZKuas4).
 To implement the RedstoneAPI in your projects you can use primarily Maven.
 Implement the RedstoneAPI by pasting this code in your pom.xml
 
-Replace {VERSION} with the current version but don't keep the prefix `v`.
+Replace {VERSION} with the current version and **keep** the prefix `v`.
 ```xml
 <repositories>
     <repository>
-        <id>github</id>
-        <name>GitHub Redstonecrafter0 Apache Maven Packages</name>
-        <url>https://maven.pkg.github.com/Redstonecrafter0/RedstoneAPI</url>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
     </repository>
 </repositories>
 
 <dependencies>
     <dependency>
-        <groupId>net.redstonecraft</groupId>
-        <artifactId>redstoneapi</artifactId>
+        <groupId>com.github.Redstonecrafter0</groupId>
+        <artifactId>RedstoneAPI</artifactId>
         <version>{VERSION}</version>
     </dependency>
 </dependencies>
@@ -57,13 +56,11 @@ Just paste this in your build.gradle
 
 Replace {VERSION} with the current version but don't keep the prefix `v`.
 ```
-repositories {
-    mavenCentral()
-    maven {
-        url 'https://maven.pkg.github.com/Redstonecrafter0/RedstoneAPI'
-    }
-    dependencies {
-        classpath 'net.redstonecraft:redstoneapi:{VERSION}'
-    }
+maven {
+    url 'https://jitpack.io'
+}
+
+dependencies {
+    implementation 'com.github.Redstonecrafter0:RedstoneAPI:{VERSION}'
 }
 ```

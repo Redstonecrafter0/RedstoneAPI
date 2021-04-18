@@ -6,6 +6,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+/**
+ * A better base class for spigot plugins.
+ * Use {@link SpigotPlugin#onEnabled()} instead of {@link JavaPlugin#onEnable()} for {@link SpigotPlugin#onServerLoaded()} to function
+ *
+ * @author Redstonecrafter0
+ * @since 1.1
+ * */
 public abstract class SpigotPlugin extends JavaPlugin {
 
     @Override
@@ -22,11 +29,15 @@ public abstract class SpigotPlugin extends JavaPlugin {
     public void onEnabled() {
     }
 
+    /**
+     * This is called when the first server tick eplapsed
+     * */
     public void onServerLoaded() {
     }
 
     /**
      * @deprecated use {@link SpigotPlugin#registerListeners(Listener...)} instead
+     * @see SpigotPlugin#registerListeners(Listener...)
      * */
     @Deprecated
     public void registerListener(Listener listener) {

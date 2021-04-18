@@ -1,12 +1,11 @@
 package net.redstonecraft.redstoneapi.tools.mojangapi;
 
-import sun.misc.BASE64Encoder;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -24,24 +23,17 @@ public class MojangProfile {
     private final long timestamp;
     private BufferedImage skin = null;
     private BufferedImage cape = null;
+    private final String signature;
+    private final String skinTexture;
 
-    /**
-     * Contructor for the MojangProfile object.
-     *
-     * @param uuid the players UUID
-     * @param name the playername
-     * @param skinUrl the url of the skin image
-     * @param capeUrl the url of the cape image
-     * @param timestamp something that the mojang api provides
-     *
-     * @see net.redstonecraft.redstoneapi.tools.MojangAPI for getting an instance
-     */
-    public MojangProfile(UUID uuid, String name, String skinUrl, String capeUrl, long timestamp) {
+    public MojangProfile(UUID uuid, String name, String skinUrl, String capeUrl, long timestamp, String signature, String skinTexture) {
         this.uuid = uuid;
         this.name = name;
         this.skinUrl = skinUrl;
         this.capeUrl = capeUrl;
         this.timestamp = timestamp;
+        this.signature = signature;
+        this.skinTexture = skinTexture;
     }
 
     /**
@@ -107,7 +99,7 @@ public class MojangProfile {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 ImageIO.write(img, "png", os);
-                return new BASE64Encoder().encode(os.toByteArray());
+                return Base64.getEncoder().encodeToString(os.toByteArray());
             } catch (IOException ignored) {
             }
         }
@@ -150,11 +142,25 @@ public class MojangProfile {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 ImageIO.write(img, "png", os);
-                return new BASE64Encoder().encode(os.toByteArray());
+                return Base64.getEncoder().encodeToString(os.toByteArray());
             } catch (IOException ignored) {
             }
         }
         return null;
+    }
+
+    /**
+     * @return the skin signature used in a gameprofile sent by a minecraft server to a client
+     * */
+    public String getSignature() {
+        return signature;
+    }
+
+    /**
+     * @return the skin texture value used in a gameprofile sent by a minecraft server to a client
+     * */
+    public String getSkinTexture() {
+        return skinTexture;
     }
 
     @Override

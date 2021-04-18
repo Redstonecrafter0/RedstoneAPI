@@ -1,9 +1,14 @@
 package net.redstonecraft.redstoneapi.sql;
 
+import net.redstonecraft.redstoneapi.sql.orm.*;
+import net.redstonecraft.redstoneapi.sql.orm.types.Int;
+
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * MySQL class to control a MySQL database
+ * MySQL class to control a MySQL or MariaDB database
  *
  * @author Redstonecrafter0
  * @since 1.0
@@ -13,6 +18,84 @@ public class MySQL implements SQL {
     private final Connection connection;
     private final Statement statement;
 
+    private static final SQLDialectRenderer sqlDialectRenderer = new SQLDialectRenderer() {
+        @Override
+        public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, Int primaryKey) {
+            if (columns.size() != columnData.size()) {
+                throw new IllegalArgumentException("Size not matching");
+            }
+            List<String> list = new ArrayList<>();
+            for (int i = 0; i < columns.size(); i++) {
+                list.add("`" + columns.get(i).getKey() + "` " + columns.get(i).getSqlName() + (columnData.get(i).notnull() ? " NOT NULL" : "") + (columnData.get(i).unique() ? " UNIQUE" : "") + (columnData.get(i).primaryKey() ? " AUTO_INCREMENT" : ""));
+            }
+            return sql.prepareStatement("CREATE TABLE IF NOT EXISTS `" + table.getSimpleName() + "` (" + String.join(", ", list) + ", PRIMARY KEY (`" + primaryKey.getKey() + "`))");
+        }
+
+        private List<String> escapeStrings(List<String> strings) {
+            List<String> list = new ArrayList<>();
+            for (String i : strings) {
+                list.add("`" + i + "`");
+            }
+            return list;
+        }
+
+        @Override
+        public PreparedStatement insert(SQL sql, Class<? extends TableBase> table, List<BaseType> values) throws SQLException {
+            List<String> keys = new ArrayList<>();
+            List<String> placeholders = new ArrayList<>();
+            for (BaseType i : values) {
+                keys.add(i.getKey());
+                placeholders.add("?");
+            }
+            PreparedStatement ps = sql.prepareStatement("INSERT INTO `" + table.getSimpleName() + "` (" + String.join(", ", escapeStrings(keys)) + ") VALUES (" + String.join(", ", placeholders) + ")");
+            for (int i = 0; i < values.size(); i++) {
+                values.get(i).serializeSql(ps, i + 1);
+            }
+            return ps;
+        }
+
+        @Override
+        public PreparedStatement update(SQL sql, Class<? extends TableBase> table, List<BaseType> values, Int primaryKey) throws SQLException {
+            List<String> list = new ArrayList<>();
+            for (BaseType i : values) {
+                list.add("`" + i.getKey() + "` = ?");
+            }
+            PreparedStatement ps = sql.prepareStatement("UPDATE `" + table.getSimpleName() + "` SET " + String.join(", ", list) + " WHERE " + primaryKey.getKey() + " = " + primaryKey.getValue());
+            for (int i = 0; i < values.size(); i++) {
+                values.get(i).serializeSql(ps, i + 1);
+            }
+            return ps;
+        }
+
+        @Override
+        public PreparedStatement delete(SQL sql, Class<? extends TableBase> table, Filter filter) throws SQLException {
+            PreparedStatement ps = sql.prepareStatement("DELETE FROM `" + table.getSimpleName() + "` WHERE " + filter.getQueryString());
+            return renderFilter(filter, ps);
+        }
+
+        @Override
+        public PreparedStatement select(SQL sql, Class<? extends TableBase> table, Filter filter) throws SQLException {
+            PreparedStatement ps = sql.prepareStatement("SELECT * FROM `" + table.getSimpleName() + "` WHERE " + filter.getQueryString());
+            return renderFilter(filter, ps);
+        }
+
+        @Override
+        public PreparedStatement select(SQL sql, Class<? extends TableBase> table) {
+            return sql.prepareStatement("SELECT * FROM `" + table.getSimpleName() + "`");
+        }
+
+        @Override
+        public PreparedStatement count(SQL sql, Class<? extends TableBase> table) {
+            return sql.prepareStatement("SELECT count(*) AS total FROM `" + table.getSimpleName() + "`");
+        }
+
+        @Override
+        public PreparedStatement count(SQL sql, Class<? extends TableBase> table, Filter filter) throws SQLException {
+            PreparedStatement ps = sql.prepareStatement("SELECT count(*) AS total FROM `" + table.getSimpleName() + "` WHERE " + filter.getQueryString());
+            return renderFilter(filter, ps);
+        }
+    };
+
     /**
      * Constructor to create a MySQL connection.
      *
@@ -21,9 +104,12 @@ public class MySQL implements SQL {
      * @param database database name to use
      * @param username username for the connection
      * @param password password for the username
+     *
+     * @throws SQLException when an sql exception occurs
+     * @throws ClassNotFoundException when the driver is missing (should by included)
      */
     public MySQL(String host, int port, String database, String username, String password) throws SQLException, ClassNotFoundException {
-        Class.forName("com.mysql.jdbc.Driver");
+        Class.forName("com.mysql.cj.jdbc.Driver");
         connection = DriverManager.getConnection("jdbc:mysql://" + host+ ":" + port + "/" + database + "?autoReconnect=true", username, password);
         statement = connection.createStatement();
     }
@@ -67,4 +153,8 @@ public class MySQL implements SQL {
         }
     }
 
+    @Override
+    public SQLDialectRenderer getSyntaxRenderer() {
+        return sqlDialectRenderer;
+    }
 }

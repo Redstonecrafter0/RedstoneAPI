@@ -15,6 +15,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Bungeecord Pluginbase
+ *
+ * @author Redstonecrafter0
+ * @since 1.1
+ * */
 public abstract class BungeecordPlugin extends Plugin {
 
     private Configuration config;
@@ -63,12 +69,18 @@ public abstract class BungeecordPlugin extends Plugin {
 
     /**
      * @deprecated use {@link BungeecordPlugin#registerListeners(Listener...)} instead
+     * @see BungeecordPlugin#registerListeners(Listener...)
      * */
     @Deprecated
     public void registerCommand(Command command) {
         ProxyServer.getInstance().getPluginManager().registerCommand(this, command);
     }
 
+    /**
+     * Used to register commands easyly
+     *
+     * @param command the commands to register
+     * */
     public void registerCommands(Command... command) {
         for (Command i : command) {
             registerCommand(i);
@@ -77,13 +89,18 @@ public abstract class BungeecordPlugin extends Plugin {
 
     /**
      * @deprecated use {@link BungeecordPlugin#registerListeners(Listener...)} instead
+     * @see BungeecordPlugin#registerListeners(Listener...)
      * */
     @Deprecated
     public void registerListener(Listener listener) {
         ProxyServer.getInstance().getPluginManager().registerListener(this, listener);
     }
 
-    public void registerListeners(Listener... listener) {
+    /**
+     * Used to register listeners easyly
+     *
+     * @param listener the listener to register
+     * */    public void registerListeners(Listener... listener) {
         for (Listener i : listener) {
             registerListener(i);
         }

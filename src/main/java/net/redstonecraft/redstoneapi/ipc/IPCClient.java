@@ -45,6 +45,9 @@ public class IPCClient {
      * @param request a request object
      *
      * @return the {@link Response} sent by the server
+     *
+     * @throws IOException when an I/O exception occurs
+     * @throws InvalidResponse when the response is invalid formatted
      * */
     public Response request(Request request) throws IOException, InvalidResponse {
         Socket socket = new Socket(this.host, this.port);

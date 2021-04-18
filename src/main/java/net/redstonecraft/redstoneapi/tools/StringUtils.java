@@ -1,5 +1,9 @@
 package net.redstonecraft.redstoneapi.tools;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +18,7 @@ public class StringUtils {
     public static final char[] DEFAULT_WHITELISTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?^°,.-;:_µ€@üöäÜÖÄ#+'*~<>| \\ß{[]}".toCharArray();
 
     /**
-     * Get a {@link String} of a c long
+     * Get a {@link String} of a with the length of c
      *
      * @param a char to use
      * @param c length
@@ -60,6 +64,83 @@ public class StringUtils {
             list.add(i);
         }
         return list;
+    }
+
+    private static void add(List<String> list, String str) {
+        if (!str.equals("")) {
+            list.add(str);
+        }
+    }
+
+    /**
+     * Parse arguments splitted by spaces but joining them when used with quotation marks.
+     *
+     * @param str the string to parse
+     *
+     * @return the parsed args
+     * */
+    public static String[] parseArgs(String str) {
+        List<String> list = new ArrayList<>();
+        boolean longArg = false;
+        boolean escaped = false;
+        StringBuilder buffer = new StringBuilder(str.length());
+        for (char i : str.toCharArray()) {
+            switch (i) {
+                case '"':
+                    if (escaped) {
+                        buffer.append('"');
+                        escaped = false;
+                    } else {
+                        add(list, buffer.toString());
+                        buffer = new StringBuilder();
+                        longArg = !longArg;
+                    }
+                    break;
+                case ' ':
+                    if (longArg) {
+                        buffer.append(i);
+                    } else {
+                        add(list, buffer.toString());
+                        buffer = new StringBuilder();
+                    }
+                    break;
+                case '\\':
+                    if (escaped) {
+                        buffer.append('\\');
+                    }
+                    escaped = !escaped;
+                    break;
+                default:
+                    buffer.append(i);
+                    break;
+            }
+        }
+        add(list, buffer.toString());
+        String[] converted = new String[list.size()];
+        for (int i = 0; i < converted.length; i++) {
+            converted[i] = list.get(i);
+        }
+        return converted;
+    }
+
+    /**
+     * Get the Stacktrace as a {@link String} from any {@link Exception}
+     *
+     * @param exception the exception to get the stacktrace from
+     *
+     * @return the stackstrace as {@link String}
+     * */
+    public static String stringFromError(Throwable exception) {
+        Writer w = new StringWriter();
+        try {
+            PrintWriter pw = new PrintWriter(w);
+            exception.printStackTrace(pw);
+            pw.flush();
+            pw.close();
+            w.close();
+        } catch (IOException ignored) {
+        }
+        return w.toString();
     }
 
 }

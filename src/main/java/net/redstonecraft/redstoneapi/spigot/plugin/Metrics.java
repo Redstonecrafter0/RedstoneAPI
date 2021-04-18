@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.spigot;
+package net.redstonecraft.redstoneapi.spigot.plugin;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

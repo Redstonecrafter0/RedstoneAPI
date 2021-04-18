@@ -5,6 +5,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+/**
+ * This event is fired when a player jumps
+ *
+ * @author Redstonecrafter0
+ * @since 1.1
+ * */
 public class PlayerJumpEvent extends Event {
 
     private static HandlerList handlerList = new HandlerList();

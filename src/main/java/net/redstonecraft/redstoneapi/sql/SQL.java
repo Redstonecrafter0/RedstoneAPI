@@ -1,5 +1,7 @@
 package net.redstonecraft.redstoneapi.sql;
 
+import net.redstonecraft.redstoneapi.sql.orm.SQLDialectRenderer;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -31,6 +33,8 @@ public interface SQL {
      * Method used for typesafe querys and updates
      *
      * @param sql SQL-string
+     *
+     * @return a new prepared statement
      */
     public PreparedStatement prepareStatement(String sql);
 
@@ -38,5 +42,12 @@ public interface SQL {
      * Method to close the connection
      */
     public void close();
+
+    /**
+     * Get the sql renderer to fit the dialect
+     *
+     * @return a dialect renderer for sql commands
+     * */
+    public SQLDialectRenderer getSyntaxRenderer();
 
 }

@@ -4,7 +4,6 @@ import net.redstonecraft.redstoneapi.json.JSONArray;
 import net.redstonecraft.redstoneapi.json.JSONObject;
 import net.redstonecraft.redstoneapi.json.parser.JSONParser;
 import org.xbill.DNS.*;
-import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
@@ -12,37 +11,31 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import java.util.*;
 
 /**
- * Class to ping a Minecraft server to get some data
+ * Class to ping a Minecraft server to get some data.
+ * Might have problems with DNS resolving when used in MCP, Forge or Fabric projects so use instead the buildin methods for pinging a server.
  *
  * @author Redstonecrafter0
  * @since 1.0
  * */
 public class ServerListPing {
 
+    private final static int CHUNK_SIZE = 16;
+
     private final String faviconB64;
     private final String motd;
     private final String motdColored;
     private final RenderedImage favicon;
     private final String version;
+    private final int protocol;
     private final long onlinePlayers;
     private final long maxPlayers;
-    private final int protocol;
+    private final long latency;
+    private final Sample[] sample;
 
-    /**
-     * Minecraft server list ping response object
-     *
-     * @param motd server motd
-     * @param motdColored colored server motd
-     * @param faviconB64 server favicon as base64 {@link String}
-     * @param favicon server favicon as {@link RenderedImage}
-     * @param version server version
-     * @param onlinePlayers online player count
-     * @param maxPlayers max players online
-     * */
-    public ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers, int protocol) {
+    private ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers, int protocol, long latency, Sample[] sample) {
         this.motd = motd;
         this.motdColored = motdColored;
         this.faviconB64 = faviconB64;
@@ -51,6 +44,8 @@ public class ServerListPing {
         this.onlinePlayers = onlinePlayers;
         this.maxPlayers = maxPlayers;
         this.protocol = protocol;
+        this.latency = latency;
+        this.sample = sample;
     }
 
     /**
@@ -80,31 +75,83 @@ public class ServerListPing {
             } catch (UnknownHostException ignored) {
             }
             Socket socket = new Socket(host, port);
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            ByteArrayOutputStream handshake_bytes = new ByteArrayOutputStream();
-            DataOutputStream handshake = new DataOutputStream(handshake_bytes);
+            OutputStream outputStream = socket.getOutputStream();
+            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+            InputStream inputStream = socket.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            DataOutputStream handshake = new DataOutputStream(b);
             handshake.writeByte(0x00);
             writeVarInt(handshake, 4);
             writeVarInt(handshake, host.length());
             handshake.writeBytes(host);
             handshake.writeShort(port);
             writeVarInt(handshake, 1);
-            writeVarInt(out, handshake_bytes.size());
-            out.write(handshake_bytes.toByteArray());
-            out.writeByte(0x01);
-            out.writeByte(0x00);
-            int length = readVarInt(in);
+            writeVarInt(dataOutputStream, b.size());
+            dataOutputStream.write(b.toByteArray());
+            dataOutputStream.writeByte(0x01);
+            dataOutputStream.writeByte(0x00);
+            DataInputStream dataInputStream = new DataInputStream(inputStream);
+            int size = readVarInt(dataInputStream);
+            int id = readVarInt(dataInputStream);
+            if (id == -1) {
+                throw new IOException("Premature end of stream.");
+            }
+            if (id != 0x00) {
+                throw new IOException("Invalid packetID");
+            }
+            int length = readVarInt(dataInputStream);
+            if (length == -1) {
+                throw new IOException("Premature end of stream.");
+            }
+            if (length == 0) {
+                throw new IOException("Invalid string length.");
+            }
             byte[] data = new byte[length];
-            in.readFully(data);
-            String json = new String(data, StandardCharsets.UTF_8).substring(3);
-            JSONObject root = new JSONParser().parseObject(json);
+            dataInputStream.readFully(data);
+            dataOutputStream.writeByte(0x09);
+            dataOutputStream.writeByte(0x01);
+            long now = System.currentTimeMillis();
+            dataOutputStream.writeLong(now);
+            readVarInt(dataInputStream);
+            long end = System.currentTimeMillis();
+            id = readVarInt(dataInputStream);
+            if (id == -1) {
+                throw new IOException("Premature end of stream.");
+            }
+            if (id != 0x01) {
+                throw new IOException("Invalid packetID");
+            }
+            long pingtime = dataInputStream.readLong();
+            long latency;
+            if (now == pingtime) {
+                latency = (end - now) / 4;
+            } else {
+                latency = 0;
+            }
+            dataOutputStream.close();
+            outputStream.close();
+            inputStreamReader.close();
+            inputStream.close();
+            socket.close();
+            String json = new String(data, StandardCharsets.UTF_8);
+            JSONObject root = JSONParser.parseObject(json);
             JSONObject version = Objects.requireNonNull(root).getObject("version");
             String versionName = version.getString("name");
             int protocol = version.getInt("protocol");
             JSONObject players = root.getObject("players");
             long online = players.getLong("online");
             long maxPlayers = players.getLong("max");
+            Sample[] sample;
+            if (players.containsKey("sample")) {
+                JSONArray sampleTmp = players.getArray("sample");
+                sample = new Sample[sampleTmp.size()];
+                for (int i = 0; i < sampleTmp.size(); i++) {
+                    sample[i] = new Sample(((JSONObject) sampleTmp.get(i)).getString("name"), UUID.fromString(((JSONObject) sampleTmp.get(i)).getString("id")));
+                }
+            } else {
+                sample = new Sample[]{};
+            }
             StringBuilder sb = new StringBuilder();
             if (root.get("description") instanceof JSONObject) {
                 JSONObject description = root.getObject("description");
@@ -158,125 +205,91 @@ public class ServerListPing {
                 favicon = b64toImage(b64favicon);
             } catch (NullPointerException ignored) {
             }
-            return new ServerListPing(motd, motdColored, b64favicon, favicon, versionName, online, maxPlayers, protocol);
-        } catch (IOException | NullPointerException e) {
+            return new ServerListPing(motd, motdColored, b64favicon, favicon, versionName, online, maxPlayers, protocol, latency, sample);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    /**
-     * Convert the base64 favicon to a {@link RenderedImage}
-     *
-     * @param base64 favicon as base64
-     *
-     * @return favicon as {@link RenderedImage}
-     * */
-    private static RenderedImage b64toImage(String base64) throws IOException {
-        String imageString = base64.split(",")[1];
-        byte[] imageBytes = new BASE64Decoder().decodeBuffer(imageString);
-        return ImageIO.read(new ByteArrayInputStream(imageBytes));
-    }
+    public static class Sample {
 
-    /**
-     * Util to write var int to datastream
-     *
-     * @param out datastream
-     * @param paramInt value
-     * */
-    private static void writeVarInt(DataOutputStream out, int paramInt) {
-        try {
-            while (true) {
-                if ((paramInt & 0xFFFFFF80) == 0) {
-                    out.writeByte(paramInt);
-                    return;
-                }
-                out.writeByte(paramInt & 0x7F | 0x80);
-                paramInt >>>= 7;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        private final String name;
+        private final UUID uuid;
+
+        private Sample(String name, UUID uuid) {
+            this.name = name;
+            this.uuid = uuid;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public UUID getUniqueId() {
+            return uuid;
         }
     }
 
-    /**
-     * Util to read var int from datastream
-     *
-     * @param in datastream
-     *
-     * @return var int
-     * */
-    private static int readVarInt(DataInputStream in) {
+    private static RenderedImage b64toImage(String base64) throws IOException {
+        String imageString = base64.split(",")[1];
+        byte[] imageBytes = Base64.getDecoder().decode(imageString);
+        return ImageIO.read(new ByteArrayInputStream(imageBytes));
+    }
+
+    public static int readVarInt(DataInputStream in) throws IOException {
         int i = 0;
         int j = 0;
         while (true) {
-            try {
-                int k = in.readByte();
-                i |= (k & 0x7F) << j++ * 7;
-                if (j > 5) {
-                    return 0;
-                }
-                if ((k & 0x80) != 128)
-                    break;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            int k = in.readByte();
+            i |= (k & 0x7F) << j++ * 7;
+            if (j > 5) throw new RuntimeException("VarInt too big");
+            if ((k & 0x80) != 128) break;
         }
         return i;
     }
 
-    /**
-     * Strip the color codes from a string
-     *
-     * @param input input {@link String}
-     *
-     * @return uncolored {@link String}
-     * */
-    private static String removeColor(String input) {
-        return input.replaceAll("§0", "")
-                .replaceAll("§1", "")
-                .replaceAll("§2", "")
-                .replaceAll("§3", "")
-                .replaceAll("§4", "")
-                .replaceAll("§5", "")
-                .replaceAll("§6", "")
-                .replaceAll("§7", "")
-                .replaceAll("§8", "")
-                .replaceAll("§9", "")
-                .replaceAll("§a", "")
-                .replaceAll("§b", "")
-                .replaceAll("§c", "")
-                .replaceAll("§d", "")
-                .replaceAll("§e", "")
-                .replaceAll("§f", "")
-                .replaceAll("§k", "")
-                .replaceAll("§l", "")
-                .replaceAll("§m", "")
-                .replaceAll("§n", "")
-                .replaceAll("§o", "")
-                .replaceAll("§r", "");
+    public static void writeVarInt(DataOutputStream out, int paramInt) throws IOException {
+        while (true) {
+            if ((paramInt & 0xFFFFFF80) == 0) {
+                out.writeByte(paramInt);
+                return;
+            }
+            out.writeByte(paramInt & 0x7F | 0x80);
+            paramInt >>>= 7;
+        }
     }
 
-    /**
-     * Internal utility wrapper
-     *
-     * @param input input
-     *
-     * @return color code
-     * */
+    private static String removeColor(String input) {
+        return input.replace("§0", "")
+                .replace("§1", "")
+                .replace("§2", "")
+                .replace("§3", "")
+                .replace("§4", "")
+                .replace("§5", "")
+                .replace("§6", "")
+                .replace("§7", "")
+                .replace("§8", "")
+                .replace("§9", "")
+                .replace("§a", "")
+                .replace("§b", "")
+                .replace("§c", "")
+                .replace("§d", "")
+                .replace("§e", "")
+                .replace("§f", "")
+                .replace("§k", "")
+                .replace("§l", "")
+                .replace("§m", "")
+                .replace("§n", "")
+                .replace("§o", "")
+                .replace("§r", "");
+    }
+
     private static String getColorCode(String input) {
         String key = MinecraftColors.getColorByName(input).getKey();
         return key.equals("") ? "" : "§" + key;
     }
 
-    /**
-     * lookup DNS
-     *
-     * @param hostName hostname
-     * @param type type of record to lookup
-     *
-     * @return the record result
-     * */
     private static Record lookupRecord(String hostName, int type) throws UnknownHostException {
         Record record;
         Lookup lookup;
@@ -338,15 +351,38 @@ public class ServerListPing {
         return protocol;
     }
 
+    public long getLatency() {
+        return latency;
+    }
+
+    public Sample[] getSample() {
+        return sample;
+    }
+
+    public String getSampleAsString() {
+        String[] tmp = new String[sample.length];
+        for (int i = 0; i < sample.length; i++) {
+            tmp[i] = sample[i].getName();
+        }
+        return String.join("\n", tmp);
+    }
+
+    public List<Sample> getSampleAsList() {
+        return Arrays.asList(getSample());
+    }
+
     @Override
     public String toString() {
         return "ServerListPing{" +
-                "faviconB64='" + faviconB64 + '\'' +
-                ", motd='" + motd + '\'' +
+                "motd='" + motd + '\'' +
                 ", motdColored='" + motdColored + '\'' +
                 ", version='" + version + '\'' +
+                ", protocol=" + protocol +
                 ", onlinePlayers=" + onlinePlayers +
                 ", maxPlayers=" + maxPlayers +
+                ", latency=" + latency +
+                ", sample=" + Arrays.toString(sample) +
+                ", faviconB64='" + faviconB64 + '\'' +
                 '}';
     }
 }

@@ -1,7 +1,7 @@
 package net.redstonecraft.redstoneapi.spigot.listeners;
 
 import net.redstonecraft.redstoneapi.RedstoneAPI;
-import net.redstonecraft.redstoneapi.spigot.RedstoneAPISpigot;
+import net.redstonecraft.redstoneapi.spigot.plugin.RedstoneAPISpigot;
 import net.redstonecraft.redstoneapi.tools.Version;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,7 +39,7 @@ public class UpdateListener implements Listener {
             @Override
             public void run() {
                 if (event.getPlayer().hasPermission("redstoneapi.admin.notifyupdate") && newVersion != null) {
-                    event.getPlayer().sendMessage(RedstoneAPISpigot.prefix + RedstoneAPISpigot.renderColors("&aThere is a newer version [" + newVersion.toString() + "] of this plugin available. Current version is [" + RedstoneAPI.getVersion().toString() + "]."));
+                    event.getPlayer().sendMessage(RedstoneAPISpigot.prefix + RedstoneAPISpigot.renderColors("&aThere is a newer version [" + newVersion + "] of this plugin available. Current version is [" + RedstoneAPI.getVersion().toString() + "]."));
                 }
             }
         }.runTaskLater(plugin, 3);

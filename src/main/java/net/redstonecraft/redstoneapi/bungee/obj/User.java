@@ -17,10 +17,6 @@ public class User {
     private final UUID uuid;
     private final String playerName;
 
-    /**
-     * Create a new User object
-     * For internal use
-     * */
     public User(UUID uuid, String playerName) {
         this.uuid = uuid;
         this.playerName = playerName;

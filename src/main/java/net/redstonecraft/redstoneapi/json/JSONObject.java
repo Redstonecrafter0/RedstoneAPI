@@ -133,11 +133,11 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	}
 
 	public int getInt(String key) {
-		return Integer.parseInt(String.valueOf((long) get(key)));
+		return (int) get(key);
 	}
 
 	public float getFloat(String key) {
-		return Float.parseFloat(String.valueOf((double) get(key)));
+		return ((Double) get(key)).floatValue();
 	}
 
 	public double getDouble(String key) {

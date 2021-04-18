@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class RedstoneAPI {
 
-    private static final Version version = new Version("v1.1.2");
+    private static final Version version = new Version("v1.2");
 
     private static final int width = 600;
     private static final int height = 250;
@@ -172,6 +172,8 @@ public class RedstoneAPI {
 
     /**
      * Get the current {@link Version} of the RedstoneAPI
+     *
+     * @return the version currently used
      * */
     public static Version getVersion() {
         return version;

@@ -5,15 +5,11 @@ import net.redstonecraft.redstoneapi.json.JSONObject;
 import net.redstonecraft.redstoneapi.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.tools.mojangapi.MojangProfile;
 import net.redstonecraft.redstoneapi.tools.mojangapi.NameHistory;
-import sun.misc.BASE64Decoder;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A class to provide the basics of the MojangAPI
@@ -95,16 +91,17 @@ public class MojangAPI {
      * */
     public static MojangProfile getProfile(UUID uuid) {
         try {
-            HttpRequest req = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()));
+            HttpRequest req = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "?unsigned=false");
             if (req.getResponseCode() == 200) {
                 JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(req.getContent(), StandardCharsets.UTF_8)));
                 UUID uuid1 = getUniqueIdByString(resp.getString("id"));
                 String name = resp.getString("name");
-                JSONObject textures = Objects.requireNonNull(JSONParser.parseObject(new String(new BASE64Decoder().decodeBuffer(resp.getArray("properties").getObject(0).getString("value")), StandardCharsets.UTF_8)));
+                JSONObject prop = resp.getArray("properties").getObject(0);
+                JSONObject textures = Objects.requireNonNull(JSONParser.parseObject(new String(Base64.getDecoder().decode(prop.getString("value")), StandardCharsets.UTF_8)));
                 if (textures.getObject("textures").containsKey("CAPE")) {
-                    return new MojangProfile(uuid1, name, textures.getObject("textures").getObject("SKIN").getString("url"), textures.getObject("textures").getObject("CAPE").getString("url"), textures.getLong("timestamp"));
+                    return new MojangProfile(uuid1, name, textures.getObject("textures").getObject("SKIN").getString("url"), textures.getObject("textures").getObject("CAPE").getString("url"), textures.getLong("timestamp"), prop.getString("signature"), prop.getString("value"));
                 } else {
-                    return new MojangProfile(uuid1, name, textures.getObject("textures").getObject("SKIN").getString("url"), null, textures.getLong("timestamp"));
+                    return new MojangProfile(uuid1, name, textures.getObject("textures").getObject("SKIN").getString("url"), null, textures.getLong("timestamp"), prop.getString("signature"), prop.getString("value"));
                 }
             } else {
                 return null;
@@ -122,13 +119,13 @@ public class MojangAPI {
      * @return uuid
      * */
     public static UUID getUniqueIdByString(String uuid) {
-        StringBuffer sb = new StringBuffer(uuid);
+        StringBuilder sb = new StringBuilder(uuid);
         sb.insert(8, "-");
-        sb = new StringBuffer(sb.toString());
+        sb = new StringBuilder(sb.toString());
         sb.insert(13, "-");
-        sb = new StringBuffer(sb.toString());
+        sb = new StringBuilder(sb.toString());
         sb.insert(18, "-");
-        sb = new StringBuffer(sb.toString());
+        sb = new StringBuilder(sb.toString());
         sb.insert(23, "-");
         return UUID.fromString(sb.toString());
     }

@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * HttpRequest class for easier HTTP request usage
@@ -37,18 +38,13 @@ public class HttpRequest {
      * */
     @Deprecated
     public final String mimeType;
+    private final HttpHeader[] headers;
 
-    /**
-     * Contructor for the responses
-     *
-     * @param content byte array of the response body
-     * @param responseCode the http response code
-     * @param mimeType the type of the response
-     * */
-    public HttpRequest(byte[] content, int responseCode, String mimeType) {
+    private HttpRequest(byte[] content, int responseCode, String mimeType, HttpHeader[] headers) {
         this.content = content;
         this.responseCode = responseCode;
         this.mimeType = mimeType;
+        this.headers = headers;
     }
 
     /**
@@ -106,16 +102,28 @@ public class HttpRequest {
     }
 
     /**
+     * Get the response headers
+     *
+     * @return httpHeaders
+     * */
+    public HttpHeader[] getHeaders() {
+        return headers;
+    }
+
+    /**
      * Simple HTTP GET request
      *
      * @param url target url
      * @param header array of {@link HttpHeader}
      *
      * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
      * */
     public static HttpRequest get(String url, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("GET");
         for (HttpHeader i : header) {
             con.addRequestProperty(i.key, i.value);
         }
@@ -127,8 +135,79 @@ public class HttpRequest {
         }
         int code = con.getResponseCode();
         String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
         con.disconnect();
-        return new HttpRequest(response, code, mime);
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
+    }
+
+    /**
+     * Simple HTTP HEAD request
+     *
+     * @param url target url
+     * @param header array of {@link HttpHeader}
+     *
+     * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
+     * */
+    public static HttpRequest head(String url, HttpHeader... header) throws IOException {
+        URL urlUrl = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("HEAD");
+        for (HttpHeader i : header) {
+            con.addRequestProperty(i.key, i.value);
+        }
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = readAllBytes(con.getInputStream());
+        } else {
+            response = readAllBytes(con.getErrorStream());
+        }
+        int code = con.getResponseCode();
+        String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
+
+        con.disconnect();
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
+    }
+
+    /**
+     * Simple HTTP DELETE request
+     *
+     * @param url target url
+     * @param header array of {@link HttpHeader}
+     *
+     * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
+     * */
+    public static HttpRequest delete(String url, HttpHeader... header) throws IOException {
+        URL urlUrl = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("DELETE");
+        for (HttpHeader i : header) {
+            con.addRequestProperty(i.key, i.value);
+        }
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = readAllBytes(con.getInputStream());
+        } else {
+            response = readAllBytes(con.getErrorStream());
+        }
+        int code = con.getResponseCode();
+        String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
+        con.disconnect();
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
     }
 
     /**
@@ -139,10 +218,13 @@ public class HttpRequest {
      * @param header array of {@link HttpHeader}
      *
      * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
      * */
     public static HttpRequest post(String url, byte[] content, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("POST");
         for (HttpHeader i : header) {
             con.addRequestProperty(i.key, i.value);
         }
@@ -158,8 +240,88 @@ public class HttpRequest {
         }
         int code = con.getResponseCode();
         String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
         con.disconnect();
-        return new HttpRequest(response, code, mime);
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
+    }
+
+    /**
+     * Simple HTTP PUT request
+     *
+     * @param url target url
+     * @param content content to post
+     * @param header array of {@link HttpHeader}
+     *
+     * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
+     * */
+    public static HttpRequest put(String url, byte[] content, HttpHeader... header) throws IOException {
+        URL urlUrl = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("PUT");
+        for (HttpHeader i : header) {
+            con.addRequestProperty(i.key, i.value);
+        }
+        con.setDoOutput(true);
+        OutputStream out = con.getOutputStream();
+        out.write(content);
+        out.flush();
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = readAllBytes(con.getInputStream());
+        } else {
+            response = readAllBytes(con.getErrorStream());
+        }
+        int code = con.getResponseCode();
+        String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
+        con.disconnect();
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
+    }
+
+    /**
+     * Simple HTTP PATCH request
+     *
+     * @param url target url
+     * @param content content to post
+     * @param header array of {@link HttpHeader}
+     *
+     * @return response as {@link HttpRequest} object
+     *
+     * @throws IOException if an I/O Exception occures
+     * */
+    public static HttpRequest patch(String url, byte[] content, HttpHeader... header) throws IOException {
+        URL urlUrl = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
+        con.setRequestMethod("PATCH");
+        for (HttpHeader i : header) {
+            con.addRequestProperty(i.key, i.value);
+        }
+        con.setDoOutput(true);
+        OutputStream out = con.getOutputStream();
+        out.write(content);
+        out.flush();
+        byte[] response;
+        if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+            response = readAllBytes(con.getInputStream());
+        } else {
+            response = readAllBytes(con.getErrorStream());
+        }
+        int code = con.getResponseCode();
+        String mime = con.getContentType();
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
+            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+        }
+        con.disconnect();
+        return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
     }
 
     private static byte[] readAllBytes(InputStream is) throws IOException {

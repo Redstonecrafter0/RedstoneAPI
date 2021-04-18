@@ -34,4 +34,33 @@ public class IntUtils {
         return Math.round(num * (double) Math.pow(10, d)) / (double) Math.pow(10, d);
     }
 
+    /**
+     * @param inputValues the values to base on
+     *
+     * @return an array of doubles that are between 0 and 1 calculated on base of the input
+     * */
+    public static double[] normalize(double... inputValues) {
+        if (inputValues.length < 1) {
+            return new double[0];
+        }
+        double[] values = new double[inputValues.length];
+        System.arraycopy(inputValues, 0, values, 0, inputValues.length);
+        for (int i = 0; i < values.length; i++) {
+            values[i] = Math.abs(values[i]);
+        }
+        double maxValue = 0;
+        for (double i : values) {
+            if (i > maxValue) {
+                maxValue = i;
+            }
+        }
+        if (maxValue == 0) {
+            return new double[values.length];
+        }
+        for (int i = 0; i < values.length; i++) {
+            values[i] = values[i] / maxValue;
+        }
+        return values;
+    }
+
 }

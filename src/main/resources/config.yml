@@ -2,3 +2,10 @@ update:
   notify:
     console: true
     adminjoin: true
+manager:
+  npc:
+    enabled: true
+  guiInventory:
+    enabled: true
+
+version: 1 # Do not touch unless you know what you are doing
