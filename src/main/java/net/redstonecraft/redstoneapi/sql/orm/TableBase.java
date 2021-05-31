@@ -30,9 +30,14 @@ public abstract class TableBase {
     public JSONObject toJsonObject() {
         JSONObject obj = new JSONObject();
         for (Field i : getClass().getFields()) {
-            if (i.isAnnotationPresent(Column.class) && BaseType.class.isAssignableFrom(i.getType())) {
+            if (i.isAnnotationPresent(Column.class) && !i.getAnnotation(Column.class).hideOnJson() && BaseType.class.isAssignableFrom(i.getType())) {
                 try {
-                    obj.put(i.getName(), ((BaseType) i.get(this)).getValue());
+                    Object value = ((BaseType) i.get(this)).getValue();
+                    if (Enum.class.isAssignableFrom(value.getClass())) {
+                        obj.put(i.getName(), ((Enum) value).name());
+                    } else {
+                        obj.put(i.getName(), value);
+                    }
                 } catch (IllegalAccessException ignored) {
                 }
             }

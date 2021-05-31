@@ -54,7 +54,7 @@ public class WebSocketConnection {
         }
     }
 
-    private void send(byte type, byte[] payload) throws IOException {
+    void send(byte type, byte[] payload) throws IOException {
         int length;
         byte[] payloadLength;
         if (payload.length <= 125) {

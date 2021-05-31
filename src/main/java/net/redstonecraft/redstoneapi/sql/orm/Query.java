@@ -30,16 +30,46 @@ public class Query<T extends TableBase> {
     private boolean done = false;
     private final PreparedStatement ps;
 
-    Query(Session session, Session.TableFields<T> table) throws SQLException {
+    Query(Session session, Session.TableFields<T> table, Order... orders) throws SQLException {
         this.session = session;
         this.table = table;
-        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz);
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, orders);
     }
 
-    Query(Session session, Session.TableFields<T> table, Filter filter) throws SQLException {
+    Query(Session session, Session.TableFields<T> table, Filter filter, Order... orders) throws SQLException {
         this.session = session;
         this.table = table;
-        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, filter);
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, filter, orders);
+    }
+
+    Query(Session session, Session.TableFields<T> table, int limit, Order... orders) throws SQLException {
+        this.session = session;
+        this.table = table;
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, limit, orders);
+    }
+
+    Query(Session session, Session.TableFields<T> table, Filter filter, int limit, Order... orders) throws SQLException {
+        this.session = session;
+        this.table = table;
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, filter, limit, orders);
+    }
+
+    Query(Session session, Session.TableFields<T> table, int limit, int offset, Order... orders) throws SQLException {
+        if (offset < 0) {
+            throw new IndexOutOfBoundsException("The offset can't be lower than 0");
+        }
+        this.session = session;
+        this.table = table;
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, limit, offset, orders);
+    }
+
+    Query(Session session, Session.TableFields<T> table, Filter filter, int limit, int offset, Order... orders) throws SQLException {
+        if (offset < 0) {
+            throw new IndexOutOfBoundsException("The offset can't be lower than 0");
+        }
+        this.session = session;
+        this.table = table;
+        ps = this.session.getSql().getSyntaxRenderer().select(session.getSql(), this.table.clazz, filter, limit, offset, orders);
     }
 
     public T getFirst() throws ClosedQueryException, ConstructException, SQLException {

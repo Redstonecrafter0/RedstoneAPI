@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * DiscordBot EventManager
  *
  * @author Redstonecrafter0
  * @since 1.2
