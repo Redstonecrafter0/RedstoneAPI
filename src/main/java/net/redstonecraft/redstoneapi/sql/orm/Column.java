@@ -11,4 +11,5 @@ public @interface Column {
     boolean primaryKey() default false;
     boolean notnull() default false;
     boolean unique() default false;
+    boolean hideOnJson() default false;
 }

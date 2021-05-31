@@ -47,10 +47,6 @@ public abstract class BaseType<T> {
 
     @Override
     public String toString() {
-        if (value != null) {
-            return value.toString();
-        } else {
-            return "null";
-        }
+        return getClass().getSimpleName() + "{key='" + getKey() + "', value=" + (getValue() == null ? "null" : getValue().toString()) + "}";
     }
 }

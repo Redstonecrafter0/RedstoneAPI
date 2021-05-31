@@ -8,6 +8,7 @@ import net.redstonecraft.redstoneapi.discord.listeners.CommandListener;
 import net.redstonecraft.redstoneapi.discord.managers.EventManager;
 
 import javax.security.auth.login.LoginException;
+
 /**
  * A discordbot wrapper containing a commandmanager and simpler event listener
  *

@@ -4,7 +4,6 @@ import com.diogonunes.jcolor.Ansi;
 import com.diogonunes.jcolor.Attribute;
 import com.github.lalyos.jfiglet.FigletFont;
 import net.redstonecraft.redstoneapi.json.JSONArray;
-import net.redstonecraft.redstoneapi.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.tools.HttpHeader;
 import net.redstonecraft.redstoneapi.tools.HttpRequest;
 import net.redstonecraft.redstoneapi.tools.Version;
@@ -15,16 +14,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Objects;
 
 public class RedstoneAPI {
 
-    private static final Version version = new Version("v1.2");
+    private static final Version version = new Version("v1.3");
 
-    private static final int width = 600;
-    private static final int height = 250;
+    private static final int WIDTH = 600;
+    private static final int HEIGHT = 250;
 
     public static void main(String[] args) {
         try {
@@ -33,17 +30,17 @@ public class RedstoneAPI {
             }
             JFrame frame = new JFrame("RedstoneAPI " + version);
             frame.setResizable(false);
-            frame.setSize(width, height);
+            frame.setSize(WIDTH, HEIGHT);
             Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-            frame.setLocation(screen.width / 2 - width / 2, screen.height / 2 - height / 2);
+            frame.setLocation(screen.width / 2 - WIDTH / 2, screen.height / 2 - HEIGHT / 2);
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             frame.getContentPane().setLayout(null);
             frame.getContentPane().setBackground(Color.BLACK);
             frame.setIconImage(Toolkit.getDefaultToolkit().getImage(RedstoneAPI.class.getResource("/redstoneapi.png")));
             JLabel label = new JLabel("<html><h1>RedstoneAPI " + version + " by Redstonecrafter0</h1></html>");
             label.setHorizontalAlignment(SwingConstants.CENTER);
-            label.setLocation(0, (height / 2) - 90);
-            label.setSize(width, 30);
+            label.setLocation(0, (HEIGHT / 2) - 90);
+            label.setSize(WIDTH, 30);
             label.setForeground(Color.WHITE);
             frame.add(label);
             JLabel label1 = new JLabel("<html>Github: <a href=\"\">https://github.com/Redstonecrafter0/RedstoneAPI</a></html>");
@@ -58,8 +55,8 @@ public class RedstoneAPI {
                 }
             });
             label1.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            label1.setLocation(0, (height / 2) - 30);
-            label1.setSize(width, 15);
+            label1.setLocation(0, (HEIGHT / 2) - 30);
+            label1.setSize(WIDTH, 15);
             label1.setForeground(Color.WHITE);
             frame.add(label1);
             JLabel label2 = new JLabel("<html>Spigot: <a href=\"\">https://www.spigotmc.org/resources/redstoneapi.88273/</a></html>");
@@ -74,14 +71,14 @@ public class RedstoneAPI {
                 }
             });
             label2.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            label2.setLocation(0, (height / 2));
-            label2.setSize(width, 15);
+            label2.setLocation(0, (HEIGHT / 2));
+            label2.setSize(WIDTH, 15);
             label2.setForeground(Color.WHITE);
             frame.add(label2);
             JLabel label3 = new JLabel("Checking for a new version...");
             label3.setHorizontalAlignment(SwingConstants.CENTER);
-            label3.setLocation(0, (height / 2) + 30);
-            label3.setSize(width, 15);
+            label3.setLocation(0, (HEIGHT / 2) + 30);
+            label3.setSize(WIDTH, 15);
             label3.setForeground(Color.WHITE);
             frame.add(label3);
             frame.setVisible(true);
@@ -119,7 +116,7 @@ public class RedstoneAPI {
 
     public static Update getUpdate() throws IOException {
         HttpRequest response = HttpRequest.get("https://api.github.com/repos/Redstonecrafter0/RedstoneAPI/releases", new HttpHeader("Accept", "application/vnd.github.v3+json"));
-        JSONArray arr = Objects.requireNonNull(JSONParser.parseArray(new String(response.getContent(), StandardCharsets.UTF_8)));
+        JSONArray arr = response.getJsonArray();
         Version version = RedstoneAPI.version;
         for (int i = 0; i < arr.size(); i++) {
             try {

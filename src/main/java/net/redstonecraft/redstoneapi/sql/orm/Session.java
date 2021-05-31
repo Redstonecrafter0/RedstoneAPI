@@ -1,11 +1,9 @@
 package net.redstonecraft.redstoneapi.sql.orm;
 
 import net.redstonecraft.redstoneapi.sql.SQL;
-import net.redstonecraft.redstoneapi.sql.orm.exceptions.AlreadyExistsException;
-import net.redstonecraft.redstoneapi.sql.orm.exceptions.ConstructException;
-import net.redstonecraft.redstoneapi.sql.orm.exceptions.InvalidStructureException;
-import net.redstonecraft.redstoneapi.sql.orm.exceptions.NoSuchTableException;
+import net.redstonecraft.redstoneapi.sql.orm.exceptions.*;
 import net.redstonecraft.redstoneapi.sql.orm.types.Int;
+import net.redstonecraft.redstoneapi.tools.Pagination;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
@@ -45,9 +43,6 @@ public class Session {
                 i.setAccessible(true);
                 fields.add(i);
                 if (value.primaryKey()) {
-                    if (!i.getType().equals(Int.class)) {
-                        throw new InvalidStructureException("The primaryKey has to be a Int");
-                    }
                     if (value.unique()) {
                         throw new InvalidStructureException("The primaryKey is unique");
                     }
@@ -73,24 +68,72 @@ public class Session {
                 columns.add(((BaseType) i.get(model)));
                 columnData.add(i.getAnnotation(Column.class));
             }
-            waitingUpdates.add(sql.getSyntaxRenderer().createTable(sql, table, columns, columnData, (Int) primary.get(model)));
+            waitingUpdates.add(sql.getSyntaxRenderer().createTable(sql, table, columns, columnData, (SQLNumber) primary.get(model)));
             tables.put(table, new TableFields(table, fields.toArray(new Field[0]), primary));
         } catch (InstantiationException | IllegalAccessException e) {
             throw new ConstructException(e.getMessage());
         }
     }
 
-    public <T extends TableBase> Query<T> query(Class<T> table) throws NoSuchTableException, SQLException {
+    public <T extends TableBase> Query<T> query(Class<T> table, Order... orders) throws NoSuchTableException, SQLException {
         if (tables.containsKey(table)) {
-            return new Query<>(this, tables.get(table));
+            return new Query<>(this, tables.get(table), orders);
         } else {
             throw new NoSuchTableException("Table does not exist");
         }
     }
 
-    public <T extends TableBase> Query<T> query(Class<T> table, Filter filter) throws NoSuchTableException, SQLException {
+    public <T extends TableBase> Query<T> query(Class<T> table, Filter filter, Order... orders) throws NoSuchTableException, SQLException {
         if (tables.containsKey(table)) {
-            return new Query<>(this, tables.get(table), filter);
+            return new Query<>(this, tables.get(table), filter, orders);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Query<T> query(Class<T> table, int limit, Order... orders) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            return new Query<>(this, tables.get(table), limit, orders);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Query<T> query(Class<T> table, Filter filter, int limit, Order... orders) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            return new Query<>(this, tables.get(table), filter, limit, orders);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Query<T> query(Class<T> table, int limit, int offset, Order... orders) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            return new Query<>(this, tables.get(table), limit, offset, orders);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Query<T> query(Class<T> table, Filter filter, int limit, int offset, Order... orders) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            return new Query<>(this, tables.get(table), filter, limit, offset, orders);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Pagination<T> paginate(Class<T> table, int pageSize, int page, Order... orders) throws NoSuchTableException, SQLException, ClosedQueryException, ConstructException {
+        if (tables.containsKey(table)) {
+            return new SQLPagination<>(new Query<>(this, tables.get(table), pageSize, pageSize * (page), orders).getAllAsList(), pageSize, page);
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public <T extends TableBase> Pagination<T> paginate(Class<T> table, int pageSize, int page, Filter filter, Order... orders) throws NoSuchTableException, SQLException, ClosedQueryException, ConstructException {
+        if (tables.containsKey(table)) {
+            return new SQLPagination<>(new Query<>(this, tables.get(table), filter, pageSize, pageSize * (page), orders).getAllAsList(), pageSize, page);
         } else {
             throw new NoSuchTableException("Table does not exist");
         }
@@ -176,6 +219,46 @@ public class Session {
             PreparedStatement ps = sql.getSyntaxRenderer().count(sql, table, filter);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt("total") : null;
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public Double avg(Class<? extends TableBase> table, SQLNumber<? extends Number> column) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            PreparedStatement ps = sql.getSyntaxRenderer().avg(sql, table, column);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble("total") : null;
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public Double avg(Class<? extends TableBase> table, SQLNumber<? extends Number> column, Filter filter) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            PreparedStatement ps = sql.getSyntaxRenderer().avg(sql, table, column, filter);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble("total") : null;
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public Double sum(Class<? extends TableBase> table, SQLNumber<? extends Number> column) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            PreparedStatement ps = sql.getSyntaxRenderer().sum(sql, table, column);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble("total") : null;
+        } else {
+            throw new NoSuchTableException("Table does not exist");
+        }
+    }
+
+    public Double sum(Class<? extends TableBase> table, SQLNumber<? extends Number> column, Filter filter) throws NoSuchTableException, SQLException {
+        if (tables.containsKey(table)) {
+            PreparedStatement ps = sql.getSyntaxRenderer().sum(sql, table, column, filter);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble("total") : null;
         } else {
             throw new NoSuchTableException("Table does not exist");
         }

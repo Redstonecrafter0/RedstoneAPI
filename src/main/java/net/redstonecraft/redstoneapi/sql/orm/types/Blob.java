@@ -34,11 +34,7 @@ public class Blob extends BaseType<byte[]> {
 
     @Override
     public String toString() {
-        if (getValue() != null) {
-            return Arrays.toString(getValue());
-        } else {
-            return "null";
-        }
+        return getClass().getSimpleName() + "{key='" + getKey() + "', value=" + (getValue() == null ? "null" : Arrays.toString(getValue())) + "}";
     }
 
 }

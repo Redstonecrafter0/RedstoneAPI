@@ -6,7 +6,7 @@
 
     <groupId>net.redstonecraft</groupId>
     <artifactId>redstoneapi</artifactId>
-    <version>1.2</version>
+    <version>1.3</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -69,6 +69,7 @@
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-api</artifactId>
             <version>1.15-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

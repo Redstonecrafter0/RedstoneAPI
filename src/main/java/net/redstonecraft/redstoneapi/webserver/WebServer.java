@@ -24,10 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -51,7 +48,8 @@ public class WebServer {
 
     private long lastKeepAlive = System.currentTimeMillis();
     private long lastKeepAliveId = 0;
-    private Thread thread;
+    private boolean run = true;
+    private final Thread thread;
     private final JinjavaConfig jinjavaConfig = new JinjavaConfig();
     public final Jinjava jinjava = new Jinjava(jinjavaConfig);
     private final Selector selector;
@@ -63,6 +61,7 @@ public class WebServer {
     private final WebsocketManager websocketManager = new WebsocketManager();
     private final File staticDir;
     private final File templateDir;
+    private final int port;
     private static final Logger logger = Logger.getLogger(WebServer.class.getName());
 
     private enum HttpMethod {
@@ -107,42 +106,16 @@ public class WebServer {
 
     @Deprecated
     public WebServer() throws IOException {
-        this.logging = true;
-        errorHandlerManager = new ErrorHandlerManager(ErrorHandlerManager.DEFAULT_UNIVERSAL_ERROR_HANDLER);
-        selector = Selector.open();
-        serverSocket = ServerSocketChannel.open();
-        serverSocket.bind(new InetSocketAddress("localhost", 8080));
-        serverSocket.configureBlocking(false);
-        serverSocket.register(selector, serverSocket.validOps(), null);
-        templateDir = new File("templates");
-        jinjava.setResourceLocator(new FileLocator(templateDir));
-        staticDir = new File("./");
-        if (!staticDir.exists() || !staticDir.isDirectory()) {
-            staticDir.mkdirs();
-        }
-        startThread();
-        logger.info("WebServer listening on port " + 8080);
+        this("localhost", 8080);
     }
 
     public WebServer(String host, int port) throws IOException {
-        this.logging = true;
-        errorHandlerManager = new ErrorHandlerManager(ErrorHandlerManager.DEFAULT_UNIVERSAL_ERROR_HANDLER);
-        selector = Selector.open();
-        serverSocket = ServerSocketChannel.open();
-        serverSocket.bind(new InetSocketAddress(host, port));
-        serverSocket.configureBlocking(false);
-        serverSocket.register(selector, serverSocket.validOps(), null);
-        templateDir = new File("templates");
-        jinjava.setResourceLocator(new FileLocator(templateDir));
-        staticDir = new File("./");
-        if (!staticDir.exists() || !staticDir.isDirectory()) {
-            staticDir.mkdirs();
-        }
-        startThread();
+        this(host, port, true, ErrorHandlerManager.DEFAULT_UNIVERSAL_ERROR_HANDLER, ".");
     }
 
     public WebServer(String host, int port, boolean logging, ErrorHandler defaultErrorHandler, String baseDir) throws IOException {
         this.logging = logging;
+        this.port = port;
         errorHandlerManager = new ErrorHandlerManager(defaultErrorHandler);
         selector = Selector.open();
         serverSocket = ServerSocketChannel.open();
@@ -150,6 +123,9 @@ public class WebServer {
         serverSocket.configureBlocking(false);
         serverSocket.register(selector, serverSocket.validOps(), null);
         templateDir = new File(baseDir + "/templates");
+        if (!templateDir.exists() || !templateDir.isDirectory()) {
+            templateDir.mkdirs();
+        }
         jinjava.setResourceLocator(new FileLocator(templateDir));
         File tmp = new File(baseDir);
         if (!tmp.exists() || !tmp.isDirectory()) {
@@ -159,15 +135,15 @@ public class WebServer {
         if (!staticDir.exists() || !staticDir.isDirectory()) {
             staticDir.mkdirs();
         }
-        startThread();
-    }
-
-    private void startThread() {
+        if (this.logging) {
+            logger.info("WebServer listening on port " + this.port);
+        }
         thread = new Thread(() -> {
-            while (true) {
+            while (run) {
                 try {
                     tick();
-                } catch (Exception e) {
+                } catch (ClosedSelectorException ignored) {
+                } catch (Throwable e) {
                     if (logging) {
                         logger.severe(e.getClass().getName());
                         e.printStackTrace();
@@ -178,10 +154,17 @@ public class WebServer {
         thread.start();
     }
 
-    public void stop() throws IOException {
-        thread.stop();
-        serverSocket.close();
-        selector.close();
+    public void stop() {
+        run = false;
+        try {
+            serverSocket.close();
+            selector.close();
+            thread.stop();
+        } catch (Throwable ignored) {
+        }
+        if (logging) {
+            logger.info("WebServer on port " + port + " stopped");
+        }
     }
 
     private void tick() throws IOException {
@@ -578,11 +561,15 @@ public class WebServer {
     }
 
     void disconnectWebsocket(WebSocketConnection webSocketConnection) {
+        websocketManager.executeDisconnectEvent(webSocketConnection);
+        try {
+            webSocketConnection.send((byte) 0x8, new byte[]{0x03, (byte) 0xe8});
+        } catch (IOException ignored) {
+        }
         try {
             webSocketConnection.getChannel().close();
         } catch (IOException ignored) {
         }
-        websocketManager.executeDisconnectEvent(webSocketConnection);
         websocketManager.unregisterConnection(webSocketConnection);
     }
 
@@ -635,12 +622,12 @@ public class WebServer {
     }
 
     private void sendResponse(SocketChannel channel, String method, String path, HttpResponseCode code, byte[] content, HttpHeader... headers) throws IOException {
-        List<String> list = new ArrayList<>();
+        Set<String> list = new HashSet<>();
+        list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.length));
         for (HttpHeader i : headers) {
             list.add(i.getKey() + ": " + i.getValue());
         }
         list.add("Server: RedstoneAPI/" + RedstoneAPI.getVersion().toString().replace("v", ""));
-        list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.length));
         list.add("Date: " + getServerTime());
         if (!list.contains("Connection: Upgrade")) {
             list.add("Connection: close");
@@ -730,7 +717,7 @@ public class WebServer {
                                 Class<?>[] parameterTypes = i.getParameterTypes();
                                 if (parameterTypes.length == 1) {
                                     if (WebRequest.class.isAssignableFrom(parameterTypes[0])) {
-                                        handlerManager.setHandler((Class<? extends WebRequest>) parameterTypes[0], i.getAnnotation(Route.class).path(), new HandlerBundle(handler, i));
+                                        handlerManager.setHandler((Class<? extends WebRequest>) parameterTypes[0], k.path(), new HandlerBundle(handler, i));
                                     }
                                 }
                             }
