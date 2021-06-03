@@ -26,11 +26,16 @@ public abstract class TableBase {
             }
         }
     }
-    
+
+    /**
+     * Get a JSON representation of the table entry
+     *
+     * @return a JSON representation of the table entry except the {@link Field} has the {@link java.lang.annotation.Annotation} {@link HideOnJson} or {@link Column#hideOnJson()} is true
+     * */
     public JSONObject toJsonObject() {
         JSONObject obj = new JSONObject();
         for (Field i : getClass().getFields()) {
-            if (i.isAnnotationPresent(Column.class) && !i.getAnnotation(Column.class).hideOnJson() && BaseType.class.isAssignableFrom(i.getType())) {
+            if (i.isAnnotationPresent(Column.class) && !(i.getAnnotation(Column.class).hideOnJson() || i.isAnnotationPresent(HideOnJson.class)) && BaseType.class.isAssignableFrom(i.getType())) {
                 try {
                     Object value = ((BaseType) i.get(this)).getValue();
                     if (Enum.class.isAssignableFrom(value.getClass())) {

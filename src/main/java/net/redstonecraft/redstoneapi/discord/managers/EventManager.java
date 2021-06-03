@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * DiscordBot EventManager
@@ -20,6 +22,7 @@ import java.util.Map;
  * */
 public class EventManager implements EventListener {
 
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final HashMap<Class, List<ListenerBundle>> listeners = new HashMap<>();
 
     public void addEventListener(DiscordEventListener listener) {
@@ -43,11 +46,13 @@ public class EventManager implements EventListener {
             }
         }
         for (ListenerBundle i : bundle) {
-            try {
-                i.method.invoke(i.listener, genericEvent);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            threadPool.submit(() -> {
+                try {
+                    i.method.invoke(i.listener, genericEvent);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 

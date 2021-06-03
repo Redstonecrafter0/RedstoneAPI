@@ -154,7 +154,7 @@ public class Query<T extends TableBase> {
             if (keyField == null) {
                 throw new NoSuchTableException("Key not found in table");
             }
-            if (!keyField.getAnnotation(Column.class).primaryKey() && !keyField.getAnnotation(Column.class).unique()) {
+            if (!(keyField.getAnnotation(Column.class).primaryKey() || keyField.isAnnotationPresent(PrimaryKey.class)) && !(keyField.getAnnotation(Column.class).unique() || keyField.isAnnotationPresent(Unique.class))) {
                 throw new InvalidStructureException("The key must be either the primary key or unique");
             }
             JSONObject obj = new JSONObject();

@@ -18,6 +18,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The RedstoneAPI BungeeCord plugin class
+ *
+ * @author Redstonecrafter0
+ */
 public class RedstoneAPIBungee extends BungeecordPlugin {
 
     public static final String prefix = renderColors("&7[&9Redstone&cAPI&7] &r");

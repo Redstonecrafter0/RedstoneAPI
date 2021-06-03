@@ -6,7 +6,7 @@ package net.redstonecraft.redstoneapi.tools;
  * @author Redstonecrafter0
  * @since 1.0
  * */
-public class HttpHeader {
+public class HttpHeader implements Comparable<HttpHeader> {
 
     /**
      * @deprecated
@@ -74,4 +74,10 @@ public class HttpHeader {
                 ", value='" + value + '\'' +
                 '}';
     }
+
+    @Override
+    public int compareTo(HttpHeader o) {
+        return key.compareTo(o.key);
+    }
+
 }

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class Bool extends BaseType<Boolean> {
+public class Bool extends BaseType<Boolean> implements Comparable<Bool> {
 
     public Bool() {
         super();
@@ -35,6 +35,11 @@ public class Bool extends BaseType<Boolean> {
     @Override
     public String getSqlName() {
         return "INT";
+    }
+
+    @Override
+    public int compareTo(Bool o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

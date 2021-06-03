@@ -38,7 +38,7 @@ public abstract class SQLDialectRenderer {
         addFilterRenderClass(UUID.class, SQLUUID.class);
     }
 
-    public abstract PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, SQLNumber primaryKey) throws SQLException;
+    public abstract PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, List<Boolean> primaryKeyData, List<Boolean> notNullData, List<Boolean> uniqueData, List<Boolean> hideOnJsonData, SQLNumber primaryKey) throws SQLException;
 
     public abstract PreparedStatement insert(SQL sql, Class<? extends TableBase> table, List<BaseType> values) throws SQLException;
 
@@ -70,6 +70,12 @@ public abstract class SQLDialectRenderer {
 
     public abstract PreparedStatement sum(SQL sql, Class<? extends TableBase> table, SQLNumber column, Filter filter) throws SQLException;
 
+    /**
+     * Set the classes according to your custom sql class so the {@link Filter} knows what is what
+     *
+     * @param type the raw type
+     * @param sqlType the sql type
+     * */
     public static void addFilterRenderClass(Class<?> type, Class<? extends BaseType> sqlType) {
         filterRenderer.put(type, sqlType);
     }

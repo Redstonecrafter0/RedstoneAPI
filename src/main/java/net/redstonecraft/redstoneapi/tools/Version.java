@@ -8,7 +8,7 @@ import java.util.Arrays;
  * @author Redstonecrafter0
  * @since 1.1
  * */
-public class Version {
+public class Version implements Comparable<Version> {
 
     private final int[] version;
     private final boolean includeV;
@@ -124,4 +124,16 @@ public class Version {
         }
         return includeV ? "v" + String.join(".", nums) : (preRelease ? "pre-" + String.join(".", nums) : String.join(".", nums));
     }
+
+    @Override
+    public int compareTo(Version o) {
+        if (isOlderThan(o)) {
+            return -1;
+        } else if (equals(o)) {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
 }

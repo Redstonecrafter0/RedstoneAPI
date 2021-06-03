@@ -39,7 +39,7 @@ public class CommandListener extends DiscordEventListener {
         }
         String finalCommand = command;
         String finalMsg = msg;
-        new Thread(() -> commandManager.performServerCommand(finalCommand, finalMsg, channel, member, message, event.getGuild())).start();
+        commandManager.performServerCommand(finalCommand, finalMsg, channel, member, message, event.getGuild());
     }
 
     @DiscordEvent
@@ -64,7 +64,7 @@ public class CommandListener extends DiscordEventListener {
         }
         String finalCommand = command;
         String finalMsg = msg;
-        new Thread(() -> commandManager.performPrivateCommand(finalCommand, finalMsg, channel, member, message)).start();
+        commandManager.performPrivateCommand(finalCommand, finalMsg, channel, member, message);
     }
 
 }

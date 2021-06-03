@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class Int extends SQLNumber<Integer> {
+public class Int extends SQLNumber<Integer> implements Comparable<Int> {
 
     public Int() {
         super();
@@ -35,6 +35,11 @@ public class Int extends SQLNumber<Integer> {
     @Override
     public String getSqlName() {
         return "INTEGER";
+    }
+
+    @Override
+    public int compareTo(Int o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

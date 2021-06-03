@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class BigInt extends SQLNumber<Long> {
+public class BigInt extends SQLNumber<Long> implements Comparable<BigInt> {
 
     public BigInt() {
         super();
@@ -35,6 +35,11 @@ public class BigInt extends SQLNumber<Long> {
     @Override
     public String getSqlName() {
         return "BIGINT";
+    }
+
+    @Override
+    public int compareTo(BigInt o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

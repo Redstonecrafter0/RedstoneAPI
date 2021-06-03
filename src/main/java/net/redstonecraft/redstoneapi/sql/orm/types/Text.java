@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class Text extends BaseType<String> {
+public class Text extends BaseType<String> implements Comparable<Text> {
 
     public Text() {
         super();
@@ -34,6 +34,11 @@ public class Text extends BaseType<String> {
     @Override
     public String getSqlName() {
         return "TEXT";
+    }
+
+    @Override
+    public int compareTo(Text o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

@@ -18,7 +18,7 @@ import java.util.Arrays;
 
 public class RedstoneAPI {
 
-    private static final Version version = new Version("v1.3");
+    private static final Version VERSION = new Version("v1.4");
 
     private static final int WIDTH = 600;
     private static final int HEIGHT = 250;
@@ -28,7 +28,7 @@ public class RedstoneAPI {
             if (Arrays.asList(args).contains("nogui")) {
                 throw new Exception();
             }
-            JFrame frame = new JFrame("RedstoneAPI " + version);
+            JFrame frame = new JFrame("RedstoneAPI " + VERSION);
             frame.setResizable(false);
             frame.setSize(WIDTH, HEIGHT);
             Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -37,7 +37,7 @@ public class RedstoneAPI {
             frame.getContentPane().setLayout(null);
             frame.getContentPane().setBackground(Color.BLACK);
             frame.setIconImage(Toolkit.getDefaultToolkit().getImage(RedstoneAPI.class.getResource("/redstoneapi.png")));
-            JLabel label = new JLabel("<html><h1>RedstoneAPI " + version + " by Redstonecrafter0</h1></html>");
+            JLabel label = new JLabel("<html><h1>RedstoneAPI " + VERSION + " by Redstonecrafter0</h1></html>");
             label.setHorizontalAlignment(SwingConstants.CENTER);
             label.setLocation(0, (HEIGHT / 2) - 90);
             label.setSize(WIDTH, 30);
@@ -90,7 +90,7 @@ public class RedstoneAPI {
             }
         } catch (Exception ignored) {
             try {
-                String[] line1 = FigletFont.convertOneLine(" RedstoneAPI " + version + " ").split("\\n");
+                String[] line1 = FigletFont.convertOneLine(" RedstoneAPI " + VERSION + " ").split("\\n");
                 String[] line2 = FigletFont.convertOneLine(" by Redstonecrafter0 ").split("\\n");
                 String[] msg = new String[line1.length + line2.length];
                 System.arraycopy(line1, 0, msg, 0, line1.length);
@@ -117,7 +117,7 @@ public class RedstoneAPI {
     public static Update getUpdate() throws IOException {
         HttpRequest response = HttpRequest.get("https://api.github.com/repos/Redstonecrafter0/RedstoneAPI/releases", new HttpHeader("Accept", "application/vnd.github.v3+json"));
         JSONArray arr = response.getJsonArray();
-        Version version = RedstoneAPI.version;
+        Version version = RedstoneAPI.VERSION;
         for (int i = 0; i < arr.size(); i++) {
             try {
                 if (!arr.getObject(i).getBoolean("prerelease")) {
@@ -129,7 +129,7 @@ public class RedstoneAPI {
             } catch (Exception ignored) {
             }
         }
-        return version.equals(RedstoneAPI.version) ? new Update(Update.State.LATEST_VERSION, null) : new Update(Update.State.NEW_VERSION_AVAILABLE, version);
+        return version.equals(RedstoneAPI.VERSION) ? new Update(Update.State.LATEST_VERSION, null) : new Update(Update.State.NEW_VERSION_AVAILABLE, version);
     }
 
     public static class Update {
@@ -173,7 +173,7 @@ public class RedstoneAPI {
      * @return the version currently used
      * */
     public static Version getVersion() {
-        return version;
+        return VERSION;
     }
 
 }

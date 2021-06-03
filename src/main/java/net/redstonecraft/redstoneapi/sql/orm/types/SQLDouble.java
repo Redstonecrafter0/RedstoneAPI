@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class SQLDouble extends SQLNumber<Double> {
+public class SQLDouble extends SQLNumber<Double> implements Comparable<SQLDouble> {
 
     public SQLDouble() {
         super();
@@ -35,6 +35,11 @@ public class SQLDouble extends SQLNumber<Double> {
     @Override
     public String getSqlName() {
         return "DOUBLE";
+    }
+
+    @Override
+    public int compareTo(SQLDouble o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }
