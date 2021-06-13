@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is the most important class in the orm system.
@@ -24,7 +25,7 @@ import java.util.List;
 public class Session {
 
     private final SQL sql;
-    final HashMap<Class<? extends TableBase>, TableFields> tables = new HashMap<>();
+    final Map<Class<? extends TableBase>, TableFields> tables = new HashMap<>();
     final List<PreparedStatement> waitingUpdates = new ArrayList<>();
 
     public Session(SQL sql) {

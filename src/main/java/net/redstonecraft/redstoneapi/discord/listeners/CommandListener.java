@@ -7,7 +7,7 @@ import net.redstonecraft.redstoneapi.discord.abs.CommandManager;
 import net.redstonecraft.redstoneapi.discord.abs.DiscordEvent;
 import net.redstonecraft.redstoneapi.discord.abs.DiscordEventListener;
 
-public class CommandListener extends DiscordEventListener {
+public class CommandListener implements DiscordEventListener {
 
     private final String commandPrefix;
     private final CommandManager commandManager;

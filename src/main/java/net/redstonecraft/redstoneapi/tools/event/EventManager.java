@@ -3,10 +3,7 @@ package net.redstonecraft.redstoneapi.tools.event;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * A complete eventmanager
@@ -16,7 +13,7 @@ import java.util.List;
  * */
 public class EventManager {
 
-    private final HashMap<Class<? extends Event>, List<HandlerBundle>> registry = new HashMap<>();
+    private final Map<Class<? extends Event>, List<HandlerBundle>> registry = new HashMap<>();
 
     public void registerEventListener(EventHandler handler) {
         List<Class<? extends Event>> toSort = new ArrayList<>();

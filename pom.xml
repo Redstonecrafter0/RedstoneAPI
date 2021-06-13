@@ -6,7 +6,7 @@
 
     <groupId>net.redstonecraft</groupId>
     <artifactId>redstoneapi</artifactId>
-    <version>1.3</version>
+    <version>1.4</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -87,7 +87,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>4.2.1_253</version>
+            <version>4.2.1_272</version>
         </dependency>
 
         <dependency>

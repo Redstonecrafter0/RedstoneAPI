@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 public class EventManager implements EventListener {
 
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
-    private final HashMap<Class, List<ListenerBundle>> listeners = new HashMap<>();
+    private final Map<Class, List<ListenerBundle>> listeners = new HashMap<>();
 
     public void addEventListener(DiscordEventListener listener) {
         for (Method i : listener.getClass().getMethods()) {
@@ -48,6 +48,7 @@ public class EventManager implements EventListener {
         for (ListenerBundle i : bundle) {
             threadPool.submit(() -> {
                 try {
+                    i.method.setAccessible(true);
                     i.method.invoke(i.listener, genericEvent);
                 } catch (Throwable e) {
                     e.printStackTrace();

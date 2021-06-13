@@ -1,42 +1,108 @@
 package net.redstonecraft.redstoneapi.discord;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.redstonecraft.redstoneapi.discord.abs.CommandManager;
+import net.redstonecraft.redstoneapi.discord.abs.SlashCommandManager;
 import net.redstonecraft.redstoneapi.discord.listeners.CommandListener;
+import net.redstonecraft.redstoneapi.discord.listeners.SlashCommandListener;
+import net.redstonecraft.redstoneapi.discord.managers.ButtonManager;
 import net.redstonecraft.redstoneapi.discord.managers.EventManager;
 
 import javax.security.auth.login.LoginException;
+import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
- * A auto sharded discordbot wrapper containing a commandmanager and simpler event listener
+ * A auto sharded discordbot wrapper containing two commandmanagers and simpler event listener
  *
  * @author Redstonecrafter0
  * @since 1.4
  * */
-public class ShardedDiscordBot<T extends CommandManager> {
+public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandManager> {
 
     private final ShardManager shardManager;
-    private final T commandManager;
+    private final C commandManager;
+    private final S slashCommandManager;
     private final EventManager eventManager;
+    private final ButtonManager buttonManager;
+    private final int buttonLifetime;
     private final String commandPrefix;
 
-    public ShardedDiscordBot(String token, String commandPrefix, T commandManager) throws LoginException {
-        shardManager = DefaultShardManagerBuilder.create(token, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS)).build();
-        this.commandManager = commandManager;
-        this.commandPrefix = commandPrefix;
-        eventManager = new EventManager();
-        shardManager.addEventListener(eventManager);
-        eventManager.addEventListener(new CommandListener(this.commandPrefix, this.commandManager));
+    public ShardedDiscordBot(String token, S slashCommandManager) throws LoginException {
+        this(token, null, null, slashCommandManager, 60, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS), (i -> {}));
     }
 
-    public T getCommandManager() {
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager) throws LoginException {
+        this(token, commandPrefix, commandManager, null, 60, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS), (i -> {}));
+    }
+
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager, S slashCommandManager) throws LoginException {
+        this(token, commandPrefix, commandManager, slashCommandManager, 60, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS), (i -> {}));
+    }
+
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager, S slashCommandManager, int buttonLifetimeSeconds) throws LoginException {
+        this(token, commandPrefix, commandManager, slashCommandManager, buttonLifetimeSeconds, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS), (i -> {}));
+    }
+
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager, S slashCommandManager, int buttonLifetimeSeconds, Consumer<DefaultShardManagerBuilder> preBuild) throws LoginException {
+        this(token, commandPrefix, commandManager, slashCommandManager, buttonLifetimeSeconds, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS), preBuild);
+    }
+
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager, S slashCommandManager, int buttonLifetimeSeconds, Collection<GatewayIntent> intents) throws LoginException {
+        this(token, commandPrefix, commandManager, slashCommandManager, buttonLifetimeSeconds, intents, (i -> {}));
+    }
+
+    public ShardedDiscordBot(String token, String commandPrefix, C commandManager, S slashCommandManager, int buttonLifetimeSeconds, Collection<GatewayIntent> intents, Consumer<DefaultShardManagerBuilder> preBuild) throws LoginException {
+        DefaultShardManagerBuilder shardManagerBuilder = DefaultShardManagerBuilder.create(token, intents);
+        preBuild.accept(shardManagerBuilder);
+        shardManager = shardManagerBuilder.build();
+        this.commandManager = commandManager;
+        this.slashCommandManager = slashCommandManager;
+        this.commandPrefix = commandPrefix;
+        this.buttonLifetime = buttonLifetimeSeconds;
+        this.buttonManager = new ButtonManager(this.buttonLifetime);
+        eventManager = new EventManager();
+        shardManager.addEventListener(eventManager);
+        if (commandManager != null) {
+            eventManager.addEventListener(new CommandListener(this.commandPrefix, this.commandManager));
+        }
+        if (slashCommandManager != null) {
+            eventManager.addEventListener(new SlashCommandListener(this.slashCommandManager));
+        }
+        eventManager.addEventListener(this.buttonManager);
+    }
+
+    public C getCommandManager() {
         return commandManager;
+    }
+
+    public S getSlashCommandManager() {
+        return slashCommandManager;
+    }
+
+    public ButtonManager getButtonManager() {
+        return buttonManager;
+    }
+
+    public void submitSlashCommands() {
+        shardManager.getShards().forEach(jda -> {
+            CommandListUpdateAction commands = jda.updateCommands();
+            if (slashCommandManager != null) {
+                commands.addCommands(slashCommandManager.getJdaCommands());
+            }
+            commands.queue();
+        });
     }
 
     public String getCommandPrefix() {
         return commandPrefix;
+    }
+
+    public int getButtonLifetime() {
+        return buttonLifetime;
     }
 
     public ShardManager getShardManager() {
@@ -46,4 +112,5 @@ public class ShardedDiscordBot<T extends CommandManager> {
     public EventManager getEventManager() {
         return eventManager;
     }
+
 }

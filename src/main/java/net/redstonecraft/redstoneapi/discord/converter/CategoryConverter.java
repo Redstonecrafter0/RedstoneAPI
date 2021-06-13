@@ -13,11 +13,15 @@ public class CategoryConverter extends Converter<Category> {
     @Override
     public Category convertServer(String from, JDA jda, Message message, TextChannel channel, Member member, Guild guild) throws ConvertException {
         try {
-            Category category = guild.getCategoryById(from);
-            if (category != null) {
-                return category;
-            } else {
-                throw new ConvertException();
+            try {
+                return guild.getCategoryById(from.split("<#")[1].split(">")[0]);
+            } catch (Exception ignored) {
+                Category category = guild.getCategoryById(from);
+                if (category != null) {
+                    return category;
+                } else {
+                    throw new ConvertException();
+                }
             }
         } catch (Exception ignored) {
             throw new ConvertException();

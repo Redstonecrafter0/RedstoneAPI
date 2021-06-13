@@ -15,7 +15,7 @@ import java.util.*;
  * */
 public class SimpleCommandManager extends CommandManager {
 
-    private final HashMap<Class, Converter> converters = new HashMap<>();
+    private final Map<Class, Converter> converters = new HashMap<>();
     private final Map<String, CommandBundle> commandsRegistry = new TreeMap<>();
 
     public SimpleCommandManager() {

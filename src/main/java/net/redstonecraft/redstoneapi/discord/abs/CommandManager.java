@@ -2,13 +2,16 @@ package net.redstonecraft.redstoneapi.discord.abs;
 
 import net.dv8tion.jda.api.entities.*;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * CommandManager Base
  *
  * @author Redstonecrafter0
  * @since 1.1
  * */
-public abstract class CommandManager {
+public abstract class CommandManager<S, P> {
 
     /**
      * This method will by called by the {@link net.redstonecraft.redstoneapi.discord.listeners.CommandListener} when a command was detected on a discord server
@@ -32,5 +35,9 @@ public abstract class CommandManager {
      * @param message the message that was sent
      */
     public abstract void performPrivateCommand(String command, String content, PrivateChannel channel, User user, Message message);
+
+    public abstract Set<Map.Entry<String, S>> getServerCommands();
+
+    public abstract Set<Map.Entry<String, P>> getPrivateCommands();
 
 }

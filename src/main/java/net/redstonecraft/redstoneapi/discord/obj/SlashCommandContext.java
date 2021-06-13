@@ -1,23 +1,24 @@
 package net.redstonecraft.redstoneapi.discord.obj;
 
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 /**
  * This is the first parameter for discord server commands
  *
  * @author Redstonecrafter0
- * @since 1.2
- * */
-public class ServerContext {
+ * @since 1.4
+ */
+public class SlashCommandContext {
 
     private final TextChannel channel;
-    private final Message message;
+    private final SlashCommandEvent slashCommandEvent;
     private final Guild guild;
     private final Member member;
 
-    public ServerContext(TextChannel channel, Message message, Guild guild, Member member) {
+    public SlashCommandContext(TextChannel channel, SlashCommandEvent slashCommandEvent, Guild guild, Member member) {
         this.channel = channel;
-        this.message = message;
+        this.slashCommandEvent = slashCommandEvent;
         this.guild = guild;
         this.member = member;
     }
@@ -27,13 +28,6 @@ public class ServerContext {
      * */
     public Guild getGuild() {
         return guild;
-    }
-
-    /**
-     * @return the message that contains the command that was executed
-     * */
-    public Message getMessage() {
-        return message;
     }
 
     /**
@@ -48,6 +42,10 @@ public class ServerContext {
      * */
     public Member getMember() {
         return member;
+    }
+
+    public SlashCommandEvent getSlashCommandEvent() {
+        return slashCommandEvent;
     }
 
 }
