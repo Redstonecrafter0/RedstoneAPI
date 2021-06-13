@@ -34,6 +34,10 @@ public abstract class RequestHandler {
         return new WebResponse(new byte[0], HttpResponseCode.FOUND, new HttpHeader("Location", url));
     }
 
+    public WebResponse redirect(String url, boolean permanent) {
+        return new WebResponse(new byte[0], permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND, new HttpHeader("Location", url));
+    }
+
     public WebResponse renderTemplate(String template, RenderedItems items, HttpHeader... headers) throws IOException {
         return new WebResponse(webServer.jinjava.render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), headers);
     }
