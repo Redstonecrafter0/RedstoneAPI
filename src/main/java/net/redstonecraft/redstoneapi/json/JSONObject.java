@@ -10,22 +10,33 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
  * 
  * @author FangYidong fangyidong@yahoo.com.cn
  */
-public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAware{
-	
+public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAware {
+
 	private static final long serialVersionUID = -503443796854799292L;
-	
 
 	public JSONObject() {
 		super();
+	}
+
+	public JSONObject(Object obj) {
+		super();
+		for (Field i : obj.getClass().getFields()) {
+			if (!i.isAnnotationPresent(HideJson.class)) {
+				try {
+					i.setAccessible(true);
+					put(i.getName(), i.get(obj));
+				} catch (IllegalAccessException ignored) {
+				}
+			}
+		}
 	}
 
 	/**
@@ -37,7 +48,6 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	public JSONObject(Map map) {
 		super(map);
 	}
-
 
     /**
      * Encode a map into JSON text and write it to out.
