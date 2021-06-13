@@ -11,6 +11,7 @@ import net.redstonecraft.redstoneapi.webserver.handler.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.obj.*;
 import net.redstonecraft.redstoneapi.webserver.obj.requests.*;
 import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvent;
+import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvents;
 import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketBinaryDataEvent;
 import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketConnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketDisconnectedEvent;
@@ -846,6 +847,14 @@ public class WebServer {
                                 }
                             }
                         }
+                } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
+                    for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
+                        if (i.getParameterTypes().length == 1 && j.path().startsWith("/")) {
+                            if (Arrays.asList(new Class<?>[]{WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class}).contains(i.getParameterTypes()[0])) {
+                                websocketManager.addHandler(j.path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                            }
+                        }
+                    }
                 } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
                     if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).path().startsWith("/")) {
                         if (Arrays.asList(new Class<?>[]{WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class}).contains(i.getParameterTypes()[0])) {
