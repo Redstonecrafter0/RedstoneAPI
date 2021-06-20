@@ -3,6 +3,7 @@ package net.redstonecraft.redstoneapi.discord.managers;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.redstonecraft.redstoneapi.discord.AbstractDiscordBot;
 import net.redstonecraft.redstoneapi.discord.DiscordBot;
 import net.redstonecraft.redstoneapi.discord.abs.*;
 import net.redstonecraft.redstoneapi.discord.converter.*;
@@ -358,9 +359,9 @@ public class SimpleCommandManager extends CommandManager<SimpleCommandManager.Co
         private final String title;
         private final Color color;
         private final String indexOutOfBoundsText;
-        private final DiscordBot<SimpleCommandManager, ?> bot;
+        private final AbstractDiscordBot<?, SimpleCommandManager, ?> bot;
 
-        public DefaultServerHelpCommand(DiscordBot<SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
+        public DefaultServerHelpCommand(AbstractDiscordBot<?, SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
             this.fullWidth = fullWidth;
             this.itemsPerPage = itemsPerPage;
             this.title = title;
@@ -404,9 +405,9 @@ public class SimpleCommandManager extends CommandManager<SimpleCommandManager.Co
         private final String title;
         private final Color color;
         private final String indexOutOfBoundsText;
-        private final DiscordBot<SimpleCommandManager, ?> bot;
+        private final AbstractDiscordBot<?, SimpleCommandManager, ?> bot;
 
-        public DefaultPrivateHelpCommand(DiscordBot<SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
+        public DefaultPrivateHelpCommand(AbstractDiscordBot<?, SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
             this.fullWidth = fullWidth;
             this.itemsPerPage = itemsPerPage;
             this.title = title;
