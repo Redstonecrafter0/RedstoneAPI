@@ -169,14 +169,14 @@ public class WebServer {
     }
 
     private void tick() throws IOException {
-        lastKeepAliveId++;
-        if (lastKeepAliveId > Long.MAX_VALUE - 5) {
-            lastKeepAliveId = 0;
-        }
         long time = System.currentTimeMillis();
-        if (time >= lastKeepAlive + 10000) {
+        if (time >= lastKeepAlive + 20000) {
+            lastKeepAliveId++;
+            if (lastKeepAliveId > Long.MAX_VALUE - 5) {
+                lastKeepAliveId = 0;
+            }
             lastKeepAlive = time;
-            long t = time - 15000;
+            long t = time - 60000;
             List<Connection> remove = new LinkedList<>();
             connections.stream().filter(connection -> connection.keepAlive < t).forEach(connection -> {
                 try {
@@ -195,17 +195,16 @@ public class WebServer {
                 remove1.add(entry.getKey());
             });
             remove1.forEach(websocketManager::unregisterConnection);
-            byte[] now = ByteBuffer.allocate(8).putLong(time).array();
-            byte[] ping = new byte[]{(byte) 0x89, 0x14, now[0], now[1], now[2], now[3], now[4], now[5], now[6], now[7]};
             websocketManager.forEach((connection, timeout) -> {
                 try {
-                    connection.getChannel().write(ByteBuffer.wrap(ping));
+                    connection.send((byte) 0b10001001, String.valueOf(lastKeepAliveId).getBytes(StandardCharsets.UTF_8));
+                    timeout.payload = lastKeepAliveId;
                 } catch (IOException ignored) {
                     connection.disconnect();
                 }
             });
         }
-        time += 10000;
+        time += 20000;
         time -= lastKeepAlive;
         selector.select(time);
         for (SelectionKey key : selector.selectedKeys()) {
@@ -270,16 +269,18 @@ public class WebServer {
                                     decoded[i] = (byte) (encoded[i] ^ maskKey[i % 4]);
                                 }
                                 if (action == 0xA) {
-                                    long id = ByteBuffer.wrap(decoded).getLong();
-                                    if (id == websocketManager.getPing(webSocketConnection).payload) {
+                                    String id = new String(decoded, StandardCharsets.UTF_8);
+                                    if (id.equals(String.valueOf(websocketManager.getPing(webSocketConnection).payload))) {
                                         websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
                                     }
                                 } else if (action == 0x1) {
                                     String payload = new String(decoded, StandardCharsets.UTF_8);
+                                    websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
                                     websocketManager.executeMessageEvent(webSocketConnection, payload);
                                 } else if (action == 0x9) {
                                     webSocketConnection.send(decoded);
                                 } else if (action == 0x2) {
+                                    websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
                                     websocketManager.executeBinaryEvent(webSocketConnection, decoded);
                                 } else {
                                     webSocketConnection.disconnect();

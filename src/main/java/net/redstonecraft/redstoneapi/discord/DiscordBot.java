@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * @author Redstonecrafter0
  * @since 1.2
  * */
-public class DiscordBot<C extends CommandManager, S extends SlashCommandManager> {
+public class DiscordBot<C extends CommandManager, S extends SlashCommandManager> extends AbstractDiscordBot<JDA, C, S> {
 
     private final JDA jda;
     private final C commandManager;
@@ -75,18 +75,22 @@ public class DiscordBot<C extends CommandManager, S extends SlashCommandManager>
         eventManager.addEventListener(this.buttonManager);
     }
 
+    @Override
     public C getCommandManager() {
         return commandManager;
     }
 
+    @Override
     public S getSlashCommandManager() {
         return slashCommandManager;
     }
 
+    @Override
     public ButtonManager getButtonManager() {
         return buttonManager;
     }
 
+    @Override
     public void submitSlashCommands() {
         CommandListUpdateAction commands = jda.updateCommands();
         if (slashCommandManager != null) {
@@ -95,19 +99,28 @@ public class DiscordBot<C extends CommandManager, S extends SlashCommandManager>
         commands.queue();
     }
 
+    @Override
     public String getCommandPrefix() {
         return commandPrefix;
     }
 
+    @Override
     public int getButtonLifetime() {
         return buttonLifetime;
+    }
+
+    @Override
+    public JDA getManager() {
+        return jda;
     }
 
     public JDA getJda() {
         return jda;
     }
 
+    @Override
     public EventManager getEventManager() {
         return eventManager;
     }
+
 }

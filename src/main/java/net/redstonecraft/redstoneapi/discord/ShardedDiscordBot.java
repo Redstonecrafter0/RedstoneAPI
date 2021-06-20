@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * @author Redstonecrafter0
  * @since 1.4
  * */
-public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandManager> {
+public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandManager> extends AbstractDiscordBot<ShardManager, C, S> {
 
     private final ShardManager shardManager;
     private final C commandManager;
@@ -75,18 +75,22 @@ public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandM
         eventManager.addEventListener(this.buttonManager);
     }
 
+    @Override
     public C getCommandManager() {
         return commandManager;
     }
 
+    @Override
     public S getSlashCommandManager() {
         return slashCommandManager;
     }
 
+    @Override
     public ButtonManager getButtonManager() {
         return buttonManager;
     }
 
+    @Override
     public void submitSlashCommands() {
         shardManager.getShards().forEach(jda -> {
             CommandListUpdateAction commands = jda.updateCommands();
@@ -97,18 +101,26 @@ public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandM
         });
     }
 
+    @Override
     public String getCommandPrefix() {
         return commandPrefix;
     }
 
+    @Override
     public int getButtonLifetime() {
         return buttonLifetime;
+    }
+
+    @Override
+    public ShardManager getManager() {
+        return shardManager;
     }
 
     public ShardManager getShardManager() {
         return shardManager;
     }
 
+    @Override
     public EventManager getEventManager() {
         return eventManager;
     }
