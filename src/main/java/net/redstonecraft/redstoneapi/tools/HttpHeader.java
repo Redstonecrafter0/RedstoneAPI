@@ -48,7 +48,7 @@ public class HttpHeader implements Comparable<HttpHeader> {
      * */
     public static HttpHeader getByKey(HttpHeader[] headers, String key) {
         for (HttpHeader i : headers) {
-            if (i.getKey().equals(key)) {
+            if (i.getKey().equalsIgnoreCase(key)) {
                 return i;
             }
         }
