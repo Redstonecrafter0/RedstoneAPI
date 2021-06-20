@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public class SQLUUID extends BaseType<UUID> {
+public class SQLUUID extends BaseType<UUID> implements Comparable<SQLUUID> {
 
     public SQLUUID() {
     }
@@ -29,6 +29,11 @@ public class SQLUUID extends BaseType<UUID> {
     @Override
     public void deserializeSql(ResultSet rs) throws SQLException {
         setValue(UUID.fromString(rs.getString(getKey())));
+    }
+
+    @Override
+    public int compareTo(SQLUUID o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

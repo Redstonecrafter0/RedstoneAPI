@@ -6,7 +6,6 @@ import net.redstonecraft.redstoneapi.bungee.BungeecordPlugin;
 import net.redstonecraft.redstoneapi.bungee.listeners.UpdateListener;
 import net.redstonecraft.redstoneapi.bungee.listeners.UserListener;
 import net.redstonecraft.redstoneapi.bungee.manager.UserManager;
-import net.redstonecraft.redstoneapi.ipc.IPCServer;
 import net.redstonecraft.redstoneapi.sql.MySQL;
 import net.redstonecraft.redstoneapi.sql.SQL;
 import net.redstonecraft.redstoneapi.sql.SQLTypes;
@@ -14,10 +13,14 @@ import net.redstonecraft.redstoneapi.sql.SQLite;
 import net.redstonecraft.redstoneapi.tools.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The RedstoneAPI BungeeCord plugin class
+ *
+ * @author Redstonecrafter0
+ */
 public class RedstoneAPIBungee extends BungeecordPlugin {
 
     public static final String prefix = renderColors("&7[&9Redstone&cAPI&7] &r");
@@ -26,7 +29,6 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
 
     private SQL sql;
     private UserManager userManager;
-    private IPCServer ipcServer;
 
     @Override
     public void onLoad() {
@@ -78,13 +80,6 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
         }
         if (getConfig().getBoolean("update.notify.adminjoin")) {
             registerListeners(new UpdateListener(this));
-        }
-        if (isIpcEnabled()) {
-            try {
-                ipcServer = new IPCServer(getConfig().getString("ipc.host"), getConfig().getInt("ipc.port"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         String[] msg = {
                 "&b╓" + StringUtils.sameChar('─', 31 + getDescription().getVersion().length()) + "╖",
@@ -150,21 +145,4 @@ public class RedstoneAPIBungee extends BungeecordPlugin {
         return getConfig().getBoolean("usermanager.enabled");
     }
 
-    /**
-     * Return true if the IPCServer is enabled
-     *
-     * @return false if disabled by config
-     * */
-    public boolean isIpcEnabled() {
-        return getConfig().getBoolean("ipc.enabled");
-    }
-
-    /**
-     * Return the instance of the IPCServer
-     *
-     * @return null if disabled by config
-     * */
-    public IPCServer getIpcServer() {
-        return ipcServer;
-    }
 }

@@ -5,6 +5,12 @@ import java.util.function.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Paginate through a {@link Collection} or an {@link java.lang.reflect.Array} of items you want to paginate
+ *
+ * @since 1.3
+ * @author Redstonecrafter0
+ * */
 public class Pagination<T> implements Iterable<T> {
 
     private final List<T> items;

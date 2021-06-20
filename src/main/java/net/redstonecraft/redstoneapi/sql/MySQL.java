@@ -20,13 +20,13 @@ public class MySQL implements SQL {
 
     private static final SQLDialectRenderer sqlDialectRenderer = new SQLDialectRenderer() {
         @Override
-        public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, SQLNumber primaryKey) {
-            if (columns.size() != columnData.size()) {
+        public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, List<Boolean> primaryKeyData, List<Boolean> notNullData, List<Boolean> uniqueData, List<Boolean> hideOnJsonData, SQLNumber primaryKey) {
+            if (columns.size() != columnData.size() && columnData.size() != primaryKeyData.size() && primaryKeyData.size() != notNullData.size() && notNullData.size() != uniqueData.size() && uniqueData.size() != hideOnJsonData.size()) {
                 throw new IllegalArgumentException("Size not matching");
             }
             List<String> list = new ArrayList<>();
             for (int i = 0; i < columns.size(); i++) {
-                list.add("`" + columns.get(i).getKey() + "` " + columns.get(i).getSqlName() + (columnData.get(i).notnull() ? " NOT NULL" : "") + (columnData.get(i).unique() ? " UNIQUE" : "") + (columnData.get(i).primaryKey() ? " AUTO_INCREMENT" : ""));
+                list.add("`" + columns.get(i).getKey() + "` " + columns.get(i).getSqlName() + (columnData.get(i).notnull() || notNullData.get(i) ? " NOT NULL" : "") + (columnData.get(i).unique() || uniqueData.get(i) ? " UNIQUE" : "") + (columnData.get(i).primaryKey() || primaryKeyData.get(i) ? " AUTO_INCREMENT" : ""));
             }
             return sql.prepareStatement("CREATE TABLE IF NOT EXISTS `" + table.getSimpleName() + "` (" + String.join(", ", list) + ", PRIMARY KEY (`" + primaryKey.getKey() + "`))");
         }

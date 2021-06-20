@@ -27,13 +27,13 @@ public class SQLite implements SQL {
 
     private static final SQLDialectRenderer sqlDialectRenderer = new SQLDialectRenderer() {
         @Override
-        public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, SQLNumber primaryKey) {
+        public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, List<Boolean> primaryKeyData, List<Boolean> notNullData, List<Boolean> uniqueData, List<Boolean> hideOnJsonData, SQLNumber primaryKey) {
             if (columns.size() != columnData.size()) {
                 throw new IllegalArgumentException("Size not matching");
             }
             List<String> list = new ArrayList<>();
             for (int i = 0; i < columns.size(); i++) {
-                list.add("'" + StringEscapeUtils.escapeSql(columns.get(i).getKey()) + "' " + columns.get(i).getSqlName() + (columnData.get(i).notnull() ? " NOT NULL" : "") + (columnData.get(i).unique() ? " UNIQUE" : ""));
+                list.add("'" + StringEscapeUtils.escapeSql(columns.get(i).getKey()) + "' " + columns.get(i).getSqlName() + (columnData.get(i).notnull() || notNullData.get(i) ? " NOT NULL" : "") + (columnData.get(i).unique() || uniqueData.get(i) ? " UNIQUE" : ""));
             }
             return sql.prepareStatement("CREATE TABLE IF NOT EXISTS '" + StringEscapeUtils.escapeSql(table.getSimpleName()) + "' (" + String.join(", ", list) + ", PRIMARY KEY ('" + StringEscapeUtils.escapeSql(primaryKey.getKey()) + "' AUTOINCREMENT))");
         }

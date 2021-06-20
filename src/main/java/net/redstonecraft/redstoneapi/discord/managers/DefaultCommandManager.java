@@ -11,6 +11,8 @@ import net.redstonecraft.redstoneapi.tools.StringUtils;
 
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A commandmanager for the {@link net.redstonecraft.redstoneapi.discord.DiscordBot} for commands like them from spigot
@@ -18,10 +20,10 @@ import java.util.HashMap;
  * @author Redstonecrafter0
  * @since 1.2
  * */
-public class DefaultCommandManager extends CommandManager {
+public class DefaultCommandManager extends CommandManager<ServerCommand, PrivateCommand> {
 
-    private final HashMap<String, ServerCommand> serverCommands = new HashMap<>();
-    private final HashMap<String, PrivateCommand> privateCommands = new HashMap<>();
+    private final Map<String, ServerCommand> serverCommands = new HashMap<>();
+    private final Map<String, PrivateCommand> privateCommands = new HashMap<>();
     private final String title;
 
     public DefaultCommandManager(String title) {
@@ -66,6 +68,16 @@ public class DefaultCommandManager extends CommandManager {
                 channel.sendMessage(eb.build()).queue();
             }
         }
+    }
+
+    @Override
+    public Set<Map.Entry<String, PrivateCommand>> getPrivateCommands() {
+        return privateCommands.entrySet();
+    }
+
+    @Override
+    public Set<Map.Entry<String, ServerCommand>> getServerCommands() {
+        return serverCommands.entrySet();
     }
 
 }

@@ -1,4 +1,9 @@
 package net.redstonecraft.redstoneapi.discord.abs;
 
-public abstract class DiscordEventListener {
+/**
+ * The abstract DiscordEventListener class
+ *
+ * @author Redstonecrafter0
+ * */
+public interface DiscordEventListener {
 }

@@ -10,8 +10,10 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface SimpleCommand {
+
     String name() default "";
     String usage();
     String info();
     Permission permission() default Permission.UNKNOWN;
+
 }

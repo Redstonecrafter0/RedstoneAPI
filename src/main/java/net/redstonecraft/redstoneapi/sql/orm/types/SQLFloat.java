@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class SQLFloat extends SQLNumber<Float> {
+public class SQLFloat extends SQLNumber<Float> implements Comparable<SQLFloat> {
 
     public SQLFloat() {
         super();
@@ -35,6 +35,11 @@ public class SQLFloat extends SQLNumber<Float> {
     @Override
     public String getSqlName() {
         return "FLOAT";
+    }
+
+    @Override
+    public int compareTo(SQLFloat o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

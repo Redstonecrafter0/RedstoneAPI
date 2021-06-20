@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class VarChar extends BaseType<String> {
+public class VarChar extends BaseType<String> implements Comparable<VarChar> {
 
     private final int size;
 
@@ -33,6 +33,11 @@ public class VarChar extends BaseType<String> {
     @Override
     public void deserializeSql(ResultSet rs) throws SQLException {
         setValue(rs.getString(getKey()));
+    }
+
+    @Override
+    public int compareTo(VarChar o) {
+        return getValue().compareTo(o.getValue());
     }
 
 }

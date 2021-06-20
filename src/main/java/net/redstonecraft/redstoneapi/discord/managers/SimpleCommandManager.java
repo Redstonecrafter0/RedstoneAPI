@@ -3,23 +3,19 @@ package net.redstonecraft.redstoneapi.discord.managers;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.redstonecraft.redstoneapi.discord.AbstractDiscordBot;
 import net.redstonecraft.redstoneapi.discord.DiscordBot;
-import net.redstonecraft.redstoneapi.discord.abs.CommandManager;
-import net.redstonecraft.redstoneapi.discord.abs.Converter;
-import net.redstonecraft.redstoneapi.discord.abs.SimpleCommand;
-import net.redstonecraft.redstoneapi.discord.abs.SimpleCommands;
+import net.redstonecraft.redstoneapi.discord.abs.*;
 import net.redstonecraft.redstoneapi.discord.converter.*;
 import net.redstonecraft.redstoneapi.discord.obj.PrivateContext;
 import net.redstonecraft.redstoneapi.discord.obj.ServerContext;
+import net.redstonecraft.redstoneapi.tools.Bucket;
 import net.redstonecraft.redstoneapi.tools.StringUtils;
 
 import java.awt.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * A simple command manager using annotations for declaring commands with automatic argument parsing
@@ -27,7 +23,7 @@ import java.util.TreeMap;
  * @author Redstonecrafter0
  * @since 1.2
  * */
-public class SimpleCommandManager extends CommandManager {
+public class SimpleCommandManager extends CommandManager<SimpleCommandManager.CommandBundle, SimpleCommandManager.CommandBundle> {
 
     private final String title;
     private final Map<Class, Converter> converters = new HashMap<>();
@@ -50,7 +46,8 @@ public class SimpleCommandManager extends CommandManager {
                 new RoleConverter(),
                 new TextChannelConverter(),
                 new UserConverter(),
-                new VoiceChannelConverter());
+                new VoiceChannelConverter()
+        );
     }
 
     public void registerCommands(SimpleCommands... simpleCommands) {
@@ -66,7 +63,7 @@ public class SimpleCommandManager extends CommandManager {
                             }
                         }
                         if (works) {
-                            serverCommands.put(i.getAnnotation(SimpleCommand.class).name().equals("") ? i.getName() : i.getAnnotation(SimpleCommand.class).name(), new CommandBundle(i, commands, i.getAnnotation(SimpleCommand.class).usage(), i.getAnnotation(SimpleCommand.class).info(), i.getAnnotation(SimpleCommand.class).permission()));
+                            serverCommands.put(i.getAnnotation(SimpleCommand.class).name().equals("") ? i.getName() : i.getAnnotation(SimpleCommand.class).name(), new CommandBundle(i, commands, i.getAnnotation(SimpleCommand.class).usage(), i.getAnnotation(SimpleCommand.class).info(), i.getAnnotation(SimpleCommand.class).permission(), i.isAnnotationPresent(Cooldown.class)));
                         }
                     } else if (i.isAnnotationPresent(SimpleCommand.class) && !Modifier.isStatic(i.getModifiers()) && i.getReturnType().equals(boolean.class) && i.getParameterTypes()[0].equals(PrivateContext.class)) {
                         boolean works = true;
@@ -77,7 +74,7 @@ public class SimpleCommandManager extends CommandManager {
                             }
                         }
                         if (works) {
-                            privateCommands.put(i.getAnnotation(SimpleCommand.class).name().equals("") ? i.getName() : i.getAnnotation(SimpleCommand.class).name(), new CommandBundle(i, commands, i.getAnnotation(SimpleCommand.class).usage(), i.getAnnotation(SimpleCommand.class).info(), i.getAnnotation(SimpleCommand.class).permission()));
+                            privateCommands.put(i.getAnnotation(SimpleCommand.class).name().equals("") ? i.getName() : i.getAnnotation(SimpleCommand.class).name(), new CommandBundle(i, commands, i.getAnnotation(SimpleCommand.class).usage(), i.getAnnotation(SimpleCommand.class).info(), i.getAnnotation(SimpleCommand.class).permission(), i.isAnnotationPresent(Cooldown.class)));
                         }
                     }
                 } catch (ArrayIndexOutOfBoundsException ignored) {
@@ -106,70 +103,102 @@ public class SimpleCommandManager extends CommandManager {
     public void performServerCommand(String command, String content, TextChannel channel, Member member, Message message, Guild guild) {
         if (serverCommands.containsKey(command)) {
             CommandBundle commandBundle = serverCommands.get(command);
-            if (!commandBundle.permission.equals(Permission.UNKNOWN)) {
-                if (!member.hasPermission(commandBundle.permission)) {
-                    return;
-                }
-            }
-            String[] oriArgs = StringUtils.parseArgs(content);
-            Object[] args = new Object[commandBundle.method.getParameterTypes().length];
-            if (oriArgs.length != args.length + 1) {
-                EmbedBuilder eb = new EmbedBuilder();
-                eb.setTitle(title);
-                eb.setColor(Color.decode("#FF0000"));
-                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                channel.sendMessage(eb.build()).queue();
-                return;
-            }
-            args[0] = new ServerContext(channel, message, guild, member);
-            for (int i = 2; i < oriArgs.length; i++) {
-                if (commandBundle.method.getParameterTypes()[i - 1].equals(String.class)) {
-                    args[i - 1] = oriArgs[i];
-                } else {
-                    try {
-                        if (converters.get(commandBundle.method.getParameterTypes()[i - 1]) != null) {
-                            try {
-                                args[i - 1] = converters.get(commandBundle.method.getParameterTypes()[i - 1]).convertServer(oriArgs[i], guild.getJDA(), message, channel, member, guild);
-                            } catch (NullPointerException ignored) {
-                                EmbedBuilder eb = new EmbedBuilder();
-                                eb.setTitle(title);
-                                eb.setColor(Color.decode("#FF0000"));
-                                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                                channel.sendMessage(eb.build()).queue();
-                                return;
-                            }
-                        } else {
-                            return;
-                        }
-                    } catch (ConvertException ignored) {
-                        EmbedBuilder eb = new EmbedBuilder();
-                        eb.setTitle(title);
-                        eb.setColor(Color.decode("#FF0000"));
-                        eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                        channel.sendMessage(eb.build()).queue();
+            Runnable runnable = () -> {
+                if (!commandBundle.permission.equals(Permission.UNKNOWN)) {
+                    if (!member.hasPermission(commandBundle.permission)) {
                         return;
                     }
                 }
-            }
-            if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
-                try {
-                    commandBundle.method.setAccessible(true);
-                    if (!(boolean) commandBundle.method.invoke(commandBundle.simpleCommands, args)) {
-                        EmbedBuilder eb = new EmbedBuilder();
-                        eb.setTitle(title);
-                        eb.setColor(Color.decode("#FF0000"));
-                        eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                        channel.sendMessage(eb.build()).queue();
+                String[] oriArgs = StringUtils.parseArgs(content);
+                Object[] args = new Object[commandBundle.method.getParameterTypes().length];
+                if (oriArgs.length != args.length + 1) {
+                    EmbedBuilder eb = new EmbedBuilder();
+                    eb.setTitle(title);
+                    eb.setColor(Color.decode("#FF0000"));
+                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                    channel.sendMessage(eb.build()).queue();
+                    return;
+                }
+                args[0] = new ServerContext(channel, message, guild, member);
+                for (int i = 2; i < oriArgs.length; i++) {
+                    if (commandBundle.method.getParameterTypes()[i - 1].equals(String.class)) {
+                        args[i - 1] = oriArgs[i];
+                    } else {
+                        try {
+                            if (converters.get(commandBundle.method.getParameterTypes()[i - 1]) != null) {
+                                try {
+                                    args[i - 1] = converters.get(commandBundle.method.getParameterTypes()[i - 1]).convertServer(oriArgs[i], guild.getJDA(), message, channel, member, guild);
+                                } catch (NullPointerException ignored) {
+                                    EmbedBuilder eb = new EmbedBuilder();
+                                    eb.setTitle(title);
+                                    eb.setColor(Color.decode("#FF0000"));
+                                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                                    channel.sendMessage(eb.build()).queue();
+                                    return;
+                                }
+                            } else {
+                                return;
+                            }
+                        } catch (ConvertException ignored) {
+                            EmbedBuilder eb = new EmbedBuilder();
+                            eb.setTitle(title);
+                            eb.setColor(Color.decode("#FF0000"));
+                            eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                            channel.sendMessage(eb.build()).queue();
+                            return;
+                        }
                     }
-                } catch (Throwable e) {
-                    e.printStackTrace();
+                }
+                if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
+                    try {
+                        commandBundle.method.setAccessible(true);
+                        if (!(boolean) commandBundle.method.invoke(commandBundle.instance, args)) {
+                            EmbedBuilder eb = new EmbedBuilder();
+                            eb.setTitle(title);
+                            eb.setColor(Color.decode("#FF0000"));
+                            eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                            channel.sendMessage(eb.build()).queue();
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    EmbedBuilder eb = new EmbedBuilder();
+                    eb.setTitle(title);
+                    eb.setColor(Color.decode("#FF0000"));
+                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                    channel.sendMessage(eb.build()).queue();
+                }
+            };
+            if (commandBundle.method.isAnnotationPresent(Cooldown.class)) {
+                switch (commandBundle.method.getAnnotation(Cooldown.class).type()) {
+                    case GUILD:
+                        if (!commandBundle.cooldown.containsKey(guild)) {
+                            commandBundle.cooldown.put(guild, new Bucket(commandBundle.method.getAnnotation(Cooldown.class).bucketSize(), commandBundle.method.getAnnotation(Cooldown.class).initialLevel(), commandBundle.method.getAnnotation(Cooldown.class).fullRefillTime(), false));
+                        }
+                        commandBundle.cooldown.get(guild).execute(runnable);
+                        break;
+                    case CHANNEL:
+                        if (!commandBundle.cooldown.containsKey(channel)) {
+                            commandBundle.cooldown.put(channel, new Bucket(commandBundle.method.getAnnotation(Cooldown.class).bucketSize(), commandBundle.method.getAnnotation(Cooldown.class).initialLevel(), commandBundle.method.getAnnotation(Cooldown.class).fullRefillTime(), false));
+                        }
+                        commandBundle.cooldown.get(channel).execute(runnable);
+                        break;
+                    case USER:
+                        if (!commandBundle.cooldown.containsKey(member.getUser())) {
+                            commandBundle.cooldown.put(member.getUser(), new Bucket(commandBundle.method.getAnnotation(Cooldown.class).bucketSize(), commandBundle.method.getAnnotation(Cooldown.class).initialLevel(), commandBundle.method.getAnnotation(Cooldown.class).fullRefillTime(), false));
+                        }
+                        commandBundle.cooldown.get(member.getUser()).execute(runnable);
+                        break;
+                    case MEMBER:
+                        if (!commandBundle.cooldown.containsKey(member)) {
+                            commandBundle.cooldown.put(member, new Bucket(commandBundle.method.getAnnotation(Cooldown.class).bucketSize(), commandBundle.method.getAnnotation(Cooldown.class).initialLevel(), commandBundle.method.getAnnotation(Cooldown.class).fullRefillTime(), false));
+                        }
+                        commandBundle.cooldown.get(member).execute(runnable);
+                        break;
                 }
             } else {
-                EmbedBuilder eb = new EmbedBuilder();
-                eb.setTitle(title);
-                eb.setColor(Color.decode("#FF0000"));
-                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                channel.sendMessage(eb.build()).queue();
+                runnable.run();
             }
         }
     }
@@ -189,65 +218,77 @@ public class SimpleCommandManager extends CommandManager {
     public void performPrivateCommand(String command, String content, PrivateChannel channel, User user, Message message) {
         if (privateCommands.containsKey(command)) {
             CommandBundle commandBundle = privateCommands.get(command);
-            String[] oriArgs = StringUtils.parseArgs(content);
-            Object[] args = new Object[commandBundle.method.getParameterTypes().length];
-            if (oriArgs.length != args.length + 1) {
-                EmbedBuilder eb = new EmbedBuilder();
-                eb.setTitle(title);
-                eb.setColor(Color.decode("#FF0000"));
-                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                channel.sendMessage(eb.build()).queue();
-                return;
-            }
-            args[0] = new PrivateContext(channel, message, user);
-            for (int i = 2; i < oriArgs.length; i++) {
-                if (commandBundle.method.getParameterTypes()[i - 1].equals(String.class)) {
-                    args[i - 1] = oriArgs[i];
-                } else {
-                    try {
-                        if (converters.get(commandBundle.method.getParameterTypes()[i - 1]) != null) {
-                            try {
-                                args[i - 1] = converters.get(commandBundle.method.getParameterTypes()[i - 1]).convertPrivate(oriArgs[i], channel.getJDA(), message, channel, user);
-                            } catch (NullPointerException ignored) {
-                                EmbedBuilder eb = new EmbedBuilder();
-                                eb.setTitle(title);
-                                eb.setColor(Color.decode("#FF0000"));
-                                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                                channel.sendMessage(eb.build()).queue();
+            Runnable runnable = () -> {
+                String[] oriArgs = StringUtils.parseArgs(content);
+                Object[] args = new Object[commandBundle.method.getParameterTypes().length];
+                if (oriArgs.length != args.length + 1) {
+                    EmbedBuilder eb = new EmbedBuilder();
+                    eb.setTitle(title);
+                    eb.setColor(Color.decode("#FF0000"));
+                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                    channel.sendMessage(eb.build()).queue();
+                    return;
+                }
+                args[0] = new PrivateContext(channel, message, user);
+                for (int i = 2; i < oriArgs.length; i++) {
+                    if (commandBundle.method.getParameterTypes()[i - 1].equals(String.class)) {
+                        args[i - 1] = oriArgs[i];
+                    } else {
+                        try {
+                            if (converters.get(commandBundle.method.getParameterTypes()[i - 1]) != null) {
+                                try {
+                                    args[i - 1] = converters.get(commandBundle.method.getParameterTypes()[i - 1]).convertPrivate(oriArgs[i], channel.getJDA(), message, channel, user);
+                                } catch (NullPointerException ignored) {
+                                    EmbedBuilder eb = new EmbedBuilder();
+                                    eb.setTitle(title);
+                                    eb.setColor(Color.decode("#FF0000"));
+                                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                                    channel.sendMessage(eb.build()).queue();
+                                    return;
+                                }
+                            } else {
                                 return;
                             }
-                        } else {
+                        } catch (ConvertException ignored) {
+                            EmbedBuilder eb = new EmbedBuilder();
+                            eb.setTitle(title);
+                            eb.setColor(Color.decode("#FF0000"));
+                            eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                            channel.sendMessage(eb.build()).queue();
                             return;
                         }
-                    } catch (ConvertException ignored) {
-                        EmbedBuilder eb = new EmbedBuilder();
-                        eb.setTitle(title);
-                        eb.setColor(Color.decode("#FF0000"));
-                        eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                        channel.sendMessage(eb.build()).queue();
-                        return;
                     }
                 }
-            }
-            if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
-                try {
-                    commandBundle.method.setAccessible(true);
-                    if (!(boolean) commandBundle.method.invoke(commandBundle.simpleCommands, args)) {
-                        EmbedBuilder eb = new EmbedBuilder();
-                        eb.setTitle(title);
-                        eb.setColor(Color.decode("#FF0000"));
-                        eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                        channel.sendMessage(eb.build()).queue();
+                if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
+                    try {
+                        commandBundle.method.setAccessible(true);
+                        if (!(boolean) commandBundle.method.invoke(commandBundle.instance, args)) {
+                            EmbedBuilder eb = new EmbedBuilder();
+                            eb.setTitle(title);
+                            eb.setColor(Color.decode("#FF0000"));
+                            eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                            channel.sendMessage(eb.build()).queue();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } else {
+                    EmbedBuilder eb = new EmbedBuilder();
+                    eb.setTitle(title);
+                    eb.setColor(Color.decode("#FF0000"));
+                    eb.setDescription("```diff\n- " + commandBundle.usage + "```");
+                    channel.sendMessage(eb.build()).queue();
+                }
+            };
+            if (commandBundle.method.isAnnotationPresent(Cooldown.class)) {
+                if (commandBundle.method.getAnnotation(Cooldown.class).type() == CooldownType.USER) {
+                    if (!commandBundle.cooldown.containsKey(user)) {
+                        commandBundle.cooldown.put(user, new Bucket(commandBundle.method.getAnnotation(Cooldown.class).bucketSize(), commandBundle.method.getAnnotation(Cooldown.class).initialLevel(), commandBundle.method.getAnnotation(Cooldown.class).fullRefillTime(), false));
+                    }
+                    commandBundle.cooldown.get(user).execute(runnable);
                 }
             } else {
-                EmbedBuilder eb = new EmbedBuilder();
-                eb.setTitle(title);
-                eb.setColor(Color.decode("#FF0000"));
-                eb.setDescription("```diff\n- " + commandBundle.usage + "```");
-                channel.sendMessage(eb.build()).queue();
+                runnable.run();
             }
         }
     }
@@ -258,28 +299,50 @@ public class SimpleCommandManager extends CommandManager {
         return tmp;
     }
 
-    public Map<String, CommandBundle> getServerCommands() {
-        return serverCommands;
+    public Set<Map.Entry<String, CommandBundle>> getServerCommands() {
+        return serverCommands.entrySet();
     }
 
-    public Map<String, CommandBundle> getPrivateCommands() {
-        return privateCommands;
+    public Set<Map.Entry<String, CommandBundle>> getPrivateCommands() {
+        return privateCommands.entrySet();
     }
 
-    private static class CommandBundle {
+    public static class CommandBundle {
 
         private final Method method;
-        private final SimpleCommands simpleCommands;
+        private final SimpleCommands instance;
         private final String usage;
         private final String info;
         private final Permission permission;
+        private final Map<Object, Bucket> cooldown;
 
-        private CommandBundle(Method method, SimpleCommands simpleCommands, String usage, String info, Permission permission) {
+        private CommandBundle(Method method, SimpleCommands instance, String usage, String info, Permission permission, boolean cooldown) {
             this.method = method;
-            this.simpleCommands = simpleCommands;
+            this.instance = instance;
             this.usage = usage;
             this.info = info;
             this.permission = permission;
+            this.cooldown = cooldown ? new HashMap<>() : null;
+        }
+
+        public String getUsage() {
+            return usage;
+        }
+
+        public String getInfo() {
+            return info;
+        }
+
+        public Permission getPermission() {
+            return permission;
+        }
+
+        public Method getMethod() {
+            return method;
+        }
+
+        public SimpleCommands getInstance() {
+            return instance;
         }
 
     }
@@ -296,9 +359,9 @@ public class SimpleCommandManager extends CommandManager {
         private final String title;
         private final Color color;
         private final String indexOutOfBoundsText;
-        private final DiscordBot<SimpleCommandManager> bot;
+        private final AbstractDiscordBot<?, SimpleCommandManager, ?> bot;
 
-        public DefaultServerHelpCommand(DiscordBot<SimpleCommandManager> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
+        public DefaultServerHelpCommand(AbstractDiscordBot<?, SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
             this.fullWidth = fullWidth;
             this.itemsPerPage = itemsPerPage;
             this.title = title;
@@ -342,9 +405,9 @@ public class SimpleCommandManager extends CommandManager {
         private final String title;
         private final Color color;
         private final String indexOutOfBoundsText;
-        private final DiscordBot<SimpleCommandManager> bot;
+        private final AbstractDiscordBot<?, SimpleCommandManager, ?> bot;
 
-        public DefaultPrivateHelpCommand(DiscordBot<SimpleCommandManager> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
+        public DefaultPrivateHelpCommand(AbstractDiscordBot<?, SimpleCommandManager, ?> bot, boolean fullWidth, int itemsPerPage, String title, Color color, String indexOutOfBoundsText) {
             this.fullWidth = fullWidth;
             this.itemsPerPage = itemsPerPage;
             this.title = title;

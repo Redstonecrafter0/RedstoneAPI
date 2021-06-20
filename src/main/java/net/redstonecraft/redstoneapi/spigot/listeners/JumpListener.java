@@ -11,10 +11,11 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class JumpListener implements Listener {
 
-    private final HashMap<Player, Boolean> onGround = new HashMap<>();
+    private final Map<Player, Boolean> onGround = new HashMap<>();
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {

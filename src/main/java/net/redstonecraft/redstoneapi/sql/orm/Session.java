@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is the most important class in the orm system.
@@ -24,7 +25,7 @@ import java.util.List;
 public class Session {
 
     private final SQL sql;
-    final HashMap<Class<? extends TableBase>, TableFields> tables = new HashMap<>();
+    final Map<Class<? extends TableBase>, TableFields> tables = new HashMap<>();
     final List<PreparedStatement> waitingUpdates = new ArrayList<>();
 
     public Session(SQL sql) {
@@ -42,11 +43,11 @@ public class Session {
                 Column value = i.getAnnotation(Column.class);
                 i.setAccessible(true);
                 fields.add(i);
-                if (value.primaryKey()) {
-                    if (value.unique()) {
+                if (value.primaryKey() || i.isAnnotationPresent(PrimaryKey.class)) {
+                    if (value.unique() || i.isAnnotationPresent(Unique.class)) {
                         throw new InvalidStructureException("The primaryKey is unique");
                     }
-                    if (value.notnull()) {
+                    if (value.notnull() || i.isAnnotationPresent(NotNull.class)) {
                         throw new InvalidStructureException("The primaryKey cannot be null");
                     }
                     if (primary == null) {
@@ -64,11 +65,19 @@ public class Session {
             Object model = table.newInstance();
             List<BaseType> columns = new ArrayList<>();
             List<Column> columnData = new ArrayList<>();
+            List<Boolean> primaryKeyData = new ArrayList<>();
+            List<Boolean> notNullData = new ArrayList<>();
+            List<Boolean> uniqueData = new ArrayList<>();
+            List<Boolean> hideOnJsonData = new ArrayList<>();
             for (Field i : fields) {
                 columns.add(((BaseType) i.get(model)));
                 columnData.add(i.getAnnotation(Column.class));
+                primaryKeyData.add(i.isAnnotationPresent(PrimaryKey.class));
+                notNullData.add(i.isAnnotationPresent(NotNull.class));
+                uniqueData.add(i.isAnnotationPresent(Unique.class));
+                hideOnJsonData.add(i.isAnnotationPresent(HideOnJson.class));
             }
-            waitingUpdates.add(sql.getSyntaxRenderer().createTable(sql, table, columns, columnData, (SQLNumber) primary.get(model)));
+            waitingUpdates.add(sql.getSyntaxRenderer().createTable(sql, table, columns, columnData, primaryKeyData, notNullData, uniqueData, hideOnJsonData, (SQLNumber) primary.get(model)));
             tables.put(table, new TableFields(table, fields.toArray(new Field[0]), primary));
         } catch (InstantiationException | IllegalAccessException e) {
             throw new ConstructException(e.getMessage());
@@ -144,7 +153,7 @@ public class Session {
             try {
                 List<BaseType> values = new ArrayList();
                 for (Field i : tables.get(entry.getClass()).fields) {
-                    if (i.getAnnotation(Column.class).notnull() && ((BaseType) i.get(entry)).getValue() == null) {
+                    if ((i.getAnnotation(Column.class).notnull() || i.isAnnotationPresent(NotNull.class)) && ((BaseType) i.get(entry)).getValue() == null) {
                         throw new NullPointerException("Column " + i.getName() + " is declared as notnull but null was provided");
                     }
                     BaseType type = ((BaseType) i.get(entry));
@@ -170,7 +179,7 @@ public class Session {
                 }
                 List<BaseType> values = new ArrayList<>();
                 for (Field i : tables.get(entry.getClass()).fields) {
-                    if (!i.getAnnotation(Column.class).primaryKey()) {
+                    if (!(i.getAnnotation(Column.class).primaryKey() || i.isAnnotationPresent(PrimaryKey.class))) {
                         values.add((BaseType) i.get(entry));
                     }
                 }

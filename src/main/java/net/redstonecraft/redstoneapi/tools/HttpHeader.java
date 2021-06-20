@@ -6,7 +6,7 @@ package net.redstonecraft.redstoneapi.tools;
  * @author Redstonecrafter0
  * @since 1.0
  * */
-public class HttpHeader {
+public class HttpHeader implements Comparable<HttpHeader> {
 
     /**
      * @deprecated
@@ -48,7 +48,7 @@ public class HttpHeader {
      * */
     public static HttpHeader getByKey(HttpHeader[] headers, String key) {
         for (HttpHeader i : headers) {
-            if (i.getKey().equals(key)) {
+            if (i.getKey().equalsIgnoreCase(key)) {
                 return i;
             }
         }
@@ -74,4 +74,10 @@ public class HttpHeader {
                 ", value='" + value + '\'' +
                 '}';
     }
+
+    @Override
+    public int compareTo(HttpHeader o) {
+        return key.compareTo(o.key);
+    }
+
 }

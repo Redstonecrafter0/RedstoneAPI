@@ -1,5 +1,10 @@
 package net.redstonecraft.redstoneapi.sql.orm;
 
+/**
+ * This class is used to sort a SQL query
+ *
+ * @author Redstonecrafter0
+ * */
 public class Order {
 
     private final BaseType key;

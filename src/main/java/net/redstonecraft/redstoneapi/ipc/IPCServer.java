@@ -23,7 +23,10 @@ import java.util.Objects;
  *
  * @author Redstonecrafter0
  * @since 1.0
+ *
+ * @deprecated for ipc you may use the PluginChannel of Minecraft or a webhook using {@link net.redstonecraft.redstoneapi.webserver.WebServer} for everythin else
  * */
+@Deprecated
 public class IPCServer {
 
     private final ServerSocket socket;
