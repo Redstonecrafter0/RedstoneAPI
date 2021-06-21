@@ -1,6 +1,6 @@
 name: RedstoneAPI
 main: net.redstonecraft.redstoneapi.spigot.plugin.RedstoneAPISpigot
-version: 1.4
+version: 1.5
 author: Redstonecrafter0
 softdepend:
   - ProtocolLib

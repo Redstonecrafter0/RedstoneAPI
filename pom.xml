@@ -6,7 +6,7 @@
 
     <groupId>net.redstonecraft</groupId>
     <artifactId>redstoneapi</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,6 +44,12 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.23</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>4.0.3</version>
         </dependency>
 
         <dependency>
@@ -278,6 +284,7 @@
                             </filters>
                             <artifactSet>
                                 <includes>
+                                    <include>com.zaxxer:HikariCP</include>
                                     <include>org.xerial:sqlite-jdbc</include>
                                     <include>mysql:mysql-connector-java</include>
                                     <include>com.github.lalyos:jfiglet</include>
