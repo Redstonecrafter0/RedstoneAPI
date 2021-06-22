@@ -25,13 +25,13 @@ public class Filter {
     }
 
     public Filter and(Filter filter) {
-        queryString += " AND " + filter.queryString;
+        queryString = "(" + queryString + " AND " + filter.queryString + ")";
         values.addAll(filter.values);
         return this;
     }
 
     public Filter or(Filter filter) {
-        queryString += " OR " + filter.queryString;
+        queryString = "(" + queryString + " OR " + filter.queryString + ")";
         values.addAll(filter.values);
         return this;
     }
