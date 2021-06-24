@@ -324,7 +324,7 @@ public class WebServer {
                                             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
                                             prev1 = t;
                                         }
-                                        String protocol = sb.toString();
+                                        String protocol = sb.toString().trim();
                                         sb = new StringBuilder();
                                         List<Byte> buf = new ArrayList<>();
                                         buf.add((byte) 0);
