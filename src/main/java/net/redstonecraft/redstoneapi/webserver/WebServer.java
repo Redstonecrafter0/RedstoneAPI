@@ -116,6 +116,10 @@ public class WebServer {
         this("localhost", 8080);
     }
 
+    public WebServer(int port) throws IOException {
+        this("", port);
+    }
+
     public WebServer(String host, int port) throws IOException {
         this(host, port, true, DEFAULT_UNIVERSAL_ERROR_HANDLER, ".");
     }
@@ -324,7 +328,7 @@ public class WebServer {
                                             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
                                             prev1 = t;
                                         }
-                                        String protocol = sb.toString();
+                                        String protocol = sb.toString().trim();
                                         sb = new StringBuilder();
                                         List<Byte> buf = new ArrayList<>();
                                         buf.add((byte) 0);
@@ -841,14 +845,14 @@ public class WebServer {
                 } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
                     for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
                         if (i.getParameterTypes().length == 1 && j.path().startsWith("/")) {
-                            if (Arrays.asList(new Class<?>[]{WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class}).contains(i.getParameterTypes()[0])) {
+                            if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
                                 websocketManager.addHandler(j.path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                             }
                         }
                     }
                 } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
                     if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).path().startsWith("/")) {
-                        if (Arrays.asList(new Class<?>[]{WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class}).contains(i.getParameterTypes()[0])) {
+                        if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
                             websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                         }
                     }
