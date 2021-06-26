@@ -411,6 +411,59 @@
                             <finalName>${project.artifactId}-${project.version}-webserver</finalName>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>packets</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>net.redstonecraft:redstoneapi</artifact>
+                                    <includes>
+                                        <include>net/redstonecraft/redstoneapi/packets/**/*</include>
+                                        <include>net/redstonecraft/redstoneapi/json/**/*</include>
+                                        <include>net/redstonecraft/redstoneapi/tools/**/*</include>
+                                        <include>net/redstonecraft/redstoneapi/RedstoneAPI*</include>
+                                        <include>redstoneapi.png</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.hubspot.jinjava:jinjava</include>
+                                    <include>com.fasterxml.jackson.core:jackson-databind</include>
+                                    <include>com.fasterxml.jackson.core:jackson-annotations</include>
+                                    <include>com.fasterxml.jackson.core:jackson-core</include>
+                                    <include>com.github.lalyos:jfiglet</include>
+                                    <include>com.diogonunes:JColor</include>
+                                    <include>com.google.code.gson:gson</include>
+                                    <include>dnsjava:dnsjava</include>
+                                    <include>org.springframework.security:spring-security-core</include>
+                                    <include>commons-lang:commons-lang</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>net.redstonecraft.redstoneapi.RedstoneAPI</mainClass>
+                                    <manifestEntries>
+                                        <Built-By>Redstonecrafter0</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <minimizeJar>true</minimizeJar>
+                            <finalName>${project.artifactId}-${project.version}-packets</finalName>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

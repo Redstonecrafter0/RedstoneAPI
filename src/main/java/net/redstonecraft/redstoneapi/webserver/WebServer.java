@@ -150,6 +150,8 @@ public class WebServer {
                 try {
                     tick();
                 } catch (ClosedSelectorException ignored) {
+                } catch (OutOfMemoryError ignored) {
+                    System.gc();
                 } catch (Throwable e) {
                     if (logging) {
                         logger.severe(e.getClass().getName());
