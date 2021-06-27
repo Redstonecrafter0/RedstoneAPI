@@ -2,7 +2,10 @@ package net.redstonecraft.redstoneapi.tools;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -54,16 +57,20 @@ public class Hashlib {
         return hash("SHA-512", arr);
     }
 
+    public static String hmacSha512(String str, String key) {
+        return hmacSha512(str.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String hmacSha512(byte[] arr, byte[] key) {
+        return hmac("HmacSHA512", arr, key);
+    }
+
     private static String hash(String algorithm, byte[] arr) {
-        try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            md.reset();
-            md.update(arr);
-            return bytesToHex(md.digest());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            throw new IllegalStateException();
-        }
+        return bytesToHex(hash_raw(algorithm, arr));
+    }
+
+    private static String hmac(String algorithm, byte[] arr, byte[] key) {
+        return bytesToHex(hmac_raw(algorithm, arr, key));
     }
 
     private static String bytesToHex(byte[] hash) {
@@ -118,6 +125,14 @@ public class Hashlib {
         return hash_raw("SHA-512", arr);
     }
 
+    public static byte[] hmacSha512_raw(String str, String key) {
+        return hmacSha512_raw(str.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static byte[] hmacSha512_raw(byte[] arr, byte[] key) {
+        return hmac_raw("HmacSHA512", arr, key);
+    }
+
     private static byte[] hash_raw(String algorithm, byte[] arr) {
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
@@ -128,6 +143,17 @@ public class Hashlib {
             e.printStackTrace();
             throw new IllegalStateException();
         }
+    }
+
+    private static byte[] hmac_raw(String algorithm, byte[] arr, byte[] key) {
+        try {
+            Mac hmac = Mac.getInstance(algorithm);
+            SecretKeySpec keySpec = new SecretKeySpec(key, algorithm);
+            hmac.init(keySpec);
+            return hmac.doFinal(arr);
+        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+        }
+        return null;
     }
 
     public static String bcrypt_hash(String str) {
