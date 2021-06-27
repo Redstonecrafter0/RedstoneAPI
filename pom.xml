@@ -131,6 +131,12 @@
             <artifactId>commons-lang</artifactId>
             <version>2.6</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>4.5.13</version>
+        </dependency>
     </dependencies>
 
     <licenses>
@@ -208,6 +214,7 @@
                                     <include>dnsjava:dnsjava</include>
                                     <include>org.springframework.security:spring-security-core</include>
                                     <include>commons-lang:commons-lang</include>
+                                    <include>org.apache.httpcomponents:httpmime</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
@@ -293,6 +300,7 @@
                                     <include>dnsjava:dnsjava</include>
                                     <include>org.springframework.security:spring-security-core</include>
                                     <include>commons-lang:commons-lang</include>
+                                    <include>org.apache.httpcomponents:httpmime</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
@@ -343,6 +351,7 @@
                                     <include>dnsjava:dnsjava</include>
                                     <include>org.springframework.security:spring-security-core</include>
                                     <include>commons-lang:commons-lang</include>
+                                    <include>org.apache.httpcomponents:httpmime</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
@@ -397,6 +406,7 @@
                                     <include>dnsjava:dnsjava</include>
                                     <include>org.springframework.security:spring-security-core</include>
                                     <include>commons-lang:commons-lang</include>
+                                    <include>org.apache.httpcomponents:httpmime</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
@@ -450,6 +460,7 @@
                                     <include>dnsjava:dnsjava</include>
                                     <include>org.springframework.security:spring-security-core</include>
                                     <include>commons-lang:commons-lang</include>
+                                    <include>org.apache.httpcomponents:httpmime</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
