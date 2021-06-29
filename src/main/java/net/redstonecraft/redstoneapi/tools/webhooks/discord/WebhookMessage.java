@@ -85,4 +85,8 @@ public class WebhookMessage {
         send(url, new FileInputStream(file), file.getName());
     }
 
+    public JSONObject getData() {
+        return data;
+    }
+
 }
