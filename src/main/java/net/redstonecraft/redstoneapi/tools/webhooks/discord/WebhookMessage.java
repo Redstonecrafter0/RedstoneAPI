@@ -1,5 +1,6 @@
 package net.redstonecraft.redstoneapi.tools.webhooks.discord;
 
+import net.redstonecraft.redstoneapi.RedstoneAPI;
 import net.redstonecraft.redstoneapi.json.JSONArray;
 import net.redstonecraft.redstoneapi.json.JSONObject;
 import net.redstonecraft.redstoneapi.tools.HttpHeader;
@@ -49,7 +50,7 @@ public class WebhookMessage {
     }
 
     public void send(String url) throws IOException {
-        HttpRequest.post(url, data.toJSONString().getBytes(StandardCharsets.UTF_8), new HttpHeader("Content-Type", "application/json"));
+        HttpRequest.post(url, data.toJSONString().getBytes(StandardCharsets.UTF_8), new HttpHeader("Content-Type", "application/json"), new HttpHeader("User-Agent", "RedstoneAPI/" + RedstoneAPI.getVersion()));
     }
 
     public void send(String url, byte[] fileData, String filename) throws IOException {
