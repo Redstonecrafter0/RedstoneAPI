@@ -1,5 +1,6 @@
 package net.redstonecraft.redstoneapi.discord;
 
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -99,6 +100,15 @@ public class ShardedDiscordBot<C extends CommandManager, S extends SlashCommandM
             }
             commands.queue();
         });
+    }
+
+    @Override
+    public void submitSlashCommandsForGuild(Guild guild) {
+        CommandListUpdateAction commands = guild.updateCommands();
+        if (slashCommandManager != null) {
+            commands.addCommands(slashCommandManager.getJdaCommands());
+        }
+        commands.queue();
     }
 
     @Override

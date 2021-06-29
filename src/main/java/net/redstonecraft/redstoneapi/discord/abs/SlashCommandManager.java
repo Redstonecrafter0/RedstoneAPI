@@ -49,14 +49,4 @@ public abstract class SlashCommandManager {
 
     }
 
-    public static class Option {
-
-        private final String name;
-
-        public Option(String name) {
-            this.name = name;
-        }
-
-    }
-
 }
