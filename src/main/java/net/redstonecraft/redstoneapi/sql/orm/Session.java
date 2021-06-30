@@ -88,7 +88,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -96,7 +96,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), filter, orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -104,7 +104,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), limit, orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -112,7 +112,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), filter, limit, orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -120,7 +120,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), limit, offset, orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -128,7 +128,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new Query<>(this, tables.get(table), filter, limit, offset, orders);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -136,7 +136,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new SQLPagination<>(new Query<>(this, tables.get(table), pageSize, pageSize * (page), orders).getAllAsList(), pageSize, page);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -144,7 +144,7 @@ public class Session {
         if (tables.containsKey(table)) {
             return new SQLPagination<>(new Query<>(this, tables.get(table), filter, pageSize, pageSize * (page), orders).getAllAsList(), pageSize, page);
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -166,7 +166,7 @@ public class Session {
                 e.printStackTrace();
             }
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + entry.getClass().getName() + " does not exist");
         }
     }
 
@@ -188,7 +188,7 @@ public class Session {
                 throw new InvalidStructureException(e.getMessage());
             }
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + entry.getClass().getName() + " does not exist");
         }
     }
 
@@ -196,7 +196,7 @@ public class Session {
         if (tables.containsKey(table)) {
             waitingUpdates.add(sql.getSyntaxRenderer().delete(sql, table, filter));
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -209,7 +209,7 @@ public class Session {
                 throw new InvalidStructureException(e.getMessage());
             }
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + entry.getClass().getName() + " does not exist");
         }
     }
 
@@ -219,7 +219,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -229,7 +229,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -239,7 +239,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -249,7 +249,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -259,7 +259,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
@@ -269,7 +269,7 @@ public class Session {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble("total") : null;
         } else {
-            throw new NoSuchTableException("Table does not exist");
+            throw new NoSuchTableException("Table " + table.getName() + " does not exist");
         }
     }
 
