@@ -40,7 +40,12 @@ public class EventManager {
     }
 
     public void fireEvent(Event event) {
-        List<HandlerBundle> handlers = registry.get(event.getClass());
+        List<HandlerBundle> handlers = new LinkedList<>();
+        for (Map.Entry<Class<? extends Event>, List<HandlerBundle>> i : registry.entrySet()) {
+            if (i.getKey().equals(event.getClass()) || i.getKey().isAssignableFrom(event.getClass())) {
+                handlers.addAll(i.getValue());
+            }
+        }
         if (handlers != null) {
             if (CancellableEvent.class.isAssignableFrom(event.getClass())) {
                 for (HandlerBundle i : handlers) {
