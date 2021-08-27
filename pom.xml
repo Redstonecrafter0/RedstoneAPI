@@ -15,6 +15,37 @@
         <javac.target>1.8</javac.target>
     </properties>
 
+    <scm>
+        <url>https://github.com/Redstonecrafter0/RedstoneAPI</url>
+        <connection>scm:git:git://github.com/Redstonecrafter0/RedstoneAPI.git</connection>
+        <developerConnection>scm:git:git@github.com:Redstonecrafter0/RedstoneAPI.git</developerConnection>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>GNU AFFERO GENERAL PUBLIC LICENSE, Version 3 (AGPL-3.0)</name>
+            <url>https://opensource.org/licenses/AGPL-3.0</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>redstonecrafter0</id>
+            <name>Redstonecrafter0</name>
+            <email>info.redstonecrafter0@gmail.com</email>
+            <url>https://github.com/Redstonecrafter0</url>
+            <roles>
+                <role>Owner</role>
+                <role>Developer</role>
+                <role>Documentation</role>
+            </roles>
+            <timezone>Europe/Berlin</timezone>
+            <properties>
+                <discord>Redstonecrafter0#7990</discord>
+            </properties>
+        </developer>
+    </developers>
+
     <repositories>
         <repository>
             <id>bungeecord-repo</id>
@@ -99,7 +130,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
-            <version>5.4.5</version>
+            <version>5.4.7</version>
         </dependency>
 
         <dependency>
@@ -138,13 +169,6 @@
             <version>4.5.13</version>
         </dependency>
     </dependencies>
-
-    <licenses>
-        <license>
-            <name>GNU General Public License v3 (GPLv3)</name>
-            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
-        </license>
-    </licenses>
 
     <build>
         <plugins>

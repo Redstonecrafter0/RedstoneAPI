@@ -137,7 +137,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
         con.disconnect();
         return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
@@ -170,7 +172,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
 
         con.disconnect();
@@ -204,7 +208,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
         con.disconnect();
         return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
@@ -242,7 +248,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
         con.disconnect();
         return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
@@ -280,7 +288,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
         con.disconnect();
         return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
@@ -318,7 +328,9 @@ public class HttpRequest {
         String mime = con.getContentType();
         List<HttpHeader> headers = new ArrayList<>();
         for (Map.Entry<String, List<String>> i : con.getHeaderFields().entrySet()) {
-            headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            if (i.getKey() != null) {
+                headers.add(new HttpHeader(i.getKey(), String.join(", ", i.getValue())));
+            }
         }
         con.disconnect();
         return new HttpRequest(response, code, mime, headers.toArray(new HttpHeader[0]));
