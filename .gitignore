@@ -1,8 +1,9 @@
 .idea
 target
-RedstoneAPI.iml
+*.iml
 dependency-reduced-pom.xml
 src/test/java/internaltest
 settings.xml
 templates
 static
+TODO

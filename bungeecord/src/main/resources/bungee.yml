@@ -1,0 +1,4 @@
+name: RedstoneAPI
+main: net.redstonecraft.redstoneapi.bungee.plugin.RedstoneAPIBungee
+version: ${version}
+author: Redstonecrafter0
