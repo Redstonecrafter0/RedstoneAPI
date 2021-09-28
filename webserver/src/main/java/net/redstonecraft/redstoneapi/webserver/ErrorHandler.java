@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.webserver.handler;
+package net.redstonecraft.redstoneapi.webserver;
 
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.core.HttpResponseCode;

@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.data.json;
+package net.redstonecraft.redstoneapi.db.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface HideJson {
+public @interface HideOnJson {
 }

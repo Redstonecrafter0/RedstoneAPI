@@ -1,7 +1,7 @@
 package net.redstonecraft.redstoneapi.db;
 
 /**
- * redstoneapi
+ * RedstoneAPI
  *
  * @author Redstonecrafter0
  */

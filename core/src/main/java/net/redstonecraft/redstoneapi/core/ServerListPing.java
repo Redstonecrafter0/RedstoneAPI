@@ -4,6 +4,7 @@ import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
 import org.xbill.DNS.*;
+import org.xbill.DNS.Record;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;

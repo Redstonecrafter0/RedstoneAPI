@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver.obj;
 
-import net.redstonecraft.redstoneapi.webserver.handler.RequestHandler;
+import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 
 import java.lang.reflect.Method;
 
