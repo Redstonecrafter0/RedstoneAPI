@@ -8,7 +8,7 @@ import net.redstonecraft.redstoneapi.core.event.Event;
  * @author Redstonecrafter0
  * @since 1.5
  */
-public abstract class Packet extends Event {
+public abstract class Packet implements Event {
 
     public abstract int getPacketId();
 

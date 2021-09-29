@@ -6,5 +6,5 @@ package net.redstonecraft.redstoneapi.core.event;
  * @author Redstonecrafter0
  * @since 1.2
  * */
-public abstract class Event {
+public interface Event {
 }

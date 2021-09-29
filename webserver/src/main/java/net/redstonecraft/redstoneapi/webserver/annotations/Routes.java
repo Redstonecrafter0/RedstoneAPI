@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.webserver;
+package net.redstonecraft.redstoneapi.webserver.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

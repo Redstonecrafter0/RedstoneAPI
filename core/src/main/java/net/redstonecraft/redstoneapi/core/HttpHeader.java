@@ -1,5 +1,7 @@
 package net.redstonecraft.redstoneapi.core;
 
+import java.util.List;
+
 /**
  * HttpHeader class for providing http headers in {@link HttpRequest}
  *
@@ -8,16 +10,8 @@ package net.redstonecraft.redstoneapi.core;
  * */
 public class HttpHeader implements Comparable<HttpHeader> {
 
-    /**
-     * @deprecated
-     * @see HttpHeader#getKey()
-     * */
-    public final String key;
-    /**
-     * @deprecated
-     * @see HttpHeader#getValue()
-     * */
-    public final String value;
+    private final String key;
+    private final String value;
 
     /**
      * Create a http header for {@link HttpRequest}
@@ -47,6 +41,23 @@ public class HttpHeader implements Comparable<HttpHeader> {
      * @return null if not found
      * */
     public static HttpHeader getByKey(HttpHeader[] headers, String key) {
+        for (HttpHeader i : headers) {
+            if (i.getKey().equalsIgnoreCase(key)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get a {@link HttpHeader} by the key.
+     *
+     * @param headers the headers to get from
+     * @param key the key from which to get the value from
+     *
+     * @return null if not found
+     * */
+    public static HttpHeader getByKey(List<HttpHeader> headers, String key) {
         for (HttpHeader i : headers) {
             if (i.getKey().equalsIgnoreCase(key)) {
                 return i;

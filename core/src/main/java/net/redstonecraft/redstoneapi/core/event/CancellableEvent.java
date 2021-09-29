@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.core.event;
 
-public interface CancellableEvent {
+public interface CancellableEvent extends Event {
 
     public void setCancelled(boolean cancelled);
 

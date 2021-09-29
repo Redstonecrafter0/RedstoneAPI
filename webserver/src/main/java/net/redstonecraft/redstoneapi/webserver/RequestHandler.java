@@ -35,12 +35,12 @@ public abstract class RequestHandler {
 
     public WebResponse renderTemplate(String template, RenderedItems items, HttpHeader... headers) throws IOException {
         //noinspection ReadWriteStringCanBeUsed
-        return new WebResponse(webServer.jinjava.render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), headers);
+        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), headers);
     }
 
     public WebResponse renderTemplate(String template, RenderedItems items, HttpResponseCode code, HttpHeader... headers) throws IOException {
         //noinspection ReadWriteStringCanBeUsed
-        return new WebResponse(webServer.jinjava.render(new String(Files.readAllBytes(new File(template).toPath()), StandardCharsets.UTF_8), items), code, headers);
+        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(template).toPath()), StandardCharsets.UTF_8), items), code, headers);
     }
 
     public WebResponse jsonify(JSONObject object, HttpHeader... headers) {
