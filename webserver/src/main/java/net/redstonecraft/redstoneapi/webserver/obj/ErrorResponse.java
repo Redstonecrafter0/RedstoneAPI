@@ -7,12 +7,14 @@ public class ErrorResponse extends WebResponse {
 
     private HttpResponseCode errorCode;
 
-    public ErrorResponse(String content, HttpHeader... headers) {
+    public ErrorResponse(HttpResponseCode errorCode, String content, HttpHeader... headers) {
         super(content, headers);
+        this.errorCode = errorCode;
     }
 
-    public ErrorResponse(byte[] content, HttpHeader... headers) {
+    public ErrorResponse(HttpResponseCode errorCode, byte[] content, HttpHeader... headers) {
         super(content, headers);
+        this.errorCode = errorCode;
     }
 
     public void setErrorCode(HttpResponseCode errorCode) {
@@ -23,4 +25,5 @@ public class ErrorResponse extends WebResponse {
     public HttpResponseCode getCode() {
         return errorCode;
     }
+
 }

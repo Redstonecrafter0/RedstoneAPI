@@ -1,10 +1,12 @@
 package net.redstonecraft.redstoneapi.webserver;
 
+import net.redstonecraft.redstoneapi.core.HttpResponseCode;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.data.json.parser.ParseException;
+import net.redstonecraft.redstoneapi.webserver.obj.ErrorResponse;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
 
 import java.io.ByteArrayInputStream;
@@ -17,24 +19,30 @@ import java.util.*;
 
 public class WebRequest {
 
-    private String path;
+    private final String path;
     private final HttpHeaders headers;
-    private final InputStream content;
+    private final InputStream inputStream;
     private final WebServer webServer;
     private final HttpMethod method;
-    final String protocol;
+    private final Map<String, String> args = new HashMap<>();
+    private final String protocol;
 
-    public WebRequest(HttpMethod method, String path, String protocol, List<HttpHeader> headers, InputStream content, WebServer webServer) {
+    public WebRequest(HttpMethod method, String path, String protocol, HttpHeaders headers, InputStream inputStream, WebServer webServer) {
         this.method = method;
         this.protocol = protocol;
         this.webServer = webServer;
         if (path.contains("?")) {
-            this.path = "";
+            String[] splitted = path.split("\\?", 2);
+            this.path = splitted[0];
+            for (String i : splitted[1].split("&")) {
+                String[] arg = i.split("=");
+                args.put(URLDecoder.decode(arg[0], StandardCharsets.UTF_8), URLDecoder.decode(arg[1], StandardCharsets.UTF_8));
+            }
         } else {
             this.path = URLDecoder.decode(path, StandardCharsets.UTF_8);
         }
-        this.headers = new HttpHeaders(headers);
-        this.content = content;
+        this.headers = headers;
+        this.inputStream = inputStream;
     }
 
     public String getPath() {
@@ -50,12 +58,16 @@ public class WebRequest {
     }
 
     public InputStream getInputStream() {
-        return content;
+        return inputStream;
+    }
+
+    public Map<String, String> getArgs() {
+        return args;
     }
 
     public byte[] getContent() {
         try {
-            return content.readAllBytes();
+            return inputStream.readAllBytes();
         } catch (IOException e) {
             return null;
         }
@@ -73,6 +85,10 @@ public class WebRequest {
         return JSONParser.parseObject(getContentAsString());
     }
 
+    public String getProtocol() {
+        return protocol;
+    }
+
     public WebServer getWebServer() {
         return webServer;
     }
@@ -85,7 +101,7 @@ public class WebRequest {
                 '}';
     }
 
-    static WebRequest parseRequest(WebServer.Connection connection, ByteBuffer buffer, int len, List<WebServer.Connection> connections, WebServer webServer) throws IOException {
+    static Object parseRequest(WebServer.Connection connection, ByteBuffer buffer, int len, List<WebServer.Connection> connections, WebServer webServer) throws IOException {
         InputStream is = new ByteArrayInputStream(Arrays.copyOfRange(buffer.array(), 0, len));
         StringBuilder sb = new StringBuilder();
         int t;
@@ -93,7 +109,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return null;
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
         }
         String method = sb.toString();
         sb = new StringBuilder();
@@ -101,7 +117,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return null;
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
         }
         String path = sb.toString();
         sb = new StringBuilder();
@@ -111,7 +127,7 @@ public class WebRequest {
             prev1 = t;
         }
         if (t == -1) {
-            return null;
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
         }
         String protocol = sb.toString().trim();
         sb = new StringBuilder();
@@ -134,20 +150,30 @@ public class WebRequest {
             }
         }
         if (!eoh) {
-            return null;
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
         }
-        List<HttpHeader> headers = new LinkedList<>();
+        List<HttpHeader> tmpHeaders = new LinkedList<>();
         for (String i : sb.toString().split("\r\n")) {
             String[] a = i.split(": ", 2);
-            headers.add(new HttpHeader(a[0], a[1]));
+            tmpHeaders.add(new HttpHeader(a[0], a[1]));
         }
+        HttpHeaders headers = new HttpHeaders(tmpHeaders);
         if (!HttpMethod.isMethodAvailable(method)) {
-            return null;
+            return new ErrorResponse(HttpResponseCode.METHOD_NOT_ALLOWED, "");
+        }
+        if (!path.startsWith("/") && !(path.startsWith("*") && method.equals(HttpMethod.OPTIONS.name()))) {
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+        }
+        if (path.length() > 2048) {
+            return new ErrorResponse(HttpResponseCode.URI_TOO_LONG, "");
+        }
+        if (!protocol.equals("HTTP/1.1") && !protocol.equals("HTTP/1.0")) {
+            return new ErrorResponse(HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED, "");
+        }
+        if (HttpMethod.valueOf(method).hasBody() && (headers.get("Content-Length") == null || headers.getContentLength() != is.available())) {
+            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
         }
         return new WebRequest(HttpMethod.valueOf(method), path, protocol, headers, is, webServer);
-    }
-
-    boolean validate() {
     }
 
     private static byte[] toPrimitiveBytes(List<Byte> list) {

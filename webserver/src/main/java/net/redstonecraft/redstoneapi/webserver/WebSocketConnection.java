@@ -2,7 +2,6 @@ package net.redstonecraft.redstoneapi.webserver;
 
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
-import net.redstonecraft.redstoneapi.webserver.obj.WebArgument;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

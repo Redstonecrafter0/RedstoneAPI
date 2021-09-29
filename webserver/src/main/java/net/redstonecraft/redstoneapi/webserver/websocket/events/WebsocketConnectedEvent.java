@@ -1,7 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver.websocket.events;
 
 import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;
-import net.redstonecraft.redstoneapi.webserver.obj.WebArgument;
 
 /**
  * Executed on connection
