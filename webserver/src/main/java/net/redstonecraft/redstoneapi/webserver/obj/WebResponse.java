@@ -3,6 +3,9 @@ package net.redstonecraft.redstoneapi.webserver.obj;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.core.HttpResponseCode;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -14,29 +17,39 @@ import java.util.Arrays;
  * */
 public class WebResponse {
 
-    private final byte[] content;
+    private final InputStream content;
     private final HttpHeader[] headers;
     private final HttpResponseCode code;
 
     public WebResponse(String content, HttpHeader... headers) {
-        this.content = content.getBytes(StandardCharsets.UTF_8);
-        this.headers = headers;
-        this.code = HttpResponseCode.OK;
+        this(content, HttpResponseCode.OK, headers);
     }
 
     public WebResponse(String content, HttpResponseCode code, HttpHeader... headers) {
-        this.content = content.getBytes(StandardCharsets.UTF_8);
-        this.code = code;
-        this.headers = headers;
+        this(content.getBytes(StandardCharsets.UTF_8), code, headers);
     }
 
     public WebResponse(byte[] content, HttpHeader... headers) {
-        this.content = content;
-        this.headers = headers;
-        this.code = HttpResponseCode.OK;
+        this(content, HttpResponseCode.OK, headers);
     }
 
     public WebResponse(byte[] content, HttpResponseCode code, HttpHeader... headers) {
+        this(new ByteArrayInputStream(content), code, headers);
+    }
+
+    public WebResponse(ByteBuffer content, HttpHeader... headers) {
+        this(content, HttpResponseCode.OK, headers);
+    }
+
+    public WebResponse(ByteBuffer content, HttpResponseCode code, HttpHeader... headers) {
+        this(content.array(), code, headers);
+    }
+
+    public WebResponse(InputStream content, HttpHeader... headers) {
+        this(content, HttpResponseCode.OK, headers);
+    }
+
+    public WebResponse(InputStream content, HttpResponseCode code, HttpHeader... headers) {
         this.content = content;
         this.headers = headers;
         this.code = code;
@@ -46,7 +59,7 @@ public class WebResponse {
         return code;
     }
 
-    public byte[] getContent() {
+    public InputStream getContent() {
         return content;
     }
 
@@ -57,7 +70,6 @@ public class WebResponse {
     @Override
     public String toString() {
         return "WebResponse{" +
-                "content=" + Arrays.toString(content) +
                 ", headers=" + Arrays.toString(headers) +
                 ", code=" + code +
                 '}';

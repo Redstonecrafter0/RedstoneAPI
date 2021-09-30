@@ -17,8 +17,7 @@ import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketDisconn
 import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketMessageEvent;
 import org.apache.commons.lang.NotImplementedException;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -337,20 +336,19 @@ public class WebServer {
                                 }
                                 try {
                                     if (!(new String(buffer.array(), StandardCharsets.UTF_8).contains("\r\n\r\n"))) {
-                                        errorHandlerManager.handle(HttpResponseCode.REQUEST_HEADER_FIELDS_TOO_LARGE, "UNKNOWN", new HashMap<>(), new HttpHeaders(new ArrayList<>()), e -> {
-                                            try {
-                                                sendResponse(connection.channel, "UNKNOWN", "UNKNOWN", e);
-                                                connection.channel.close();
-                                                connections.remove(connection);
-                                            } catch (IOException ioException) {
-                                                ioException.printStackTrace();
-                                            }
-                                        });
+                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.REQUEST_HEADER_FIELDS_TOO_LARGE, "UNKNOWN", new HashMap<>(), new HttpHeaders(new ArrayList<>()));
+                                        try {
+                                            sendResponse(connection.channel, null, "UNKNOWN", e);
+                                            connection.channel.close();
+                                            connections.remove(connection);
+                                        } catch (IOException ioException) {
+                                            ioException.printStackTrace();
+                                        }
                                         return;
                                     }
                                     Object parsed = WebRequest.parseRequest(connection, buffer, len, connections, this);
                                     if (parsed instanceof ErrorResponse errorResponse) {
-                                        sendResponse(connection.channel, "UNKNOWN", "UNKNOWN", errorResponse);
+                                        sendResponse(connection.channel, null, "UNKNOWN", errorResponse);
                                         try {
                                             connection.channel.close();
                                         } catch (IOException ignored) {
@@ -385,100 +383,92 @@ public class WebServer {
                                                 File file = new File(staticDir.getPath(), request.getPath());
                                                 if (file.getCanonicalPath().startsWith(staticDir.getCanonicalPath())) {
                                                     try {
-                                                        sendResponse(connection.channel, "GET", request.getPath(), HttpResponseCode.OK, Files.readAllBytes(file.toPath()), new HttpHeader("Content-Type", MimeType.getByFilename(file.getCanonicalPath()).getMimetype()));
+                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), HttpResponseCode.OK, new FileInputStream(file), new HttpHeader("Content-Type", MimeType.getByFilename(file.getCanonicalPath()).getMimetype()));
+                                                        continue;
                                                     } catch (NoSuchFileException ignored) {
-                                                        errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders(), response -> {
-                                                            try {
-                                                                sendResponse(connection.channel, "GET", request.getPath(), response);
-                                                            } catch (IOException ioException) {
-                                                                ioException.printStackTrace();
-                                                            }
-                                                        });
-                                                    } catch (Throwable ignored) {
-                                                        errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders(), response -> {
-                                                            try {
-                                                                sendResponse(connection.channel, "GET", request.getPath(), response);
-                                                            } catch (IOException ioException) {
-                                                                ioException.printStackTrace();
-                                                            }
-                                                        });
-                                                    }
-                                                } else {
-                                                    errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders(), response -> {
+                                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
                                                         try {
-                                                            sendResponse(connection.channel, "GET", request.getPath(), response);
+                                                            sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
                                                         } catch (IOException ioException) {
                                                             ioException.printStackTrace();
                                                         }
-                                                    });
+                                                        continue;
+                                                    } catch (Throwable ignored) {
+                                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
+                                                        try {
+                                                            sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
+                                                        } catch (IOException ioException) {
+                                                            ioException.printStackTrace();
+                                                        }
+                                                        continue;
+                                                    }
+                                                } else {
+                                                    ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
+                                                    try {
+                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
+                                                    } catch (IOException ioException) {
+                                                        ioException.printStackTrace();
+                                                    }
+                                                    continue;
                                                 }
-                                                try {
-                                                    connection.channel.close();
-                                                } catch (IOException ignored) {
-                                                }
-                                                connections.remove(connection);
-                                                return;
                                             } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
                                                 File favicon = new File(new File(staticDir, "static"), "favicon.ico");
                                                 if (favicon.exists()) {
                                                     WebResponse response = new WebResponse(Files.readAllBytes(favicon.toPath()), HttpResponseCode.OK, new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype()));
-                                                    sendResponse(connection.channel, "GET", request.getPath(), response);
+                                                    sendResponse(connection.channel, HttpMethod.GET, request.getPath(), response);
                                                 } else {
-                                                    errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders(), response -> {
-                                                        try {
-                                                            sendResponse(connection.channel, "GET", request.getPath(), response);
-                                                        } catch (IOException ioException) {
-                                                            ioException.printStackTrace();
-                                                        }
-                                                    });
+                                                    ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
+                                                    try {
+                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
+                                                    } catch (IOException ioException) {
+                                                        ioException.printStackTrace();
+                                                    }
                                                 }
                                                 connections.remove(connection);
                                                 return;
                                             }
-                                            if (!httpMethod.equals(HttpMethod.OPTIONS)) {
+                                            if (!request.getMethod().equals(HttpMethod.OPTIONS)) {
                                                 try {
                                                     HandlerBundle handlerBundle;
-                                                    if (httpMethod.equals(HttpMethod.HEAD)) {
-                                                        handlerBundle = handlerManager.getHandler(HttpMethod.GET.getRequestClass(), path);
+                                                    if (request.getMethod().equals(HttpMethod.HEAD)) {
+                                                        handlerBundle = handlerManager.getHandler(HttpMethod.HEAD, request.getPath());
+                                                        if (handlerBundle == null) {
+                                                            handlerBundle = handlerManager.getHandler(HttpMethod.GET, request.getPath());
+                                                        }
                                                     } else {
-                                                        handlerBundle = handlerManager.getHandler(httpMethod.getRequestClass(), path);
+                                                        handlerBundle = handlerManager.getHandler(request.getMethod(), request.getPath());
                                                     }
-                                                    WebResponse webResponse;
+                                                    Object response;
                                                     if (handlerBundle != null) {
                                                         try {
-                                                            handlerBundle.getMethod().setAccessible(true);
-                                                            webResponse = (WebResponse) handlerBundle.getMethod().invoke(handlerBundle.getHandler(), webRequest);
+                                                            response = handlerBundle.invoke(request);
                                                         } catch (Throwable e) {
-                                                            errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, webRequest.getPath(), webRequest.getWebArguments(), webRequest.getHeaders(), response -> {
-                                                                try {
-                                                                    sendResponse(connection.channel, httpMethod.name(), path, response);
-                                                                    try {
-                                                                        connection.channel.close();
-                                                                    } catch (IOException ignored) {
-                                                                    }
-                                                                    connections.remove(connection);
-                                                                } catch (IOException ioException) {
-                                                                    ioException.printStackTrace();
-                                                                }
-                                                            });
+                                                            sendResponse(connection.channel, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                            try {
+                                                                connection.channel.close();
+                                                            } catch (IOException ignored) {
+                                                            }
+                                                            connections.remove(connection);
                                                             return;
                                                         }
                                                     } else {
-                                                        errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, webRequest.getPath(), webRequest.getWebArguments(), webRequest.getHeaders(), response -> {
-                                                            try {
-                                                                sendResponse(connection.channel, httpMethod.name(), path, response);
-                                                                try {
-                                                                    connection.channel.close();
-                                                                } catch (IOException ignored) {
-                                                                }
-                                                                connections.remove(connection);
-                                                            } catch (IOException ioException) {
-                                                                ioException.printStackTrace();
-                                                            }
-                                                        });
+                                                        sendResponse(connection.channel, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                        try {
+                                                            connection.channel.close();
+                                                        } catch (IOException ignored) {
+                                                        }
+                                                        connections.remove(connection);
                                                         return;
                                                     }
-                                                    sendResponse(connection.channel, httpMethod.name(), path, webResponse);
+                                                    WebResponse finalResponse = switch (response) {
+                                                        case String s -> new WebResponse(s);
+                                                        case WebResponse r -> r;
+                                                        case byte[] d -> new WebResponse(d);
+                                                        case ByteBuffer b -> new WebResponse(b.array());
+                                                        case OutputStream s -> new WebResponse(new byte[0]); // TODO add OutputStream
+                                                        default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
+                                                    };
+                                                    sendResponse(connection.channel, request.getMethod(), request.getPath(), finalResponse);
                                                     try {
                                                         connection.channel.close();
                                                     } catch (IOException ignored) {
@@ -493,25 +483,29 @@ public class WebServer {
                                                     connections.remove(connection);
                                                 }
                                             } else {
-                                                Set<String> list = new HashSet<>();
-                                                list.add("OPTIONS");
-                                                for (HttpMethod i : HttpMethod.values()) {
+                                                if (handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()) != null) {
+                                                    //noinspection ConstantConditions
+                                                    sendResponse(connection.channel, HttpMethod.OPTIONS, request.getPath(), (WebResponse) handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request));
+                                                } else {
+                                                    Set<String> list = new HashSet<>();
+                                                    list.add("OPTIONS");
+                                                    for (HttpMethod i : HttpMethod.values()) {
 
-                                                    if (handlerManager.getHandler(i.getRequestClass(), path) != null) {
+                                                        if (handlerManager.getHandler(i, request.getPath()) != null) {
+                                                            try {
+                                                                list.add(i.name());
+                                                            } catch (IllegalStateException ignored) {
+                                                            }
+                                                        }
+                                                    }
+                                                    if (list.contains("GET")) {
                                                         try {
-                                                            list.add(i.name());
+                                                            list.add("HEAD");
                                                         } catch (IllegalStateException ignored) {
                                                         }
                                                     }
+                                                    sendResponse(connection.channel, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
                                                 }
-                                                if (list.contains("GET")) {
-                                                    try {
-                                                        list.add("HEAD");
-                                                    } catch (IllegalStateException ignored) {
-                                                    }
-                                                }
-                                                WebResponse webResponse = new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list)));
-                                                sendResponse(connection.channel, method, path, webResponse);
                                                 try {
                                                     connection.channel.close();
                                                 } catch (IOException ignored) {
@@ -601,7 +595,7 @@ public class WebServer {
         websocketManager.broadcast(path, room, payload);
     }
 
-    private void sendResponse(SocketChannel channel, String method, String path, WebResponse response) throws IOException {
+    private void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
         sendResponse(channel, method, path, response.getCode(), response.getContent(), response.getHeaders());
     }
 
@@ -612,32 +606,34 @@ public class WebServer {
         return dateFormat.format(calendar.getTime());
     }
 
-    private void sendResponse(SocketChannel channel, String method, String path, HttpResponseCode code, byte[] content, HttpHeader... headers) throws IOException {
+    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
         Set<String> list = new HashSet<>();
-        list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.length));
+        list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {
             list.add(i.getKey() + ": " + i.getValue());
         }
-        list.add("Server: RedstoneAPI/" + RedstoneAPI.getVersion().toString().replace("v", ""));
+        list.add("Server: RedstoneAPI/" + RedstoneAPI.getVersion().toString());
         list.add("Date: " + getServerTime());
         if (!list.contains("Connection: Upgrade")) {
             list.add("Connection: close");
         }
         byte[] resp = ("HTTP/1.1 " + code.getCode() + " " + code.getDescription() + "\r\n" + String.join("\r\n", list) + "\r\n\r\n").getBytes(StandardCharsets.UTF_8);
-        byte[] respContent;
-        if (method.equals("HEAD")) {
-            respContent = resp;
-        } else {
-            respContent = new byte[resp.length + content.length];
-            System.arraycopy(resp, 0, respContent, 0, resp.length);
-            System.arraycopy(content, 0, respContent, resp.length, content.length);
+        channel.write(ByteBuffer.wrap(resp));
+        int datalen = resp.length;
+        if (!code.equals(HttpResponseCode.NO_CONTENT) || (method != null && method.hasBodyResponse())) {
+            while (content.available() > 0) {
+                byte[] chunk = new byte[Math.min(1024, content.available())];
+                //noinspection ResultOfMethodCallIgnored
+                content.read(chunk);
+                channel.write(ByteBuffer.wrap(chunk));
+                datalen += chunk.length;
+            }
         }
-        if (code.equals(HttpResponseCode.NO_CONTENT)) {
-            respContent = resp;
+        if (content != null) {
+            content.close();
         }
-        channel.write(ByteBuffer.wrap(respContent));
         if (logging) {
-            logger.info("[" + channel.socket().getInetAddress().getHostAddress() + "] " + method + " " + path + " " + code.getCode() + " " + code.getDescription() + " " + respContent.length);
+            logger.info("[" + channel.socket().getInetAddress().getHostAddress() + "] " + (method != null ? method : "UNKNOWN") + " " + path + " " + code.getCode() + " " + code.getDescription() + " " + datalen);
         }
     }
 
@@ -660,61 +656,54 @@ public class WebServer {
     }
 
     public void addHandler(RequestHandler handler) {
-        try {
-            handler.setWebServer(this);
-            for (Method i : handler.getClass().getMethods()) {
-                if (i.isAnnotationPresent(Routes.class) && !Modifier.isStatic(i.getModifiers()) && i.getReturnType().equals(WebResponse.class)) {
-                    for (Route j : i.getAnnotation(Routes.class).value()) {
-                        if (j.value().startsWith("/")) {
-                            Class<?>[] parameterTypes = i.getParameterTypes();
-                            if (parameterTypes.length == 1) {
-                                if (WebRequest.class.isAssignableFrom(parameterTypes[0])) {
-                                    handlerManager.setHandler((Class<? extends WebRequest>) parameterTypes[0], j.value(), new HandlerBundle(handler, i));
-                                }
-                            }
-                        }
-                    }
-                } else if (i.isAnnotationPresent(Route.class) && !Modifier.isStatic(i.getModifiers()) && i.getReturnType().equals(WebResponse.class)) {
-                    Route j = i.getAnnotation(Route.class);
-                    if (j.value().startsWith("/")) {
-                        Class<?>[] parameterTypes = i.getParameterTypes();
-                        if (parameterTypes.length == 1) {
-                            if (WebRequest.class.isAssignableFrom(parameterTypes[0])) {
-                                handlerManager.setHandler((Class<? extends WebRequest>) parameterTypes[0], j.value(), new HandlerBundle(handler, i));
-                            }
-                        }
-                    }
-                } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
-                    for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
-                        if (i.getParameterTypes().length == 1 && j.path().startsWith("/")) {
-                            if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
-                                websocketManager.addHandler(j.path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
-                            }
-                        }
-                    }
-                } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
-                    if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).path().startsWith("/")) {
+        handler.setWebServer(this);
+        for (Method i : handler.getClass().getMethods()) {
+            if (i.isAnnotationPresent(Routes.class) && !Modifier.isStatic(i.getModifiers()) && i.getParameters().length >= 1) {
+                for (Route j : i.getAnnotation(Routes.class).value()) {
+                    internalRegisterHandler(handler, i, j);
+                }
+            } else if (i.isAnnotationPresent(Route.class) && !Modifier.isStatic(i.getModifiers()) && i.getParameters().length >= 1) {
+                Route j = i.getAnnotation(Route.class);
+                internalRegisterHandler(handler, i, j);
+            } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
+                for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
+                    if (i.getParameterTypes().length == 1 && j.path().startsWith("/")) {
                         if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
-                            websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                            websocketManager.addHandler(j.path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                         }
                     }
                 }
+            } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
+                if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).path().startsWith("/")) {
+                    if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
+                        websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                    }
+                }
             }
-        } catch (IllegalStateException ignored) {
         }
     }
 
-    public void removeHandler(String method, String path) {
+    private void internalRegisterHandler(RequestHandler handler, Method i, Route j) {
+        if (j.value().startsWith("/")) {
+            Class<?>[] parameterTypes = i.getParameterTypes();
+            if (WebRequest.class.equals(parameterTypes[0])) {
+                for (HttpMethod k : j.methods()) {
+                    handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
+                }
+            }
+        }
+    }
+
+    public void removeHandler(HttpMethod method, String path) {
         try {
-            Class<? extends WebRequest> requestMethod = HttpMethod.valueOf(method).getRequestClass();
-            handlerManager.setHandler(requestMethod, path, null);
+            handlerManager.setHandler(method, path, null);
         } catch (IllegalArgumentException ignored) {
         }
     }
 
     public void removeHandlers(String path) {
         for (HttpMethod i : HttpMethod.values()) {
-            removeHandler(i.name(), path);
+            removeHandler(i, path);
         }
     }
 
@@ -729,20 +718,17 @@ public class WebServer {
 
     private static class HandlerManager {
 
-        private final Map<Class<? extends WebRequest>, Map<String, HandlerBundle>> handlers = new HashMap<>();
+        private final Map<HttpMethod, Map<String, HandlerBundle>> handlers = new HashMap<>();
 
-        private void setHandler(Class<? extends WebRequest> requestMethod, String path, HandlerBundle handlerBundle) {
-            if (!handlers.containsKey(requestMethod)) {
-                handlers.put(requestMethod, new HashMap<>());
+        private void setHandler(HttpMethod method, String path, HandlerBundle handlerBundle) {
+            if (!handlers.containsKey(method)) {
+                handlers.put(method, new HashMap<>());
             }
-            handlers.get(requestMethod).put(path, handlerBundle);
+            handlers.get(method).put(path, handlerBundle);
         }
 
-        private HandlerBundle getHandler(Class<? extends WebRequest> requestMethod, String path) {
-            if (path.contains("?")) {
-                path = path.split("\\?")[0];
-            }
-            Map<String, HandlerBundle> map = handlers.get(requestMethod);
+        private HandlerBundle getHandler(HttpMethod method, String path) {
+            Map<String, HandlerBundle> map = handlers.get(method);
             if (map != null) {
                 return map.get(path);
             }
@@ -750,9 +736,9 @@ public class WebServer {
         }
 
         private void removeHandler(RequestHandler handler) {
-            for (Map.Entry<Class<? extends WebRequest>, Map<String, HandlerBundle>> i : handlers.entrySet()) {
+            for (Map.Entry<HttpMethod, Map<String, HandlerBundle>> i : handlers.entrySet()) {
                 for (Map.Entry<String, HandlerBundle> j : i.getValue().entrySet()) {
-                    if (j.getValue().getHandler().equals(handler)) {
+                    if (j.getValue().handler().equals(handler)) {
                         handlers.get(i.getKey()).remove(j.getKey());
                     }
                 }
@@ -964,12 +950,10 @@ public class WebServer {
             errorHandlers.remove(code);
         }
 
-        private void handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers, Consumer<ErrorResponse> callback) {
-            threadPool.submit(() -> {
-                ErrorResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
-                errorResponse.setErrorCode(code);
-                callback.accept(errorResponse);
-            });
+        private ErrorResponse handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers) {
+            ErrorResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
+            errorResponse.setErrorCode(code);
+            return errorResponse;
         }
 
         private ErrorHandler getHandler(HttpResponseCode code) {
