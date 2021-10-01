@@ -19,14 +19,14 @@ public class WebResponse {
 
     private final InputStream content;
     private final HttpHeader[] headers;
-    private final HttpResponseCode code;
+    private HttpResponseCode code;
 
     public WebResponse(String content, HttpHeader... headers) {
         this(content, HttpResponseCode.OK, headers);
     }
 
     public WebResponse(String content, HttpResponseCode code, HttpHeader... headers) {
-        this(content.getBytes(StandardCharsets.UTF_8), code, headers);
+        this((content != null ? content : "null").getBytes(StandardCharsets.UTF_8), code, headers);
     }
 
     public WebResponse(byte[] content, HttpHeader... headers) {
@@ -65,6 +65,10 @@ public class WebResponse {
 
     public HttpHeader[] getHeaders() {
         return headers;
+    }
+
+    public void setErrorCode(HttpResponseCode code) {
+        this.code = code;
     }
 
     @Override

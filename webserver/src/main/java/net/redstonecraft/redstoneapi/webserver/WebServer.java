@@ -1,6 +1,5 @@
 package net.redstonecraft.redstoneapi.webserver;
 
-import com.google.common.io.Resources;
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.JinjavaConfig;
 import com.hubspot.jinjava.loader.FileLocator;
@@ -18,7 +17,6 @@ import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketMessage
 import org.apache.commons.lang.NotImplementedException;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -33,7 +31,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -54,16 +51,16 @@ public class WebServer {
         private String html = "";
 
         @Override
-        public ErrorResponse handleError(HttpResponseCode code, String url, Map<String, String> args, HttpHeaders headers) {
+        public WebResponse handleError(HttpResponseCode code, String url, Map<String, String> args, HttpHeaders headers) {
             if (html.equals("")) {
                 try {
                     html = new String(Objects.requireNonNull(getClass().getResourceAsStream("/webserver/error.html")).readAllBytes(), StandardCharsets.UTF_8);
                 } catch (IOException ignored) {
                 }
             }
-            return new ErrorResponse(code, html.replace("{code}", String.valueOf(code.getCode()))
+            return new WebResponse(html.replace("{code}", String.valueOf(code.getCode()))
                     .replace("{desc}", code.getDescription())
-                    .replace("{text}", code.getCode() < 500 ? "Ohh. There was an error. Try another page." : "Ohh. There was an error. Try again later."));
+                    .replace("{text}", code.getCode() < 500 ? "Ohh. There was an error. Try another page." : "Ohh. There was an error. Try again later."), code);
         }
     };
     private static final Logger logger = Logger.getLogger(WebServer.class.getName());
@@ -321,6 +318,10 @@ public class WebServer {
                         try {
                             Connection connection = getConnectionBySocketChannel((SocketChannel) key.channel());
                             if (connection == null) {
+                                try {
+                                    key.channel().close();
+                                } catch (IOException ignored) {
+                                }
                                 continue;
                             }
                             try {
@@ -334,199 +335,137 @@ public class WebServer {
                                     connections.remove(connection);
                                     continue;
                                 }
-                                try {
-                                    if (!(new String(buffer.array(), StandardCharsets.UTF_8).contains("\r\n\r\n"))) {
-                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.REQUEST_HEADER_FIELDS_TOO_LARGE, "UNKNOWN", new HashMap<>(), new HttpHeaders(new ArrayList<>()));
-                                        try {
-                                            sendResponse(connection.channel, null, "UNKNOWN", e);
-                                            connection.channel.close();
-                                            connections.remove(connection);
-                                        } catch (IOException ioException) {
-                                            ioException.printStackTrace();
+                                threadPool.submit(() -> {
+                                    try {
+                                        if (!(new String(buffer.array(), StandardCharsets.UTF_8).contains("\r\n\r\n"))) {
+                                            sendResponseAndClose(connection, null, "UNKNOWN", errorHandlerManager.handle(HttpResponseCode.REQUEST_HEADER_FIELDS_TOO_LARGE, "UNKNOWN", new HashMap<>(), new HttpHeaders(new ArrayList<>())));
+                                            return;
                                         }
-                                        return;
-                                    }
-                                    Object parsed = WebRequest.parseRequest(connection, buffer, len, connections, this);
-                                    if (parsed instanceof ErrorResponse errorResponse) {
-                                        sendResponse(connection.channel, null, "UNKNOWN", errorResponse);
-                                        try {
-                                            connection.channel.close();
-                                        } catch (IOException ignored) {
-                                        }
-                                        connections.remove(connection);
-                                    } else if (parsed instanceof WebRequest request) {
-                                        try {
+                                        Object parsed = WebRequest.parseRequest(connection, buffer, len, connections, this);
+                                        if (parsed instanceof WebResponse errorResponse) {
+                                            sendResponseAndClose(connection, null, "UNKNOWN", errorResponse);
+                                        } else if (parsed instanceof WebRequest request) {
                                             try {
-                                                if (request.getMethod().equals(HttpMethod.GET) && request.getProtocol().equals("HTTP/1.1") &&
-                                                        Objects.requireNonNull(request.getHeaders().get("Connection")).equals("Upgrade") &&
-                                                        Objects.requireNonNull(request.getHeaders().get("Upgrade")).equals("websocket") &&
-                                                        request.getHeaders().get("Sec-WebSocket-Version") != null &&
-                                                        request.getHeaders().get("Sec-WebSocket-Key") != null) {
-                                                    throw new NotImplementedException();
-                                                    // TODO: implement socket connection
-//                                                    if (websocketManager.pathExists(webRequest.getPath())) {
-//                                                        String wsKey = Objects.requireNonNull(HttpHeader.getByKey(headers, "Sec-WebSocket-Key")).getValue();
-//                                                        String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
-//                                                        sendResponse(connection.channel, "GET", path, HttpResponseCode.SWITCHING_PROTOCOLS, new byte[0], new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept));
-//                                                        WebSocketConnection webSocketConnection = new WebSocketConnection(connection.channel, this, path);
-//                                                        websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
-//                                                        websocketManager.executeConnectEvent(webSocketConnection);
-//                                                    } else {
-//                                                        sendResponse(connection.channel, "GET", webRequest.getPath(), HttpResponseCode.NOT_FOUND, new byte[0]);
-//                                                    }
-//                                                    connections.remove(connection);
-//                                                    return;
-                                                }
-                                            } catch (NullPointerException ignored) {
-                                            }
-                                            if (request.getMethod().equals(HttpMethod.GET) && request.getPath().startsWith("/static/")) {
-                                                File file = new File(staticDir.getPath(), request.getPath());
-                                                if (file.getCanonicalPath().startsWith(staticDir.getCanonicalPath())) {
-                                                    try {
-                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), HttpResponseCode.OK, new FileInputStream(file), new HttpHeader("Content-Type", MimeType.getByFilename(file.getCanonicalPath()).getMimetype()));
-                                                        continue;
-                                                    } catch (NoSuchFileException ignored) {
-                                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
-                                                        try {
-                                                            sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
-                                                        } catch (IOException ioException) {
-                                                            ioException.printStackTrace();
-                                                        }
-                                                        continue;
-                                                    } catch (Throwable ignored) {
-                                                        ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
-                                                        try {
-                                                            sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
-                                                        } catch (IOException ioException) {
-                                                            ioException.printStackTrace();
-                                                        }
-                                                        continue;
-                                                    }
-                                                } else {
-                                                    ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
-                                                    try {
-                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
-                                                    } catch (IOException ioException) {
-                                                        ioException.printStackTrace();
-                                                    }
-                                                    continue;
-                                                }
-                                            } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
-                                                File favicon = new File(new File(staticDir, "static"), "favicon.ico");
-                                                if (favicon.exists()) {
-                                                    WebResponse response = new WebResponse(Files.readAllBytes(favicon.toPath()), HttpResponseCode.OK, new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype()));
-                                                    sendResponse(connection.channel, HttpMethod.GET, request.getPath(), response);
-                                                } else {
-                                                    ErrorResponse e = errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders());
-                                                    try {
-                                                        sendResponse(connection.channel, HttpMethod.GET, request.getPath(), e);
-                                                    } catch (IOException ioException) {
-                                                        ioException.printStackTrace();
-                                                    }
-                                                }
-                                                connections.remove(connection);
-                                                return;
-                                            }
-                                            if (!request.getMethod().equals(HttpMethod.OPTIONS)) {
                                                 try {
-                                                    HandlerBundle handlerBundle;
-                                                    if (request.getMethod().equals(HttpMethod.HEAD)) {
-                                                        handlerBundle = handlerManager.getHandler(HttpMethod.HEAD, request.getPath());
-                                                        if (handlerBundle == null) {
-                                                            handlerBundle = handlerManager.getHandler(HttpMethod.GET, request.getPath());
+                                                    if (request.getMethod().equals(HttpMethod.GET) && request.getProtocol().equals("HTTP/1.1") &&
+                                                            Objects.requireNonNull(request.getHeaders().get("Connection")).equals("Upgrade") &&
+                                                            Objects.requireNonNull(request.getHeaders().get("Upgrade")).equals("websocket") &&
+                                                            request.getHeaders().get("Sec-WebSocket-Version") != null &&
+                                                            request.getHeaders().get("Sec-WebSocket-Key") != null) {
+                                                        throw new NotImplementedException();
+                                                        // TODO: reimplement socket connection
+    //                                                    if (websocketManager.pathExists(webRequest.getPath())) {
+    //                                                        String wsKey = Objects.requireNonNull(HttpHeader.getByKey(headers, "Sec-WebSocket-Key")).getValue();
+    //                                                        String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
+    //                                                        sendResponse(connection.channel, "GET", path, HttpResponseCode.SWITCHING_PROTOCOLS, new byte[0], new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept));
+    //                                                        WebSocketConnection webSocketConnection = new WebSocketConnection(connection.channel, this, path);
+    //                                                        websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
+    //                                                        websocketManager.executeConnectEvent(webSocketConnection);
+    //                                                    } else {
+    //                                                        sendResponse(connection.channel, "GET", webRequest.getPath(), HttpResponseCode.NOT_FOUND, new byte[0]);
+    //                                                    }
+    //                                                    connections.remove(connection);
+    //                                                    return;
+                                                    }
+                                                } catch (NullPointerException ignored) {
+                                                }
+                                                if (request.getMethod().equals(HttpMethod.GET) && request.getPath().startsWith("/static/")) {
+                                                    File file = new File(staticDir.getPath(), request.getPath());
+                                                    if (file.getCanonicalPath().startsWith(staticDir.getCanonicalPath())) {
+                                                        try {
+                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), HttpResponseCode.OK, new FileInputStream(file), new HttpHeader("Content-Type", MimeType.getByFilename(file.getCanonicalPath()).getMimetype()));
+                                                        } catch (NoSuchFileException ignored) {
+                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                        } catch (Throwable ignored) {
+                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
                                                         }
                                                     } else {
-                                                        handlerBundle = handlerManager.getHandler(request.getMethod(), request.getPath());
+                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
                                                     }
-                                                    Object response;
-                                                    if (handlerBundle != null) {
-                                                        try {
-                                                            response = handlerBundle.invoke(request);
-                                                        } catch (Throwable e) {
-                                                            sendResponse(connection.channel, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                            try {
-                                                                connection.channel.close();
-                                                            } catch (IOException ignored) {
+                                                    return;
+                                                } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
+                                                    File favicon = new File(new File(staticDir, "static"), "favicon.ico");
+                                                    if (favicon.exists()) {
+                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), new WebResponse(Files.readAllBytes(favicon.toPath()), HttpResponseCode.OK, new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype())));
+                                                    } else {
+                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                    }
+                                                    return;
+                                                }
+                                                if (!request.getMethod().equals(HttpMethod.OPTIONS)) {
+                                                    try {
+                                                        HandlerBundle handlerBundle;
+                                                        if (request.getMethod().equals(HttpMethod.HEAD)) {
+                                                            handlerBundle = handlerManager.getHandler(HttpMethod.HEAD, request.getPath());
+                                                            if (handlerBundle == null) {
+                                                                handlerBundle = handlerManager.getHandler(HttpMethod.GET, request.getPath());
                                                             }
-                                                            connections.remove(connection);
+                                                        } else {
+                                                            handlerBundle = handlerManager.getHandler(request.getMethod(), request.getPath());
+                                                        }
+                                                        Object response;
+                                                        if (handlerBundle != null) {
+                                                            try {
+                                                                response = handlerBundle.invoke(request);
+                                                            } catch (Throwable e) {
+                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                                return;
+                                                            }
+                                                        } else {
+                                                            if (handlerManager.hasPath(request.getPath())) {
+                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.METHOD_NOT_ALLOWED, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                            } else {
+                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
+                                                            }
                                                             return;
                                                         }
-                                                    } else {
-                                                        sendResponse(connection.channel, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                        try {
-                                                            connection.channel.close();
-                                                        } catch (IOException ignored) {
-                                                        }
-                                                        connections.remove(connection);
-                                                        return;
+                                                        sendResponseAndClose(connection, request.getMethod(), request.getPath(), switch (response) {
+                                                            case WebResponse r -> r;
+                                                            case String s -> new WebResponse(s);
+                                                            case byte[] d -> new WebResponse(d);
+                                                            case ByteBuffer b -> new WebResponse(b.array());
+                                                            case InputStream s -> new WebResponse(s);
+                                                            default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
+                                                        });
+                                                    } catch (Throwable ignored) {
                                                     }
-                                                    WebResponse finalResponse = switch (response) {
-                                                        case String s -> new WebResponse(s);
-                                                        case WebResponse r -> r;
-                                                        case byte[] d -> new WebResponse(d);
-                                                        case ByteBuffer b -> new WebResponse(b.array());
-                                                        case OutputStream s -> new WebResponse(new byte[0]); // TODO add OutputStream
-                                                        default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
-                                                    };
-                                                    sendResponse(connection.channel, request.getMethod(), request.getPath(), finalResponse);
-                                                    try {
-                                                        connection.channel.close();
-                                                    } catch (IOException ignored) {
-                                                    }
-                                                    connections.remove(connection);
-                                                } catch (Throwable e) {
-                                                    e.printStackTrace();
-                                                    try {
-                                                        connection.channel.close();
-                                                    } catch (IOException ignored) {
-                                                    }
-                                                    connections.remove(connection);
-                                                }
-                                            } else {
-                                                if (handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()) != null) {
-                                                    //noinspection ConstantConditions
-                                                    sendResponse(connection.channel, HttpMethod.OPTIONS, request.getPath(), (WebResponse) handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request));
                                                 } else {
-                                                    Set<String> list = new HashSet<>();
-                                                    list.add("OPTIONS");
-                                                    for (HttpMethod i : HttpMethod.values()) {
-
-                                                        if (handlerManager.getHandler(i, request.getPath()) != null) {
-                                                            try {
+                                                    if (handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()) != null) {
+                                                        //noinspection ConstantConditions
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), (WebResponse) handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request));
+                                                    } else {
+                                                        Set<String> list = new HashSet<>();
+                                                        list.add("OPTIONS");
+                                                        for (HttpMethod i : HttpMethod.values()) {
+                                                            if (handlerManager.getHandler(i, request.getPath()) != null) {
                                                                 list.add(i.name());
+                                                            }
+                                                        }
+                                                        if (list.contains("GET")) {
+                                                            try {
+                                                                list.add("HEAD");
                                                             } catch (IllegalStateException ignored) {
                                                             }
                                                         }
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
                                                     }
-                                                    if (list.contains("GET")) {
-                                                        try {
-                                                            list.add("HEAD");
-                                                        } catch (IllegalStateException ignored) {
-                                                        }
-                                                    }
-                                                    sendResponse(connection.channel, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
                                                 }
+                                            } catch (Throwable ignored) {
                                                 try {
                                                     connection.channel.close();
-                                                } catch (IOException ignored) {
+                                                } catch (IOException ignored1) {
                                                 }
                                                 connections.remove(connection);
                                             }
-                                        } catch (Throwable ignored) {
-                                            try {
-                                                connection.channel.close();
-                                            } catch (IOException ignored1) {
-                                            }
-                                            connections.remove(connection);
                                         }
+                                    } catch (IOException | NumberFormatException ignored) {
+                                        try {
+                                            connection.channel.close();
+                                        } catch (IOException ignored1) {
+                                        }
+                                        connections.remove(connection);
                                     }
-                                } catch (IOException | NumberFormatException ignored) {
-                                    try {
-                                        connection.channel.close();
-                                    } catch (IOException ignored1) {
-                                    }
-                                    connections.remove(connection);
-                                }
+                                });
                             } catch (IndexOutOfBoundsException | IOException ignored) {
                                 try {
                                     connection.channel.close();
@@ -595,19 +534,43 @@ public class WebServer {
         websocketManager.broadcast(path, room, payload);
     }
 
+    private void sendResponseAndClose(Connection conn, HttpMethod method, String path, WebResponse response) {
+        try {
+            sendResponse(conn.channel, method, path, response);
+        } catch (IOException ignored) {
+        }
+        try {
+            conn.channel.close();
+        } catch (IOException ignored) {
+        }
+        connections.remove(conn);
+    }
+
+    private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
+        try {
+            sendResponse(conn.channel, method, path, code, content, headers);
+        } catch (IOException ignored) {
+        }
+        try {
+            conn.channel.close();
+        } catch (IOException ignored) {
+        }
+        connections.remove(conn);
+    }
+
     private void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
         sendResponse(channel, method, path, response.getCode(), response.getContent(), response.getHeaders());
     }
 
-    private String getServerTime() {
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.getDefault());
+    public static String getServerTime() {
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat(" yyyy HH:mm:ss z", Locale.getDefault());
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        return dateFormat.format(calendar.getTime());
+        return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[date.getDay()] + ", " + String.format("%02d", date.getDate()) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[date.getMonth()] + dateFormat.format(date);
     }
 
     private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
-        Set<String> list = new HashSet<>();
+        List<String> list = new ArrayList<>();
         list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {
             list.add(i.getKey() + ": " + i.getValue());
@@ -687,7 +650,7 @@ public class WebServer {
         if (j.value().startsWith("/")) {
             Class<?>[] parameterTypes = i.getParameterTypes();
             if (WebRequest.class.equals(parameterTypes[0])) {
-                for (HttpMethod k : j.methods()) {
+                for (HttpMethod k : HttpMethod.getFromMethod(i)) {
                     handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
                 }
             }
@@ -743,6 +706,15 @@ public class WebServer {
                     }
                 }
             }
+        }
+
+        private boolean hasPath(String path) {
+            for (Map<String, HandlerBundle> i : handlers.values()) {
+                if (i.containsKey(path)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
@@ -811,7 +783,7 @@ public class WebServer {
         }
 
         private void broadcast(String path, String message) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getPath().equals(path)).forEach(e -> {
+            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path)).forEach(e -> {
                 try {
                     e.getKey().send(message);
                 } catch (IOException ignored) {
@@ -820,7 +792,7 @@ public class WebServer {
         }
 
         private void broadcast(String path, byte[] payload) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getPath().equals(path)).forEach(e -> {
+            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path)).forEach(e -> {
                 try {
                     e.getKey().send(payload);
                 } catch (IOException ignored) {
@@ -829,7 +801,7 @@ public class WebServer {
         }
 
         private void broadcast(String path, String room, String message) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
+            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
                 try {
                     e.getKey().send(message);
                 } catch (IOException ignored) {
@@ -838,7 +810,7 @@ public class WebServer {
         }
 
         private void broadcast(String path, String room, byte[] payload) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
+            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
                 try {
                     e.getKey().send(payload);
                 } catch (IOException ignored) {
@@ -852,7 +824,7 @@ public class WebServer {
 
         private void executeConnectEvent(WebSocketConnection connection) {
             try {
-                endpoints.get(connection.getPath()).get(WebsocketConnectedEvent.class).forEach(bundle -> {
+                endpoints.get(connection.getRequest().getPath()).get(WebsocketConnectedEvent.class).forEach(bundle -> {
                     bundle.getMethod().setAccessible(true);
                     try {
                         bundle.getMethod().invoke(bundle.getHandler(), new WebsocketConnectedEvent(connection));
@@ -866,7 +838,7 @@ public class WebServer {
 
         private void executeDisconnectEvent(WebSocketConnection connection) {
             try {
-                endpoints.get(connection.getPath()).get(WebsocketDisconnectedEvent.class).forEach(bundle -> {
+                endpoints.get(connection.getRequest().getPath()).get(WebsocketDisconnectedEvent.class).forEach(bundle -> {
                     bundle.getMethod().setAccessible(true);
                     try {
                         bundle.getMethod().invoke(bundle.getHandler(), new WebsocketDisconnectedEvent(connection));
@@ -880,7 +852,7 @@ public class WebServer {
 
         private void executeMessageEvent(WebSocketConnection connection, String message) {
             try {
-                endpoints.get(connection.getPath()).get(WebsocketMessageEvent.class).forEach(bundle -> {
+                endpoints.get(connection.getRequest().getPath()).get(WebsocketMessageEvent.class).forEach(bundle -> {
                     bundle.getMethod().setAccessible(true);
                     try {
                         bundle.getMethod().invoke(bundle.getHandler(), new WebsocketMessageEvent(connection, message));
@@ -894,7 +866,7 @@ public class WebServer {
 
         private void executeBinaryEvent(WebSocketConnection connection, byte[] payload) {
             try {
-                endpoints.get(connection.getPath()).get(WebsocketBinaryDataEvent.class).forEach(bundle -> {
+                endpoints.get(connection.getRequest().getPath()).get(WebsocketBinaryDataEvent.class).forEach(bundle -> {
                     bundle.getMethod().setAccessible(true);
                     try {
                         bundle.getMethod().invoke(bundle.getHandler(), new WebsocketBinaryDataEvent(connection, payload));
@@ -931,7 +903,7 @@ public class WebServer {
 
     }
 
-    public class ErrorHandlerManager {
+    private static class ErrorHandlerManager {
 
         private final Map<HttpResponseCode, ErrorHandler> errorHandlers = new HashMap<>();
         private final ErrorHandler universalErrorHandler;
@@ -950,8 +922,8 @@ public class WebServer {
             errorHandlers.remove(code);
         }
 
-        private ErrorResponse handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers) {
-            ErrorResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
+        private WebResponse handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers) {
+            WebResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
             errorResponse.setErrorCode(code);
             return errorResponse;
         }

@@ -6,8 +6,8 @@ import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.data.json.parser.ParseException;
-import net.redstonecraft.redstoneapi.webserver.obj.ErrorResponse;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
+import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         String method = sb.toString();
         sb = new StringBuilder();
@@ -117,7 +117,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         String path = sb.toString();
         sb = new StringBuilder();
@@ -127,7 +127,7 @@ public class WebRequest {
             prev1 = t;
         }
         if (t == -1) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         String protocol = sb.toString().trim();
         sb = new StringBuilder();
@@ -150,7 +150,7 @@ public class WebRequest {
             }
         }
         if (!eoh) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         List<HttpHeader> tmpHeaders = new LinkedList<>();
         for (String i : sb.toString().split("\r\n")) {
@@ -159,19 +159,19 @@ public class WebRequest {
         }
         HttpHeaders headers = new HttpHeaders(tmpHeaders);
         if (!HttpMethod.isMethodAvailable(method)) {
-            return new ErrorResponse(HttpResponseCode.METHOD_NOT_ALLOWED, "");
+            return new WebResponse("", HttpResponseCode.METHOD_NOT_ALLOWED);
         }
         if (!path.startsWith("/") && !(path.startsWith("*") && method.equals(HttpMethod.OPTIONS.name()))) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         if (path.length() > 2048) {
-            return new ErrorResponse(HttpResponseCode.URI_TOO_LONG, "");
+            return new WebResponse("", HttpResponseCode.URI_TOO_LONG);
         }
         if (!protocol.equals("HTTP/1.1") && !protocol.equals("HTTP/1.0")) {
-            return new ErrorResponse(HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED, "");
+            return new WebResponse("", HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED);
         }
         if (HttpMethod.valueOf(method).hasBody() && (headers.get("Content-Length") == null || headers.getContentLength() != is.available())) {
-            return new ErrorResponse(HttpResponseCode.BAD_REQUEST, "");
+            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         return new WebRequest(HttpMethod.valueOf(method), path, protocol, headers, is, webServer);
     }

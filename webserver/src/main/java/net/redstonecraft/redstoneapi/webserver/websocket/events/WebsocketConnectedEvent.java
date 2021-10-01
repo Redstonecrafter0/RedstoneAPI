@@ -1,5 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver.websocket.events;
 
+import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;
 
 /**
@@ -20,7 +21,7 @@ public class WebsocketConnectedEvent {
         return webSocketConnection;
     }
 
-    public WebArgument[] getArguments() {
-        return webSocketConnection.getWebArguments();
+    public WebRequest getArguments() {
+        return webSocketConnection.getRequest();
     }
 }

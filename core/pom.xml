@@ -48,13 +48,4 @@
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/java/net/redstonecraft/redstoneapi/info</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-    </build>
-
 </project>

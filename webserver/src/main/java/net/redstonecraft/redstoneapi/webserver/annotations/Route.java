@@ -1,7 +1,5 @@
 package net.redstonecraft.redstoneapi.webserver.annotations;
 
-import net.redstonecraft.redstoneapi.webserver.HttpMethod;
-
 import java.lang.annotation.*;
 
 @Retention(value = RetentionPolicy.RUNTIME)
@@ -9,5 +7,4 @@ import java.lang.annotation.*;
 @Repeatable(value = Routes.class)
 public @interface Route {
     String value();
-    HttpMethod[] methods() default HttpMethod.GET;
 }

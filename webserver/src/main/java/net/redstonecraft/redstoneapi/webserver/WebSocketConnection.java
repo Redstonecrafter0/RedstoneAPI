@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The WebsocketConnection is used to send data or disconnect
@@ -20,37 +18,13 @@ public class WebSocketConnection {
 
     private final SocketChannel channel;
     private final WebServer webServer;
-    private final String path;
-    private final WebArgument[] webArguments;
+    private final WebRequest request;
     private String room = null;
 
-    public WebSocketConnection(SocketChannel channel, WebServer webServer, String path) {
+    public WebSocketConnection(SocketChannel channel, WebServer webServer, WebRequest request) {
         this.channel = channel;
         this.webServer = webServer;
-        if (path.contains("?")) {
-            this.path = path.split("\\?")[0];
-            List<WebArgument> tmpArgs = new ArrayList<>();
-            WebArgument[] tmpArgsArr;
-            try {
-                for (String i : path.split("\\?")[1].split("&")) {
-                    try {
-                        String[] tmp = i.split("=", 2);
-                        tmpArgs.add(new WebArgument(tmp[0], tmp[1]));
-                    } catch (Throwable ignored) {
-                    }
-                }
-                tmpArgsArr = new WebArgument[tmpArgs.size()];
-                for (int i = 0; i < tmpArgsArr.length; i++) {
-                    tmpArgsArr[i] = tmpArgs.get(i);
-                }
-            } catch (Throwable ignored) {
-                tmpArgsArr = new WebArgument[0];
-            }
-            webArguments = tmpArgsArr;
-        } else {
-            this.path = path;
-            webArguments = new WebArgument[0];
-        }
+        this.request = request;
     }
 
     void send(byte type, byte[] payload) throws IOException {
@@ -104,12 +78,8 @@ public class WebSocketConnection {
         webServer.disconnectWebsocket(this);
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public WebArgument[] getWebArguments() {
-        return webArguments;
+    public WebRequest getRequest() {
+        return request;
     }
 
     public WebServer getWebServer() {
@@ -125,19 +95,19 @@ public class WebSocketConnection {
     }
 
     public void broadcast(String message) {
-        webServer.broadcastWebsocket(path, message);
+        webServer.broadcastWebsocket(request.getPath(), message);
     }
 
     public void broadcast(byte[] payload) {
-        webServer.broadcastWebsocket(path, payload);
+        webServer.broadcastWebsocket(request.getPath(), payload);
     }
 
     public void broadcastRoom(String message) {
-        webServer.broadcastWebsocket(path, room, message);
+        webServer.broadcastWebsocket(request.getPath(), room, message);
     }
 
     public void broadcastRoom(byte[] payload) {
-        webServer.broadcastWebsocket(path, room, payload);
+        webServer.broadcastWebsocket(request.getPath(), room, payload);
     }
 
     public void leaveRoom() {

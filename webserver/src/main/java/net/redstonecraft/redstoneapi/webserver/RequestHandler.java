@@ -5,13 +5,13 @@ import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.core.HttpResponseCode;
 import net.redstonecraft.redstoneapi.core.MimeType;
-import net.redstonecraft.redstoneapi.webserver.obj.RenderedItems;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Map;
 
 public abstract class RequestHandler {
 
@@ -33,12 +33,12 @@ public abstract class RequestHandler {
         return new WebResponse(new byte[0], permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND, new HttpHeader("Location", url));
     }
 
-    public WebResponse renderTemplate(String template, RenderedItems items, HttpHeader... headers) throws IOException {
+    public WebResponse renderTemplate(String template, Map<String, ?> items, HttpHeader... headers) throws IOException {
         //noinspection ReadWriteStringCanBeUsed
         return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), headers);
     }
 
-    public WebResponse renderTemplate(String template, RenderedItems items, HttpResponseCode code, HttpHeader... headers) throws IOException {
+    public WebResponse renderTemplate(String template, Map<String, ?> items, HttpResponseCode code, HttpHeader... headers) throws IOException {
         //noinspection ReadWriteStringCanBeUsed
         return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(template).toPath()), StandardCharsets.UTF_8), items), code, headers);
     }

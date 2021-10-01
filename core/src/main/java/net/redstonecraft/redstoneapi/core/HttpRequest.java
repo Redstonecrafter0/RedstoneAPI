@@ -126,7 +126,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("GET");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         byte[] response;
         if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -161,7 +161,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("HEAD");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         byte[] response;
         if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -197,7 +197,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("DELETE");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         byte[] response;
         if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -233,7 +233,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("POST");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         con.setDoOutput(true);
         OutputStream out = con.getOutputStream();
@@ -273,7 +273,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("PUT");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         con.setDoOutput(true);
         OutputStream out = con.getOutputStream();
@@ -313,7 +313,7 @@ public class HttpRequest {
         HttpURLConnection con = (HttpURLConnection) urlUrl.openConnection();
         con.setRequestMethod("PATCH");
         for (HttpHeader i : header) {
-            con.addRequestProperty(i.key, i.value);
+            con.addRequestProperty(i.getKey(), i.getValue());
         }
         con.setDoOutput(true);
         OutputStream out = con.getOutputStream();
