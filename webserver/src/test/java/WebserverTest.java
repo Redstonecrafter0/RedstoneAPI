@@ -1,5 +1,7 @@
+import net.redstonecraft.redstoneapi.core.StringUtils;
 import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
+import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.Route;
 import net.redstonecraft.redstoneapi.webserver.WebServer;
@@ -13,6 +15,7 @@ import net.redstonecraft.redstoneapi.webserver.WebRequest;
  *
  * @author Redstonecrafter0
  */
+@SuppressWarnings("deprecation")
 public class WebserverTest extends RequestHandler {
 
     private final LoginManager loginManager = new LoginManager("apsuihdpaiuhsdpsaiuhdpahisdpaoihd", new UserProviderImpl());
@@ -31,8 +34,8 @@ public class WebserverTest extends RequestHandler {
     @Post
     @Route("/home")
     @Route("/test")
-    public String home(WebRequest request, @QueryParam("name") String name) {
-        return name + (request.getMethod().equals(HttpMethod.POST) ? "\n" + request.getContentAsString() : "");
+    public String home(WebRequest request, @QueryParam("name") String name, @FormParam("par") String form) {
+        return name + form;
     }
 
 }

@@ -24,7 +24,7 @@ public class WebRequest {
     private final InputStream inputStream;
     private final WebServer webServer;
     private final HttpMethod method;
-    private final Map<String, String> args = new HashMap<>();
+    private final Map<String, String> args;
     private final String protocol;
 
     public WebRequest(HttpMethod method, String path, String protocol, HttpHeaders headers, InputStream inputStream, WebServer webServer) {
@@ -34,15 +34,26 @@ public class WebRequest {
         if (path.contains("?")) {
             String[] splitted = path.split("\\?", 2);
             this.path = splitted[0];
-            for (String i : splitted[1].split("&")) {
-                String[] arg = i.split("=");
-                args.put(URLDecoder.decode(arg[0], StandardCharsets.UTF_8), URLDecoder.decode(arg[1], StandardCharsets.UTF_8));
-            }
+            args = parseFormData(splitted[1]);
         } else {
             this.path = URLDecoder.decode(path, StandardCharsets.UTF_8);
+            args = new HashMap<>();
         }
         this.headers = headers;
         this.inputStream = inputStream;
+    }
+
+    private static Map<String, String> parseFormData(String string) {
+        try {
+            Map<String, String> args = new HashMap<>();
+            for (String i : string.split("&")) {
+                String[] arg = i.split("=");
+                args.put(URLDecoder.decode(arg[0], StandardCharsets.UTF_8), URLDecoder.decode(arg[1], StandardCharsets.UTF_8));
+            }
+            return args;
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+            return new HashMap<>();
+        }
     }
 
     public String getPath() {
@@ -75,6 +86,10 @@ public class WebRequest {
 
     public String getContentAsString() {
         return new String(getContent(), StandardCharsets.UTF_8);
+    }
+
+    public Map<String, String> getFormData() {
+        return parseFormData(getContentAsString());
     }
 
     public JSONArray getContentAsJsonArray() {

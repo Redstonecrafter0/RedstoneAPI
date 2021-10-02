@@ -74,8 +74,8 @@ public class WebResponse {
     @Override
     public String toString() {
         return "WebResponse{" +
-                ", headers=" + Arrays.toString(headers) +
-                ", code=" + code +
+                "headers=" + Arrays.toString(headers) +
+                ", code=" + code.getCode() +
                 '}';
     }
 }

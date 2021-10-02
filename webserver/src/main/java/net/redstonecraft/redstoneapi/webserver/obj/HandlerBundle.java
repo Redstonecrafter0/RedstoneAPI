@@ -2,6 +2,7 @@ package net.redstonecraft.redstoneapi.webserver.obj;
 
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
+import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
 
 import java.lang.reflect.InvocationTargetException;
@@ -17,7 +18,11 @@ public record HandlerBundle(RequestHandler handler, Method method) {
         params.add(request);
         Parameter[] parameters = method.getParameters();
         for (int i = 1; i < parameters.length; i++) {
-            params.add(request.getArgs().get(parameters[i].getAnnotation(QueryParam.class).value()));
+            if (parameters[i].isAnnotationPresent(QueryParam.class)) {
+                params.add(request.getArgs().get(parameters[i].getAnnotation(QueryParam.class).value()));
+            } else {
+                params.add(request.getFormData().get(parameters[i].getAnnotation(FormParam.class).value()));
+            }
         }
         return method.invoke(handler, params.toArray(new Object[0]));
     }

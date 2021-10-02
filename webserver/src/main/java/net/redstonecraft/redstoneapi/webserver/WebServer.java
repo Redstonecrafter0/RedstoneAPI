@@ -5,6 +5,8 @@ import com.hubspot.jinjava.JinjavaConfig;
 import com.hubspot.jinjava.loader.FileLocator;
 import net.redstonecraft.redstoneapi.info.RedstoneAPI;
 import net.redstonecraft.redstoneapi.core.*;
+import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
+import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.Route;
 import net.redstonecraft.redstoneapi.webserver.annotations.Routes;
 import net.redstonecraft.redstoneapi.webserver.obj.*;
@@ -20,6 +22,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
@@ -55,7 +58,7 @@ public class WebServer {
             if (html.equals("")) {
                 try {
                     html = new String(Objects.requireNonNull(getClass().getResourceAsStream("/webserver/error.html")).readAllBytes(), StandardCharsets.UTF_8);
-                } catch (IOException ignored) {
+                } catch (IOException | NullPointerException ignored) {
                 }
             }
             return new WebResponse(html.replace("{code}", String.valueOf(code.getCode()))
@@ -79,7 +82,6 @@ public class WebServer {
         logger.addHandler(sh);
     }
 
-    private final Thread thread;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final JinjavaConfig jinjavaConfig = new JinjavaConfig();
     private final Jinjava jinjava = new Jinjava(jinjavaConfig);
@@ -98,10 +100,12 @@ public class WebServer {
     private boolean run = true;
 
     @Deprecated
+    @SuppressWarnings("DeprecatedIsStillUsed")
     public WebServer() throws IOException {
         this("localhost", 8080);
     }
 
+    @SuppressWarnings("unused")
     public WebServer(int port) throws IOException {
         this("", port);
     }
@@ -131,7 +135,7 @@ public class WebServer {
         if (this.logging) {
             logger.info("WebServer listening on port " + this.port);
         }
-        thread = new Thread(() -> {
+        Thread thread = new Thread(() -> {
             while (run) {
                 try {
                     tick();
@@ -149,43 +153,16 @@ public class WebServer {
         thread.start();
     }
 
-    private static boolean isMatch(byte[] pattern, byte[] input, int pos) {
-        for (int i = 0; i < pattern.length; i++) {
-            if (pattern[i] != input[pos + i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static byte[][] byteArraySplit(byte[] pattern, byte[] input) {
-        List<byte[]> l = new ArrayList<>();
-        int blockStart = 0;
-        for (int i = 0; i < input.length; i++) {
-            if (isMatch(pattern, input, i)) {
-                l.add(Arrays.copyOfRange(input, blockStart, i));
-                blockStart = i + pattern.length;
-                i = blockStart;
-            }
-        }
-        l.add(Arrays.copyOfRange(input, blockStart, input.length));
-        byte[][] arr = new byte[l.size()][];
-        for (Enumerate.Item<byte[]> i : new Enumerate<>(l)) {
-            arr[i.getCount()] = i.getValue();
-        }
-        return arr;
-    }
-
     public Jinjava getJinjava() {
         return jinjava;
     }
 
+    @SuppressWarnings("unused")
     public void stop() {
         run = false;
         try {
             serverSocket.close();
             selector.close();
-            thread.stop();
         } catch (Throwable ignored) {
         }
         if (logging) {
@@ -506,10 +483,12 @@ public class WebServer {
         return c;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private boolean getBitByByte(byte b, int pos) {
         return (b >> (8 - (pos + 1)) & 0x0001) == 1;
     }
 
+    @SuppressWarnings("unused")
     public File getStaticDir() {
         return new File(staticDir, "static");
     }
@@ -546,6 +525,7 @@ public class WebServer {
         connections.remove(conn);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
             sendResponse(conn.channel, method, path, code, content, headers);
@@ -566,6 +546,7 @@ public class WebServer {
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat(" yyyy HH:mm:ss z", Locale.getDefault());
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        //noinspection deprecation
         return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[date.getDay()] + ", " + String.format("%02d", date.getDate()) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[date.getMonth()] + dateFormat.format(date);
     }
 
@@ -648,8 +629,11 @@ public class WebServer {
 
     private void internalRegisterHandler(RequestHandler handler, Method i, Route j) {
         if (j.value().startsWith("/")) {
-            Class<?>[] parameterTypes = i.getParameterTypes();
-            if (WebRequest.class.equals(parameterTypes[0])) {
+            Parameter[] parameterTypes = i.getParameters();
+            if (!Arrays.stream(parameterTypes).skip(1).allMatch(k -> k.getType().equals(String.class) && (k.isAnnotationPresent(QueryParam.class) || k.isAnnotationPresent(FormParam.class)))) {
+                return;
+            }
+            if (WebRequest.class.equals(parameterTypes[0].getType())) {
                 for (HttpMethod k : HttpMethod.getFromMethod(i)) {
                     handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
                 }
@@ -664,19 +648,27 @@ public class WebServer {
         }
     }
 
+    @SuppressWarnings("unused")
     public void removeHandlers(String path) {
         for (HttpMethod i : HttpMethod.values()) {
             removeHandler(i, path);
         }
     }
 
+    @SuppressWarnings("unused")
     public void removeHandler(RequestHandler handler) {
         handlerManager.removeHandler(handler);
         websocketManager.removeHandler(handler);
     }
 
+    @SuppressWarnings("unused")
     public void setErrorHandler(HttpResponseCode code, ErrorHandler errorHandler) {
         errorHandlerManager.setHandler(code, errorHandler);
+    }
+
+    @SuppressWarnings("unused")
+    public void removeErrorHandler(HttpResponseCode code) {
+        errorHandlerManager.removeHandler(code);
     }
 
     private static class HandlerManager {
