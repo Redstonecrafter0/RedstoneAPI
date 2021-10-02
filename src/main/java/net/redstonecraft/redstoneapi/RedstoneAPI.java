@@ -18,7 +18,7 @@ import java.util.Arrays;
 
 public class RedstoneAPI {
 
-    private static final Version VERSION = new Version("v1.4");
+    private static final Version VERSION = new Version("v1.5");
 
     private static final int WIDTH = 600;
     private static final int HEIGHT = 250;

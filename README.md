@@ -1,4 +1,12 @@
 # RedstoneAPI
+
+# Important
+Currently, there is development going on this project under version 2.0.  
+Version 1.5 is the last release from version 1.
+Version 2 will be a multi-module project and will get an API redesign so that projects using version 1 will fail using version 2.
+A recode will be required but this enables improvement on the code base and binary size.
+As well version 2 will use Java 17 (the latest LTS) so the latest Java features can be used.
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Redstonecrafter0/RedstoneAPI?label=latest%20release&style=for-the-badge)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/Redstonecrafter0/RedstoneAPI?color=E67233&include_prereleases&label=latest%20pre-release&style=for-the-badge)
 

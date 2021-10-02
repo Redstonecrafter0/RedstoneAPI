@@ -143,7 +143,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	}
 
 	public int getInt(String key) {
-		return (int) get(key);
+		return (int) ((Long) get(key)).longValue();
 	}
 
 	public float getFloat(String key) {

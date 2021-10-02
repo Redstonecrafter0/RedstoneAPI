@@ -4,7 +4,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.redstonecraft.redstoneapi.discord.AbstractDiscordBot;
-import net.redstonecraft.redstoneapi.discord.DiscordBot;
 import net.redstonecraft.redstoneapi.discord.abs.*;
 import net.redstonecraft.redstoneapi.discord.converter.*;
 import net.redstonecraft.redstoneapi.discord.obj.PrivateContext;
@@ -149,7 +148,7 @@ public class SimpleCommandManager extends CommandManager<SimpleCommandManager.Co
                         }
                     }
                 }
-                if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
+                if (arrayequals(commandBundle.method.getParameterTypes(), getClasses(args))) {
                     try {
                         commandBundle.method.setAccessible(true);
                         if (!(boolean) commandBundle.method.invoke(commandBundle.instance, args)) {
@@ -201,6 +200,27 @@ public class SimpleCommandManager extends CommandManager<SimpleCommandManager.Co
                 runnable.run();
             }
         }
+    }
+
+    private static boolean arrayequals(Class<?>[] a, Class[] a2) {
+        if (a==a2) {
+            return true;
+        }
+        if (a==null || a2==null) {
+            return false;
+        }
+        int length = a.length;
+        if (a2.length != length) {
+            return false;
+        }
+        for (int i=0; i<length; i++) {
+            Class o1 = a[i];
+            Class o2 = a2[i];
+            if (!(o1==null ? o2==null : o1.isAssignableFrom(o2))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static Class[] getClasses(Object[] obj) {
@@ -259,7 +279,7 @@ public class SimpleCommandManager extends CommandManager<SimpleCommandManager.Co
                         }
                     }
                 }
-                if (Arrays.equals(commandBundle.method.getParameterTypes(), getClasses(args))) {
+                if (arrayequals(commandBundle.method.getParameterTypes(), getClasses(args))) {
                     try {
                         commandBundle.method.setAccessible(true);
                         if (!(boolean) commandBundle.method.invoke(commandBundle.instance, args)) {

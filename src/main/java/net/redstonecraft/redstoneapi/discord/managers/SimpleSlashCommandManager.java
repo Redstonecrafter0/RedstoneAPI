@@ -161,7 +161,7 @@ public class SimpleSlashCommandManager extends SlashCommandManager {
                     method.setAccessible(true);
                     method.invoke(commandBundle.instance, opt.toArray(new Object[0]));
                 } catch (Throwable e) {
-                    e.printStackTrace();
+                    commandBundle.instance.handleError((SlashCommandContext) opt.get(0), e);
                 }
             }
         }

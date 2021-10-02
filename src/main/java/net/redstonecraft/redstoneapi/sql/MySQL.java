@@ -18,7 +18,7 @@ public class MySQL implements SQL {
     private final Connection connection;
     private final Statement statement;
 
-    private static final SQLDialectRenderer sqlDialectRenderer = new SQLDialectRenderer() {
+    static final SQLDialectRenderer sqlDialectRenderer = new SQLDialectRenderer() {
         @Override
         public PreparedStatement createTable(SQL sql, Class<? extends TableBase> table, List<BaseType> columns, List<Column> columnData, List<Boolean> primaryKeyData, List<Boolean> notNullData, List<Boolean> uniqueData, List<Boolean> hideOnJsonData, SQLNumber primaryKey) {
             if (columns.size() != columnData.size() && columnData.size() != primaryKeyData.size() && primaryKeyData.size() != notNullData.size() && notNullData.size() != uniqueData.size() && uniqueData.size() != hideOnJsonData.size()) {

@@ -2,6 +2,7 @@ package net.redstonecraft.redstoneapi.tools;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -60,6 +61,38 @@ public class Pagination<T> implements Iterable<T> {
     @Override
     public Spliterator<T> spliterator() {
         return getItems().spliterator();
+    }
+
+    public static <T> Collector<T, ?, Pagination<T>> collect(int pageSize, int page) {
+        return new Collector<T, ArrayList<T>, Pagination<T>>() {
+            @Override
+            public Supplier<ArrayList<T>> supplier() {
+                return ArrayList::new;
+            }
+
+            @Override
+            public BiConsumer<ArrayList<T>, T> accumulator() {
+                return ArrayList::add;
+            }
+
+            @Override
+            public BinaryOperator<ArrayList<T>> combiner() {
+                return (list1, list2) -> {
+                    list1.addAll(list2);
+                    return list1;
+                };
+            }
+
+            @Override
+            public Function<ArrayList<T>, Pagination<T>> finisher() {
+                return list -> new Pagination<>(list, pageSize, page);
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return new HashSet<>();
+            }
+        };
     }
 
 }

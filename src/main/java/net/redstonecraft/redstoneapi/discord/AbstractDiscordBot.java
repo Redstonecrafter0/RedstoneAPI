@@ -1,6 +1,7 @@
 package net.redstonecraft.redstoneapi.discord;
 
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.redstonecraft.redstoneapi.discord.abs.CommandManager;
 import net.redstonecraft.redstoneapi.discord.abs.SlashCommandManager;
@@ -22,6 +23,8 @@ public abstract class AbstractDiscordBot<T, C extends CommandManager, S extends 
     public abstract ButtonManager getButtonManager();
 
     public abstract void submitSlashCommands();
+
+    public abstract void submitSlashCommandsForGuild(Guild guild);
 
     public abstract String getCommandPrefix();
 

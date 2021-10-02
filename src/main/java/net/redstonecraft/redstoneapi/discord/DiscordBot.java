@@ -2,6 +2,7 @@ package net.redstonecraft.redstoneapi.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.redstonecraft.redstoneapi.discord.abs.CommandManager;
@@ -93,6 +94,15 @@ public class DiscordBot<C extends CommandManager, S extends SlashCommandManager>
     @Override
     public void submitSlashCommands() {
         CommandListUpdateAction commands = jda.updateCommands();
+        if (slashCommandManager != null) {
+            commands.addCommands(slashCommandManager.getJdaCommands());
+        }
+        commands.queue();
+    }
+
+    @Override
+    public void submitSlashCommandsForGuild(Guild guild) {
+        CommandListUpdateAction commands = guild.updateCommands();
         if (slashCommandManager != null) {
             commands.addCommands(slashCommandManager.getJdaCommands());
         }
