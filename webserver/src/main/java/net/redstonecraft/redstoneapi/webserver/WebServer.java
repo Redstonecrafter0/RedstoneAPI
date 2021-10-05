@@ -528,7 +528,7 @@ public class WebServer {
     @SuppressWarnings("SameParameterValue")
     private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
-            sendResponse(conn.channel, method, path, code, content, headers);
+            sendResponse(conn.channel, method, path, code, content, Arrays.asList(headers));
         } catch (IOException ignored) {
         }
         try {
@@ -550,7 +550,7 @@ public class WebServer {
         return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[date.getDay()] + ", " + String.format("%02d", date.getDate()) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[date.getMonth()] + dateFormat.format(date);
     }
 
-    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
+    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, Collection<HttpHeader> headers) throws IOException {
         List<String> list = new ArrayList<>();
         list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {

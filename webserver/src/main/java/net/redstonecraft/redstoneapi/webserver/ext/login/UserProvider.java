@@ -5,6 +5,10 @@ package net.redstonecraft.redstoneapi.webserver.ext.login;
  *
  * @author Redstonecrafter0
  */
-public interface UserProvider {
+public interface UserProvider<T extends User> {
+
+    User login(String username, String password);
+
+    T getUserFromUserId(String uid);
 
 }

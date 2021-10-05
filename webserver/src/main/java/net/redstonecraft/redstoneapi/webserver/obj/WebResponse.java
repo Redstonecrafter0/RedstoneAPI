@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * The response sent to the client when an HTTP request came in to the {@link net.redstonecraft.redstoneapi.webserver.WebServer}
@@ -18,7 +19,7 @@ import java.util.Arrays;
 public class WebResponse {
 
     private final InputStream content;
-    private final HttpHeader[] headers;
+    private final List<HttpHeader> headers;
     private HttpResponseCode code;
 
     public WebResponse(String content, HttpHeader... headers) {
@@ -51,7 +52,7 @@ public class WebResponse {
 
     public WebResponse(InputStream content, HttpResponseCode code, HttpHeader... headers) {
         this.content = content;
-        this.headers = headers;
+        this.headers = Arrays.asList(headers);
         this.code = code;
     }
 
@@ -63,8 +64,12 @@ public class WebResponse {
         return content;
     }
 
-    public HttpHeader[] getHeaders() {
+    public List<HttpHeader> getHeaders() {
         return headers;
+    }
+
+    public void addHeader(HttpHeader header) {
+        headers.add(header);
     }
 
     public void setErrorCode(HttpResponseCode code) {
@@ -74,7 +79,7 @@ public class WebResponse {
     @Override
     public String toString() {
         return "WebResponse{" +
-                "headers=" + Arrays.toString(headers) +
+                "headers=" + headers +
                 ", code=" + code.getCode() +
                 '}';
     }

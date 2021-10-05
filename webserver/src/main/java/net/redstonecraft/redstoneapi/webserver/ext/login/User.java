@@ -5,5 +5,8 @@ package net.redstonecraft.redstoneapi.webserver.ext.login;
  *
  * @author Redstonecrafter0
  */
-public record User(String username, String password, String id) {
+public interface User {
+
+    String getId();
+
 }
