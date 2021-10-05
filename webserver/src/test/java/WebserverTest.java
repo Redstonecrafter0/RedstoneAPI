@@ -1,5 +1,3 @@
-import net.redstonecraft.redstoneapi.core.StringUtils;
-import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
@@ -7,7 +5,7 @@ import net.redstonecraft.redstoneapi.webserver.annotations.Route;
 import net.redstonecraft.redstoneapi.webserver.WebServer;
 import net.redstonecraft.redstoneapi.webserver.annotations.methods.Get;
 import net.redstonecraft.redstoneapi.webserver.annotations.methods.Post;
-import net.redstonecraft.redstoneapi.webserver.ext.login.LoginManager;
+import net.redstonecraft.redstoneapi.webserver.ext.login.jwt.JWTLoginManager;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 
 /**
@@ -18,7 +16,7 @@ import net.redstonecraft.redstoneapi.webserver.WebRequest;
 @SuppressWarnings("deprecation")
 public class WebserverTest extends RequestHandler {
 
-    private final LoginManager loginManager = new LoginManager("apsuihdpaiuhsdpsaiuhdpahisdpaoihd", new UserProviderImpl());
+    private final JWTLoginManager loginManager = new JWTLoginManager("apsuihdpaiuhsdpsaiuhdpahisdpaoihd");
 
     public static void main(String[] args) throws Throwable {
         WebServer webServer = new WebServer();

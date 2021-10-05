@@ -17,11 +17,11 @@ import java.security.NoSuchAlgorithmException;
  * */
 public class Hashlib {
 
-    public static String sha265(String str) {
-        return sha265(str.getBytes(StandardCharsets.UTF_8));
+    public static String sha256(String str) {
+        return sha256(str.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String sha265(byte[] arr) {
+    public static String sha256(byte[] arr) {
         return hash("SHA-256", arr);
     }
 
@@ -85,11 +85,11 @@ public class Hashlib {
         return hexString.toString();
     }
 
-    public static byte[] sha265_raw(String str) {
-        return sha265_raw(str.getBytes(StandardCharsets.UTF_8));
+    public static byte[] sha256_raw(String str) {
+        return sha256_raw(str.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static byte[] sha265_raw(byte[] arr) {
+    public static byte[] sha256_raw(byte[] arr) {
         return hash_raw("SHA-256", arr);
     }
 

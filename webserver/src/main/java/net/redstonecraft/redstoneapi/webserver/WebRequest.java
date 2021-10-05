@@ -20,6 +20,7 @@ import java.util.*;
 public class WebRequest {
 
     private final String path;
+    private final String rawPath;
     private final HttpHeaders headers;
     private final InputStream inputStream;
     private final WebServer webServer;
@@ -28,6 +29,7 @@ public class WebRequest {
     private final String protocol;
 
     public WebRequest(HttpMethod method, String path, String protocol, HttpHeaders headers, InputStream inputStream, WebServer webServer) {
+        this.rawPath = path;
         this.method = method;
         this.protocol = protocol;
         this.webServer = webServer;
@@ -44,16 +46,15 @@ public class WebRequest {
     }
 
     private static Map<String, String> parseFormData(String string) {
-        try {
-            Map<String, String> args = new HashMap<>();
-            for (String i : string.split("&")) {
-                String[] arg = i.split("=");
+        Map<String, String> args = new HashMap<>();
+        for (String i : string.split("&")) {
+            try {
+                String[] arg = i.split("=", 2);
                 args.put(URLDecoder.decode(arg[0], StandardCharsets.UTF_8), URLDecoder.decode(arg[1], StandardCharsets.UTF_8));
+            } catch (ArrayIndexOutOfBoundsException ignored) {
             }
-            return args;
-        } catch (ArrayIndexOutOfBoundsException ignored) {
-            return new HashMap<>();
         }
+        return args;
     }
 
     public String getPath() {
@@ -102,6 +103,10 @@ public class WebRequest {
 
     public String getProtocol() {
         return protocol;
+    }
+
+    public String getRawPath() {
+        return rawPath;
     }
 
     public WebServer getWebServer() {
