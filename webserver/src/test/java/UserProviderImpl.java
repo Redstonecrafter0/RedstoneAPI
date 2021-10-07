@@ -1,6 +1,9 @@
 import net.redstonecraft.redstoneapi.webserver.ext.login.User;
 import net.redstonecraft.redstoneapi.webserver.ext.login.UserProvider;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * RedstoneAPI
  *
@@ -8,14 +11,18 @@ import net.redstonecraft.redstoneapi.webserver.ext.login.UserProvider;
  */
 public class UserProviderImpl implements UserProvider<UserImpl> {
 
+    private final Map<String, UserImpl> list = new HashMap<>();
+
     @Override
     public User login(String username, String password) {
-        return null;
+        UserImpl a = new UserImpl(username);
+        list.put(username, a);
+        return a;
     }
 
     @Override
     public UserImpl getUserFromUserId(String uid) {
-        return null;
+        return list.get(uid);
     }
 
 }

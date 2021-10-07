@@ -7,9 +7,15 @@ import net.redstonecraft.redstoneapi.webserver.ext.login.User;
  */
 public class UserImpl implements User {
 
+    private final String id;
+
+    public UserImpl(String username) {
+        id = username;
+    }
+
     @Override
     public String getId() {
-        return null;
+        return id;
     }
 
 }

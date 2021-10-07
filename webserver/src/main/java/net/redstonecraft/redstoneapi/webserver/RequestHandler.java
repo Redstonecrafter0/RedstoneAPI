@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class RequestHandler {
@@ -31,6 +32,10 @@ public abstract class RequestHandler {
 
     public WebResponse redirect(String url, boolean permanent) {
         return new WebResponse(new byte[0], permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND, new HttpHeader("Location", url));
+    }
+
+    public WebResponse renderTemplate(String template) throws IOException {
+        return renderTemplate(template, new HashMap<>());
     }
 
     public WebResponse renderTemplate(String template, Map<String, ?> items, HttpHeader... headers) throws IOException {

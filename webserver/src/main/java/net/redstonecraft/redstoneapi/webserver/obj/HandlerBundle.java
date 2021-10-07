@@ -9,9 +9,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-public record HandlerBundle(RequestHandler handler, Method method) {
+public class HandlerBundle {
+
+    private final RequestHandler handler;
+    private final Method method;
+
+    public HandlerBundle(RequestHandler handler, Method method) {
+        this.handler = handler;
+        this.method = method;
+    }
 
     public Object invoke(WebRequest request) throws InvocationTargetException, IllegalAccessException {
         List<Object> params = new ArrayList<>();
@@ -26,5 +36,35 @@ public record HandlerBundle(RequestHandler handler, Method method) {
         }
         return method.invoke(handler, params.toArray(new Object[0]));
     }
+
+    public RequestHandler getHandler() {
+        return handler;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (HandlerBundle) obj;
+        return Objects.equals(this.handler, that.handler) &&
+                Objects.equals(this.method, that.method);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(handler, method);
+    }
+
+    @Override
+    public String toString() {
+        return "HandlerBundle[" +
+                "handler=" + handler + ", " +
+                "method=" + method + ']';
+    }
+
 
 }

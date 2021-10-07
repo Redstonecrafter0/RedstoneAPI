@@ -15,7 +15,8 @@ import java.util.Map;
 public record HttpHeaders(List<HttpHeader> headers) {
 
     public String get(String key) {
-        return HttpHeader.getByKey(headers, key).getValue();
+        HttpHeader header = HttpHeader.getByKey(headers, key);
+        return header == null ? null : header.getValue();
     }
 
     public long getContentLength() {
@@ -29,7 +30,7 @@ public record HttpHeaders(List<HttpHeader> headers) {
     public Map<String, String> getCookies() {
         String header = get("Cookie");
         if (header == null) {
-            return null;
+            return new HashMap<>();
         }
         Map<String, String> cookies = new HashMap<>();
         for (String i : header.split(";")) {

@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class WebResponse {
 
     public WebResponse(InputStream content, HttpResponseCode code, HttpHeader... headers) {
         this.content = content;
-        this.headers = Arrays.asList(headers);
+        this.headers = new ArrayList<>(Arrays.asList(headers));
         this.code = code;
     }
 

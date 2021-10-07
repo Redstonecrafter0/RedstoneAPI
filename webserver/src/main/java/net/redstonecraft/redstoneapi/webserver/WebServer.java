@@ -5,10 +5,9 @@ import com.hubspot.jinjava.JinjavaConfig;
 import com.hubspot.jinjava.loader.FileLocator;
 import net.redstonecraft.redstoneapi.info.RedstoneAPI;
 import net.redstonecraft.redstoneapi.core.*;
-import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
-import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
-import net.redstonecraft.redstoneapi.webserver.annotations.Route;
-import net.redstonecraft.redstoneapi.webserver.annotations.Routes;
+import net.redstonecraft.redstoneapi.webserver.annotations.*;
+import net.redstonecraft.redstoneapi.webserver.internal.*;
+import net.redstonecraft.redstoneapi.webserver.internal.exceptions.NoRouteParamException;
 import net.redstonecraft.redstoneapi.webserver.obj.*;
 import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvent;
 import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvents;
@@ -19,7 +18,6 @@ import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketMessage
 import org.apache.commons.lang.NotImplementedException;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -33,7 +31,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -180,16 +177,16 @@ public class WebServer {
             lastKeepAlive = time;
             long t = time - 60000;
             List<Connection> remove = new LinkedList<>();
-            connections.stream().filter(connection -> connection.keepAlive < t).forEach(connection -> {
+            connections.stream().filter(connection -> connection.getKeepAlive() < t).forEach(connection -> {
                 try {
-                    connection.channel.close();
+                    connection.getChannel().close();
                 } catch (IOException ignored) {
                 }
                 remove.add(connection);
             });
             connections.removeIf(remove::contains);
             List<WebSocketConnection> remove1 = new LinkedList<>();
-            websocketManager.entrySet().stream().filter(entry -> entry.getValue().time < t).forEach(entry -> {
+            websocketManager.entrySet().stream().filter(entry -> entry.getValue().getTime() < t).forEach(entry -> {
                 try {
                     entry.getKey().getChannel().close();
                 } catch (IOException ignored) {
@@ -200,7 +197,7 @@ public class WebServer {
             websocketManager.forEach((connection, timeout) -> {
                 try {
                     connection.send((byte) 0b10001001, String.valueOf(lastKeepAliveId).getBytes(StandardCharsets.UTF_8));
-                    timeout.payload = lastKeepAliveId;
+                    timeout.setPayload(lastKeepAliveId);
                 } catch (IOException ignored) {
                     connection.disconnect();
                 }
@@ -272,17 +269,17 @@ public class WebServer {
                                 }
                                 if (action == 0xA) {
                                     String id = new String(decoded, StandardCharsets.UTF_8);
-                                    if (id.equals(String.valueOf(websocketManager.getPing(webSocketConnection).payload))) {
-                                        websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
+                                    if (id.equals(String.valueOf(websocketManager.getPing(webSocketConnection).getPayload()))) {
+                                        websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
                                     }
                                 } else if (action == 0x1) {
                                     String payload = new String(decoded, StandardCharsets.UTF_8);
-                                    websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
+                                    websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
                                     websocketManager.executeMessageEvent(webSocketConnection, payload);
                                 } else if (action == 0x9) {
                                     webSocketConnection.send(decoded);
                                 } else if (action == 0x2) {
-                                    websocketManager.getPing(webSocketConnection).time = System.currentTimeMillis();
+                                    websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
                                     websocketManager.executeBinaryEvent(webSocketConnection, decoded);
                                 } else {
                                     webSocketConnection.disconnect();
@@ -304,9 +301,9 @@ public class WebServer {
                             try {
                                 ByteBuffer buffer = ByteBuffer.allocate(8192);
                                 int len;
-                                if ((len = connection.channel.read(buffer)) == -1) {
+                                if ((len = connection.getChannel().read(buffer)) == -1) {
                                     try {
-                                        connection.channel.close();
+                                        connection.getChannel().close();
                                     } catch (IOException ignored) {
                                     }
                                     connections.remove(connection);
@@ -402,6 +399,8 @@ public class WebServer {
                                                             case byte[] d -> new WebResponse(d);
                                                             case ByteBuffer b -> new WebResponse(b.array());
                                                             case InputStream s -> new WebResponse(s);
+                                                            case null -> new WebResponse("null");
+                                                            case Throwable throwable -> new WebResponse(StringUtils.stringFromError(throwable));
                                                             default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
                                                         });
                                                     } catch (Throwable ignored) {
@@ -429,7 +428,7 @@ public class WebServer {
                                                 }
                                             } catch (Throwable ignored) {
                                                 try {
-                                                    connection.channel.close();
+                                                    connection.getChannel().close();
                                                 } catch (IOException ignored1) {
                                                 }
                                                 connections.remove(connection);
@@ -437,7 +436,7 @@ public class WebServer {
                                         }
                                     } catch (IOException | NumberFormatException ignored) {
                                         try {
-                                            connection.channel.close();
+                                            connection.getChannel().close();
                                         } catch (IOException ignored1) {
                                         }
                                         connections.remove(connection);
@@ -445,7 +444,7 @@ public class WebServer {
                                 });
                             } catch (IndexOutOfBoundsException | IOException ignored) {
                                 try {
-                                    connection.channel.close();
+                                    connection.getChannel().close();
                                 } catch (IOException ignored1) {
                                 }
                                 connections.remove(connection);
@@ -515,11 +514,11 @@ public class WebServer {
 
     private void sendResponseAndClose(Connection conn, HttpMethod method, String path, WebResponse response) {
         try {
-            sendResponse(conn.channel, method, path, response);
+            sendResponse(conn.getChannel(), method, path, response);
         } catch (IOException ignored) {
         }
         try {
-            conn.channel.close();
+            conn.getChannel().close();
         } catch (IOException ignored) {
         }
         connections.remove(conn);
@@ -528,11 +527,11 @@ public class WebServer {
     @SuppressWarnings("SameParameterValue")
     private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
-            sendResponse(conn.channel, method, path, code, content, Arrays.asList(headers));
+            sendResponse(conn.getChannel(), method, path, code, content, Arrays.asList(headers));
         } catch (IOException ignored) {
         }
         try {
-            conn.channel.close();
+            conn.getChannel().close();
         } catch (IOException ignored) {
         }
         connections.remove(conn);
@@ -592,7 +591,7 @@ public class WebServer {
 
     private Connection getConnectionBySocketChannel(SocketChannel channel) {
         for (Connection i : connections) {
-            if (i.channel.equals(channel)) {
+            if (i.getChannel().equals(channel)) {
                 return i;
             }
         }
@@ -630,12 +629,17 @@ public class WebServer {
     private void internalRegisterHandler(RequestHandler handler, Method i, Route j) {
         if (j.value().startsWith("/")) {
             Parameter[] parameterTypes = i.getParameters();
-            if (!Arrays.stream(parameterTypes).skip(1).allMatch(k -> k.getType().equals(String.class) && (k.isAnnotationPresent(QueryParam.class) || k.isAnnotationPresent(FormParam.class)))) {
+            if (!Arrays.stream(parameterTypes).skip(1).allMatch(k -> k.getType().equals(String.class) && (k.isAnnotationPresent(QueryParam.class) || k.isAnnotationPresent(FormParam.class) || k.isAnnotationPresent(RouteParam.class)))) {
                 return;
             }
             if (WebRequest.class.equals(parameterTypes[0].getType())) {
                 for (HttpMethod k : HttpMethod.getFromMethod(i)) {
-                    handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
+                    try {
+                        handlerManager.setHandler(k, j.value(), new DynamicHandlerBundle(handler, i, j.value()));
+                    } catch (NoRouteParamException ignored) {
+                        handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
+                    } catch (IndexOutOfBoundsException ignored) {
+                    }
                 }
             }
         }
@@ -669,262 +673,6 @@ public class WebServer {
     @SuppressWarnings("unused")
     public void removeErrorHandler(HttpResponseCode code) {
         errorHandlerManager.removeHandler(code);
-    }
-
-    private static class HandlerManager {
-
-        private final Map<HttpMethod, Map<String, HandlerBundle>> handlers = new HashMap<>();
-
-        private void setHandler(HttpMethod method, String path, HandlerBundle handlerBundle) {
-            if (!handlers.containsKey(method)) {
-                handlers.put(method, new HashMap<>());
-            }
-            handlers.get(method).put(path, handlerBundle);
-        }
-
-        private HandlerBundle getHandler(HttpMethod method, String path) {
-            Map<String, HandlerBundle> map = handlers.get(method);
-            if (map != null) {
-                return map.get(path);
-            }
-            return null;
-        }
-
-        private void removeHandler(RequestHandler handler) {
-            for (Map.Entry<HttpMethod, Map<String, HandlerBundle>> i : handlers.entrySet()) {
-                for (Map.Entry<String, HandlerBundle> j : i.getValue().entrySet()) {
-                    if (j.getValue().handler().equals(handler)) {
-                        handlers.get(i.getKey()).remove(j.getKey());
-                    }
-                }
-            }
-        }
-
-        private boolean hasPath(String path) {
-            for (Map<String, HandlerBundle> i : handlers.values()) {
-                if (i.containsKey(path)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-    }
-
-    private static class WebsocketManager {
-
-        private final Map<WebSocketConnection, WebSocketPing> webSocketConnections = new HashMap<>();
-        private final Map<String, Map<Class<?>, List<WebSocketBundle>>> endpoints = new HashMap<>();
-
-        private void addHandler(String path, Class<?> event, WebSocketBundle bundle) {
-            if (!endpoints.containsKey(path)) {
-                endpoints.put(path, new HashMap<>());
-            }
-            if (!endpoints.get(path).containsKey(event)) {
-                endpoints.get(path).put(event, new ArrayList<>());
-            }
-            endpoints.get(path).get(event).add(bundle);
-        }
-
-        private void removeHandler(RequestHandler handler) {
-            endpoints.forEach((path, eventHandler) -> {
-                eventHandler.forEach((eventType, list) -> {
-                    List<WebSocketBundle> list1 = new LinkedList<>();
-                    list.forEach(e -> {
-                        if (e.getHandler().equals(handler)) {
-                            list1.add(e);
-                        }
-                    });
-                    list.removeIf(list1::contains);
-                    if (list.size() == 0) {
-                        eventHandler.remove(eventType);
-                    }
-                });
-                if (eventHandler.size() == 0) {
-                    endpoints.remove(path);
-                }
-            });
-        }
-
-        private void registerConnection(WebSocketConnection webSocketConnection, WebSocketPing ping) {
-            webSocketConnections.put(webSocketConnection, ping);
-        }
-
-        private void unregisterConnection(WebSocketConnection webSocketConnection) {
-            webSocketConnections.remove(webSocketConnection);
-        }
-
-        private WebSocketPing getPing(WebSocketConnection webSocketConnection) {
-            return webSocketConnections.get(webSocketConnection);
-        }
-
-        private Set<Map.Entry<WebSocketConnection, WebSocketPing>> entrySet() {
-            return webSocketConnections.entrySet();
-        }
-
-        private void forEach(BiConsumer<? super WebSocketConnection, ? super WebSocketPing> consumer) {
-            webSocketConnections.forEach(consumer);
-        }
-
-        private boolean containsKey(WebSocketConnection webSocketConnection) {
-            return webSocketConnections.containsKey(webSocketConnection);
-        }
-
-        private Set<WebSocketConnection> keySet() {
-            return webSocketConnections.keySet();
-        }
-
-        private void broadcast(String path, String message) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path)).forEach(e -> {
-                try {
-                    e.getKey().send(message);
-                } catch (IOException ignored) {
-                }
-            });
-        }
-
-        private void broadcast(String path, byte[] payload) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path)).forEach(e -> {
-                try {
-                    e.getKey().send(payload);
-                } catch (IOException ignored) {
-                }
-            });
-        }
-
-        private void broadcast(String path, String room, String message) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
-                try {
-                    e.getKey().send(message);
-                } catch (IOException ignored) {
-                }
-            });
-        }
-
-        private void broadcast(String path, String room, byte[] payload) {
-            webSocketConnections.entrySet().stream().filter(e -> e.getKey().getRequest().getPath().equals(path) && e.getKey().getRoom().equals(room)).forEach(e -> {
-                try {
-                    e.getKey().send(payload);
-                } catch (IOException ignored) {
-                }
-            });
-        }
-
-        private boolean pathExists(String path) {
-            return endpoints.containsKey(path);
-        }
-
-        private void executeConnectEvent(WebSocketConnection connection) {
-            try {
-                endpoints.get(connection.getRequest().getPath()).get(WebsocketConnectedEvent.class).forEach(bundle -> {
-                    bundle.getMethod().setAccessible(true);
-                    try {
-                        bundle.getMethod().invoke(bundle.getHandler(), new WebsocketConnectedEvent(connection));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } catch (NullPointerException ignored) {
-            }
-        }
-
-        private void executeDisconnectEvent(WebSocketConnection connection) {
-            try {
-                endpoints.get(connection.getRequest().getPath()).get(WebsocketDisconnectedEvent.class).forEach(bundle -> {
-                    bundle.getMethod().setAccessible(true);
-                    try {
-                        bundle.getMethod().invoke(bundle.getHandler(), new WebsocketDisconnectedEvent(connection));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } catch (NullPointerException ignored) {
-            }
-        }
-
-        private void executeMessageEvent(WebSocketConnection connection, String message) {
-            try {
-                endpoints.get(connection.getRequest().getPath()).get(WebsocketMessageEvent.class).forEach(bundle -> {
-                    bundle.getMethod().setAccessible(true);
-                    try {
-                        bundle.getMethod().invoke(bundle.getHandler(), new WebsocketMessageEvent(connection, message));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } catch (NullPointerException ignored) {
-            }
-        }
-
-        private void executeBinaryEvent(WebSocketConnection connection, byte[] payload) {
-            try {
-                endpoints.get(connection.getRequest().getPath()).get(WebsocketBinaryDataEvent.class).forEach(bundle -> {
-                    bundle.getMethod().setAccessible(true);
-                    try {
-                        bundle.getMethod().invoke(bundle.getHandler(), new WebsocketBinaryDataEvent(connection, payload));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } catch (NullPointerException ignored) {
-            }
-        }
-
-    }
-
-    static class Connection {
-
-        final SocketChannel channel;
-        long keepAlive = System.currentTimeMillis();
-
-        Connection(SocketChannel channel) {
-            this.channel = channel;
-        }
-
-    }
-
-    private static class WebSocketPing {
-
-        private long time;
-        private long payload;
-
-        private WebSocketPing(long time, long payload) {
-            this.time = time;
-            this.payload = payload;
-        }
-
-    }
-
-    private static class ErrorHandlerManager {
-
-        private final Map<HttpResponseCode, ErrorHandler> errorHandlers = new HashMap<>();
-        private final ErrorHandler universalErrorHandler;
-
-        private ErrorHandlerManager(ErrorHandler universalErrorHandler) {
-            this.universalErrorHandler = universalErrorHandler;
-        }
-
-        private void setHandler(HttpResponseCode code, ErrorHandler handler) {
-            if (HttpResponseCode.isError(code)) {
-                errorHandlers.put(code, handler);
-            }
-        }
-
-        private void removeHandler(HttpResponseCode code) {
-            errorHandlers.remove(code);
-        }
-
-        private WebResponse handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers) {
-            WebResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
-            errorResponse.setErrorCode(code);
-            return errorResponse;
-        }
-
-        private ErrorHandler getHandler(HttpResponseCode code) {
-            ErrorHandler errorHandler = errorHandlers.get(code);
-            return errorHandler != null ? errorHandler : universalErrorHandler;
-        }
-
     }
 
 }

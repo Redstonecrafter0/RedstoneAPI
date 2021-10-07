@@ -6,6 +6,7 @@ import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.data.json.parser.ParseException;
+import net.redstonecraft.redstoneapi.webserver.internal.Connection;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
@@ -26,6 +27,8 @@ public class WebRequest {
     private final WebServer webServer;
     private final HttpMethod method;
     private final Map<String, String> args;
+    private Map<String, String> formData = null;
+    private byte[] data = null;
     private final String protocol;
 
     public WebRequest(HttpMethod method, String path, String protocol, HttpHeaders headers, InputStream inputStream, WebServer webServer) {
@@ -79,7 +82,10 @@ public class WebRequest {
 
     public byte[] getContent() {
         try {
-            return inputStream.readAllBytes();
+            if (data == null) {
+                data = inputStream.readAllBytes();
+            }
+            return data;
         } catch (IOException e) {
             return null;
         }
@@ -90,7 +96,10 @@ public class WebRequest {
     }
 
     public Map<String, String> getFormData() {
-        return parseFormData(getContentAsString());
+        if (formData == null) {
+            formData = parseFormData(getContentAsString());
+        }
+        return formData;
     }
 
     public JSONArray getContentAsJsonArray() {
@@ -121,7 +130,7 @@ public class WebRequest {
                 '}';
     }
 
-    static Object parseRequest(WebServer.Connection connection, ByteBuffer buffer, int len, List<WebServer.Connection> connections, WebServer webServer) throws IOException {
+    static Object parseRequest(Connection connection, ByteBuffer buffer, int len, List<Connection> connections, WebServer webServer) throws IOException {
         InputStream is = new ByteArrayInputStream(Arrays.copyOfRange(buffer.array(), 0, len));
         StringBuilder sb = new StringBuilder();
         int t;

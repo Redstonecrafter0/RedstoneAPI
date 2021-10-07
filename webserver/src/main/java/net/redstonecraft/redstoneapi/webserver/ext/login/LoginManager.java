@@ -67,18 +67,18 @@ public class LoginManager<T extends User> {
     public void loginUser(String username, String password, Date expiresAt, WebResponse response) {
         User user = userProvider.login(username, password);
         if (user != null) {
-            response.addHeader(new SetCookieHeader(new Cookie("sessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
+            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
         }
     }
 
     public void updateUserRefreshToken(User user, Date expiresAt, WebResponse response) {
         if (user != null) {
-            response.addHeader(new SetCookieHeader(new Cookie("sessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
+            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
         }
     }
 
     public T getUserWithRefreshToken(WebRequest request) {
-        String sessionId = request.getHeaders().getCookies().get("sessionid");
+        String sessionId = request.getHeaders().getCookies().get("Jsessionid");
         if (sessionId == null) {
             return null;
         }
