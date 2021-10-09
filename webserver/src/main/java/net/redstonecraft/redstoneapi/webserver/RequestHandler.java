@@ -27,7 +27,7 @@ public abstract class RequestHandler {
     }
 
     public WebResponse redirect(String url) {
-        return new WebResponse(new byte[0], HttpResponseCode.FOUND, new HttpHeader("Location", url));
+        return redirect(url, false);
     }
 
     public WebResponse redirect(String url, boolean permanent) {
@@ -39,17 +39,16 @@ public abstract class RequestHandler {
     }
 
     public WebResponse renderTemplate(String template, Map<String, ?> items, HttpHeader... headers) throws IOException {
-        //noinspection ReadWriteStringCanBeUsed
-        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), headers);
+        return renderTemplate(template, items, HttpResponseCode.OK, headers);
     }
 
     public WebResponse renderTemplate(String template, Map<String, ?> items, HttpResponseCode code, HttpHeader... headers) throws IOException {
         //noinspection ReadWriteStringCanBeUsed
-        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(template).toPath()), StandardCharsets.UTF_8), items), code, headers);
+        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), code, headers);
     }
 
     public WebResponse jsonify(JSONObject object, HttpHeader... headers) {
-        return new WebResponse(object.toPrettyJsonString(), headers);
+        return jsonify(object, HttpResponseCode.OK, headers);
     }
 
     public WebResponse jsonify(JSONObject object, HttpResponseCode code, HttpHeader... headers) {
@@ -57,7 +56,7 @@ public abstract class RequestHandler {
     }
 
     public WebResponse jsonify(JSONArray array, HttpHeader... headers) {
-        return new WebResponse(array.toPrettyJsonString(), headers);
+        return jsonify(array, HttpResponseCode.OK, headers);
     }
 
     public WebResponse jsonify(JSONArray array, HttpResponseCode code, HttpHeader... headers) {

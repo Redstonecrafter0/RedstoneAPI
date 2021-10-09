@@ -9,12 +9,12 @@ import net.redstonecraft.redstoneapi.webserver.annotations.*;
 import net.redstonecraft.redstoneapi.webserver.internal.*;
 import net.redstonecraft.redstoneapi.webserver.internal.exceptions.NoRouteParamException;
 import net.redstonecraft.redstoneapi.webserver.obj.*;
-import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.WebsocketEvents;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketBinaryDataEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketConnectedEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketDisconnectedEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketMessageEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvents;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketBinaryDataEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
 import org.apache.commons.lang.NotImplementedException;
 
 import java.io.*;
@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
@@ -84,7 +86,7 @@ public class WebServer {
     private final Jinjava jinjava = new Jinjava(jinjavaConfig);
     private final Selector selector;
     private final ServerSocketChannel serverSocket;
-    private final List<Connection> connections = new LinkedList<>();
+    private final List<Connection> connections = new CopyOnWriteArrayList<>();
     private final HandlerManager handlerManager = new HandlerManager();
     private final boolean logging;
     private final ErrorHandlerManager errorHandlerManager;
@@ -112,12 +114,16 @@ public class WebServer {
     }
 
     public WebServer(String host, int port, boolean logging, ErrorHandler defaultErrorHandler, String baseDir) throws IOException {
+        this(new InetSocketAddress(host, port), logging, defaultErrorHandler, baseDir);
+    }
+
+    public WebServer(SocketAddress address, boolean logging, ErrorHandler defaultErrorHandler, String baseDir) throws IOException {
         this.logging = logging;
-        this.port = port;
+        this.port = address instanceof InetSocketAddress inetSocketAddress ? inetSocketAddress.getPort() : -1;
         errorHandlerManager = new ErrorHandlerManager(defaultErrorHandler);
         selector = Selector.open();
         serverSocket = ServerSocketChannel.open();
-        serverSocket.bind(new InetSocketAddress(host, port));
+        serverSocket.bind(address);
         serverSocket.configureBlocking(false);
         serverSocket.register(selector, serverSocket.validOps(), null);
         staticDir = new File(baseDir);
@@ -130,7 +136,7 @@ public class WebServer {
         }
         jinjava.setResourceLocator(new FileLocator(templateDir));
         if (this.logging) {
-            logger.info("WebServer listening on port " + this.port);
+            logger.info(this.port == -1 ? "WebServer listening on Unix Socket" : "WebServer listening on port " + this.port);
         }
         Thread thread = new Thread(() -> {
             while (run) {
@@ -163,7 +169,7 @@ public class WebServer {
         } catch (Throwable ignored) {
         }
         if (logging) {
-            logger.info("WebServer on port " + port + " stopped");
+            logger.info(port == -1 ? "WebServer on Unix Socket stopped" : "WebServer on port " + port + " stopped");
         }
     }
 
@@ -176,30 +182,30 @@ public class WebServer {
             }
             lastKeepAlive = time;
             long t = time - 60000;
-            List<Connection> remove = new LinkedList<>();
-            connections.stream().filter(connection -> connection.getKeepAlive() < t).forEach(connection -> {
-                try {
-                    connection.getChannel().close();
-                } catch (IOException ignored) {
+            for (Connection connection : connections) {
+                if (connection.getKeepAlive() < t) {
+                    try {
+                        connection.getChannel().close();
+                    } catch (IOException ignored) {
+                    }
+                    connections.remove(connection);
                 }
-                remove.add(connection);
-            });
-            connections.removeIf(remove::contains);
-            List<WebSocketConnection> remove1 = new LinkedList<>();
-            websocketManager.entrySet().stream().filter(entry -> entry.getValue().getTime() < t).forEach(entry -> {
-                try {
-                    entry.getKey().getChannel().close();
-                } catch (IOException ignored) {
+            }
+            for (Map.Entry<WebSocketConnection, WebSocketPing> entry : websocketManager.entrySet()) {
+                if (entry.getValue().getTime() < t) {
+                    try {
+                        entry.getKey().getChannel().close();
+                    } catch (IOException ignored) {
+                    }
+                    websocketManager.unregisterConnection(entry.getKey());
                 }
-                remove1.add(entry.getKey());
-            });
-            remove1.forEach(websocketManager::unregisterConnection);
+            }
             websocketManager.forEach((connection, timeout) -> {
                 try {
                     connection.send((byte) 0b10001001, String.valueOf(lastKeepAliveId).getBytes(StandardCharsets.UTF_8));
                     timeout.setPayload(lastKeepAliveId);
                 } catch (IOException ignored) {
-                    connection.disconnect();
+                    websocketManager.unregisterConnection(connection);
                 }
             });
         }
@@ -231,34 +237,6 @@ public class WebServer {
                         threadPool.submit(() -> {
                             byte[] arr = buffer.array();
                             try {
-                                byte actionRaw = arr[0];
-                                boolean fin = getBitByByte(actionRaw, 0);
-                                actionRaw <<= 4;
-                                actionRaw >>= 4;
-                                int action = actionRaw & 0xf;
-                                byte rawLength = arr[1];
-                                boolean mask = getBitByByte(rawLength, 0);
-                                rawLength <<= 1;
-                                rawLength >>= 1;
-                                int orgLength = Byte.toUnsignedInt(rawLength);
-                                int length;
-                                int pos;
-                                if (!fin || !mask) {
-                                    webSocketConnection.disconnect();
-                                    return;
-                                }
-                                if (orgLength <= 125) {
-                                    length = orgLength;
-                                    pos = 2;
-                                } else if (orgLength == 126) {
-                                    length = getIntByBytes(new byte[]{arr[2], arr[3]});
-                                    pos = 4;
-                                } else {
-                                    webSocketConnection.disconnect();
-                                    return;
-                                }
-                                byte[] maskKey = new byte[4];
-                                System.arraycopy(arr, pos, maskKey, 0, maskKey.length);
                                 byte[] encoded = new byte[length];
                                 for (int i = 0; i < length; i++) {
                                     encoded[i] = arr[i + pos + 4];
@@ -473,20 +451,6 @@ public class WebServer {
         websocketManager.unregisterConnection(webSocketConnection);
     }
 
-    private int getIntByBytes(byte[] arr) {
-        int c = 0;
-        for (byte i : arr) {
-            c |= Byte.toUnsignedInt(i);
-            c <<= 8;
-        }
-        return c;
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private boolean getBitByByte(byte b, int pos) {
-        return (b >> (8 - (pos + 1)) & 0x0001) == 1;
-    }
-
     @SuppressWarnings("unused")
     public File getStaticDir() {
         return new File(staticDir, "static");
@@ -541,12 +505,15 @@ public class WebServer {
         sendResponse(channel, method, path, response.getCode(), response.getContent(), response.getHeaders());
     }
 
-    public static String getServerTime() {
-        Date date = new Date();
+    public static String toServerTime(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(" yyyy HH:mm:ss z", Locale.getDefault());
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         //noinspection deprecation
         return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[date.getDay()] + ", " + String.format("%02d", date.getDate()) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[date.getMonth()] + dateFormat.format(date);
+    }
+
+    public static String getServerTime() {
+        return toServerTime(new Date());
     }
 
     private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, Collection<HttpHeader> headers) throws IOException {

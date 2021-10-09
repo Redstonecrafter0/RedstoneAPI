@@ -23,7 +23,7 @@ public class SetCookieHeader extends HttpHeader {
     private static String serialize(Cookie cookie, Date expires, Long maxAge, String domain, String path, boolean secure, boolean httpOnly, SameSite sameSite) {
         StringBuilder sb = new StringBuilder(cookie.key() + "=" + cookie.value());
         if (expires != null) {
-            sb.append("; Expires=").append(WebServer.getServerTime());
+            sb.append("; Expires=").append(WebServer.toServerTime(expires));
         }
         if (maxAge != null) {
             sb.append("; Max-Age=").append(maxAge);

@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.webserver.websocket.events;
+package net.redstonecraft.redstoneapi.webserver.ws.events;
 
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;

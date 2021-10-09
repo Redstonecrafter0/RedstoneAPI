@@ -3,14 +3,15 @@ package net.redstonecraft.redstoneapi.webserver.internal;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;
 import net.redstonecraft.redstoneapi.webserver.obj.WebSocketBundle;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketBinaryDataEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketConnectedEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketDisconnectedEvent;
-import net.redstonecraft.redstoneapi.webserver.websocket.events.WebsocketMessageEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketBinaryDataEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 /**
@@ -20,7 +21,7 @@ import java.util.function.BiConsumer;
  */
 public class WebsocketManager {
 
-    private final Map<WebSocketConnection, WebSocketPing> webSocketConnections = new HashMap<>();
+    private final Map<WebSocketConnection, WebSocketPing> webSocketConnections = new ConcurrentHashMap<>();
     private final Map<String, Map<Class<?>, List<WebSocketBundle>>> endpoints = new HashMap<>();
 
     public void addHandler(String path, Class<?> event, WebSocketBundle bundle) {
@@ -74,6 +75,9 @@ public class WebsocketManager {
     }
 
     public boolean containsKey(WebSocketConnection webSocketConnection) {
+        if (webSocketConnection == null) {
+            return false;
+        }
         return webSocketConnections.containsKey(webSocketConnection);
     }
 

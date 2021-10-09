@@ -1,9 +1,12 @@
 package net.redstonecraft.redstoneapi.webserver;
 
+import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +51,60 @@ public class WebSocketConnection {
         System.arraycopy(payloadLength, 0, data, 1, payloadLength.length);
         System.arraycopy(payload, 0, data, 1 + payloadLength.length, payload.length);
         channel.write(ByteBuffer.wrap(data));
+    }
+
+    public Pair<Boolean, InputStream> read() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(2);
+        if (channel.read(buffer) != 2) {
+            throw new EOFException();
+        }
+        byte[] arr = buffer.array();
+        byte actionRaw = arr[0];
+        boolean fin = getBitByByte(actionRaw, 0);
+        actionRaw <<= 4;
+        actionRaw >>= 4;
+        int action = actionRaw & 0xf;
+        byte rawLength = arr[1];
+        boolean mask = getBitByByte(rawLength, 0);
+        rawLength <<= 1;
+        rawLength >>= 1;
+        int orgLength = Byte.toUnsignedInt(rawLength);
+        int length;
+        if (!fin || !mask) {
+            disconnect();
+            return null;
+        }
+        if (orgLength <= 125) {
+            length = orgLength;
+        } else if (orgLength == 126) {
+            buffer = ByteBuffer.allocate(2);
+            if (channel.read(buffer) != 2) {
+                throw new EOFException();
+            }
+            length = getIntByBytes(buffer.array());
+        } else {
+            disconnect();
+            return null;
+        }
+        buffer = ByteBuffer.allocate(4);
+        if (channel.read(buffer) != 4) {
+            throw new EOFException();
+        }
+        byte[] maskKey = buffer.array();
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static boolean getBitByByte(byte b, int pos) {
+        return (b >> (8 - (pos + 1)) & 0x0001) == 1;
+    }
+
+    private static int getIntByBytes(byte[] arr) {
+        int c = 0;
+        for (byte i : arr) {
+            c |= Byte.toUnsignedInt(i);
+            c <<= 8;
+        }
+        return c;
     }
 
     public void send(byte[] payload) throws IOException {

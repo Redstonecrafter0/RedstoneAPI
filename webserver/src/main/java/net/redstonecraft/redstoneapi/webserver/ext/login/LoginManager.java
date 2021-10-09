@@ -66,14 +66,12 @@ public class LoginManager<T extends User> {
 
     public void loginUser(String username, String password, Date expiresAt, WebResponse response) {
         User user = userProvider.login(username, password);
-        if (user != null) {
-            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
-        }
+        updateUserRefreshToken(user, expiresAt, response);
     }
 
     public void updateUserRefreshToken(User user, Date expiresAt, WebResponse response) {
         if (user != null) {
-            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
+            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withExpiresAt(expiresAt).withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
         }
     }
 
@@ -120,9 +118,12 @@ public class LoginManager<T extends User> {
                 return null;
             }
             Map<String, String> map = new HashMap<>();
-            for (Map.Entry<String, Object> i : jwt.getClaim("userdata").asMap().entrySet()) {
-                if (i.getValue() instanceof String) {
-                    map.put(i.getKey(), (String) i.getValue());
+            Map<String, Object> body = jwt.getClaim("userdata").asMap();
+            if (body != null) {
+                for (Map.Entry<String, Object> i : body.entrySet()) {
+                    if (i.getValue() instanceof String s) {
+                        map.put(i.getKey(), s);
+                    }
                 }
             }
             return new Pair<>(userProvider.getUserFromUserId(uid), map);

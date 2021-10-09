@@ -56,13 +56,13 @@ public class WebserverTest extends RequestHandler {
     @Get
     @Post
     @Route("/login")
-    public Object login(WebRequest request, @FormParam("username") String username, @FormParam("password") String password, @FormParam("csrf") String csrf) throws IOException {
+    public Object login(WebRequest request, @FormParam("username") String username, @FormParam("password") String password, @FormParam("csrf") String csrf) {
         try {
             Map<String, String> data = new HashMap<>();
             if (request.getMethod().equals(HttpMethod.POST)) {
                 if (formValidator.isValid(request, csrf, 60000)) {
                     WebResponse response = redirect("/userdata");
-                    loginManager.loginUser(username, password, new Date(System.currentTimeMillis() + 60000), response);
+                    loginManager.loginUser(username, password, new Date(System.currentTimeMillis() + 120000000), response);
                     return response;
                 } else {
                     data.put("msg", "Timeout");

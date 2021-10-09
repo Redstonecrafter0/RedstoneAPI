@@ -11,6 +11,8 @@ import net.redstonecraft.redstoneapi.webserver.internal.exceptions.NoRouteParamE
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -53,7 +55,8 @@ public class DynamicHandlerBundle extends HandlerBundle {
             } else if (parameters[i].isAnnotationPresent(FormParam.class)) {
                 params.add(request.getFormData().get(parameters[i].getAnnotation(FormParam.class).value()));
             } else {
-                params.add(routeParams.get(parameters[i].getAnnotation(RouteParam.class).value()));
+                String s = routeParams.get(parameters[i].getAnnotation(RouteParam.class).value());
+                params.add(s == null ? null : URLDecoder.decode(s, StandardCharsets.UTF_8));
             }
         }
         return getMethod().invoke(getHandler(), params.toArray(new Object[0]));
