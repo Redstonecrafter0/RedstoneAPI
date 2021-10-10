@@ -1,15 +1,16 @@
 package net.redstonecraft.redstoneapi.webserver;
 
-import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
+import net.redstonecraft.redstoneapi.webserver.internal.WebsocketManager;
+import net.redstonecraft.redstoneapi.webserver.ws.XORInputStream;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
 
 /**
  * The WebsocketConnection is used to send data or disconnect
@@ -53,7 +54,7 @@ public class WebSocketConnection {
         channel.write(ByteBuffer.wrap(data));
     }
 
-    public Pair<Boolean, InputStream> read() throws IOException {
+    public void handle(WebsocketManager websocketManager, long maxLength, ExecutorService threadPool) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(2);
         if (channel.read(buffer) != 2) {
             throw new EOFException();
@@ -72,7 +73,7 @@ public class WebSocketConnection {
         int length;
         if (!fin || !mask) {
             disconnect();
-            return null;
+            return;
         }
         if (orgLength <= 125) {
             length = orgLength;
@@ -84,13 +85,42 @@ public class WebSocketConnection {
             length = getIntByBytes(buffer.array());
         } else {
             disconnect();
-            return null;
+            return;
+        }
+        if (length > maxLength) {
+            throw new IOException("Message longer than allowed.");
         }
         buffer = ByteBuffer.allocate(4);
         if (channel.read(buffer) != 4) {
             throw new EOFException();
         }
         byte[] maskKey = buffer.array();
+        buffer = ByteBuffer.allocate(length);
+        channel.read(buffer);
+        XORInputStream is = new XORInputStream(buffer, maskKey);
+        threadPool.submit(() -> {
+            try {
+                switch (action) {
+                    case 0xA -> {
+                        if (new String(is.readAllBytes(), StandardCharsets.UTF_8).equals(String.valueOf(websocketManager.getPing(this).getPayload()))) {
+                            websocketManager.getPing(this).setTime(System.currentTimeMillis());
+                        }
+                    }
+                    case 0x1 -> {
+                        websocketManager.getPing(this).setTime(System.currentTimeMillis());
+                        websocketManager.executeMessageEvent(this, new String(is.readAllBytes(), StandardCharsets.UTF_8));
+                    }
+                    case 0x2 -> {
+                        websocketManager.getPing(this).setTime(System.currentTimeMillis());
+                        websocketManager.executeBinaryEvent(this, is);
+                    }
+                    case 0x9 -> this.send(is.readAllBytes());
+                    default -> this.disconnect();
+                }
+            } catch (Throwable ignored) {
+                this.disconnect();
+            }
+        });
     }
 
     @SuppressWarnings("SameParameterValue")

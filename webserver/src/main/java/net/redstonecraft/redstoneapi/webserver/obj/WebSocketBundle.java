@@ -4,21 +4,5 @@ import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 
 import java.lang.reflect.Method;
 
-public class WebSocketBundle {
-
-    private final RequestHandler handler;
-    private final Method method;
-
-    public WebSocketBundle(RequestHandler handler, Method method) {
-        this.handler = handler;
-        this.method = method;
-    }
-
-    public RequestHandler getHandler() {
-        return handler;
-    }
-
-    public Method getMethod() {
-        return method;
-    }
+public record WebSocketBundle(RequestHandler handler, Method method) {
 }

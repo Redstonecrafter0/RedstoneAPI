@@ -2,6 +2,8 @@ package net.redstonecraft.redstoneapi.webserver.ws.events;
 
 import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;
 
+import java.io.InputStream;
+
 /**
  * Executed when binary data is received
  *
@@ -11,9 +13,9 @@ import net.redstonecraft.redstoneapi.webserver.WebSocketConnection;
 public class WebsocketBinaryDataEvent {
 
     private final WebSocketConnection webSocketConnection;
-    private final byte[] payload;
+    private final InputStream payload;
 
-    public WebsocketBinaryDataEvent(WebSocketConnection webSocketConnection, byte[] payload) {
+    public WebsocketBinaryDataEvent(WebSocketConnection webSocketConnection, InputStream payload) {
         this.webSocketConnection = webSocketConnection;
         this.payload = payload;
     }
@@ -22,7 +24,7 @@ public class WebsocketBinaryDataEvent {
         return webSocketConnection;
     }
 
-    public byte[] getPayload() {
+    public InputStream getPayload() {
         return payload;
     }
 }

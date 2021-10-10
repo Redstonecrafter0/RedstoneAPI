@@ -1,12 +1,14 @@
 package net.redstonecraft.redstoneapi.core;
 
 /**
- * Enum containing all HTTP response codes listed on wikipedia
+ * Enum containing all HTTP response codes documented on <a href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">IANA</a> plus Code 418
  *
  * @author Redstonecrafter0
  * @since 1.2
  * */
 public enum HttpResponseCode {
+
+    NONE(0, "NONE"),
 
     // 1xx Information
     CONTINUE(100, "Continue"),
@@ -29,7 +31,7 @@ public enum HttpResponseCode {
     // 3xx Redirect
     MULTIPLE_CHOICES(300, "Multiple Choices"),
     MOVED_PERMANENTLY(301, "Moved Permanently"),
-    FOUND(302, "Found (Moved Temporarily)"),
+    FOUND(302, "Found"),
     SEE_OTHER(303, "See Other"),
     NOT_MODIFIED(304, "Not Modified"),
     USE_PROXY(305, "Use Proxy"),
@@ -50,13 +52,14 @@ public enum HttpResponseCode {
     GONE(410, "Gone"),
     LENGTH_REQUIRED(411, "Length Required"),
     PRECONDITION_FAILED(412, "Precondition Failed"),
-    PAYLOAD_TOO_LARGE(413, "Payload Too Large"),
+    CONTENT_TOO_LARGE(413, "Content Too Large"),
     URI_TOO_LONG(414, "URI Too Long"),
     UNSUPPORTED_MEDIA_TYPE(415, "Unsupported Media Type"),
     RANGE_NOT_SATISFIABLE(416, "Range Not Satisfiable"),
     EXPECTATION_FAILED(417, "Expectation Failed"),
+    IM_A_TEAPOT(418, "I'm a teapot"),
     MISDIRECTED_REQUEST(421, "Misdirected Request"),
-    UNPROCESSABLE_ENTITY(422, "Unprocessable Entity"),
+    UNPROCESSABLE_CONTENT(422, "Unprocessable Content"),
     LOCKED(423, "Locked"),
     FAILED_DEPENDENCY(424, "Failed Dependency"),
     TOO_EARLY(425, "Too Early"),
@@ -76,7 +79,6 @@ public enum HttpResponseCode {
     VARIANT_ALSO_NEGOTIATES(506, "Variant Also Negotiates"),
     INSUFFICIANT_STORAGE(507, "Insufficiant Storage"),
     LOOP_DETECTED(508, "Loop Detected"),
-    BANDWITH_LIMIT_EXCEEDED(509, "Bandwith Limit Exceeded"),
     NOT_EXTENDED(510, "Not Extended"),
     NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required");
 

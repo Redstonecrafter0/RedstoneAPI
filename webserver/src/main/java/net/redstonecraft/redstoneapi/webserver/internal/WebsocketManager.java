@@ -9,6 +9,7 @@ import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEv
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +40,7 @@ public class WebsocketManager {
             eventHandler.forEach((eventType, list) -> {
                 List<WebSocketBundle> list1 = new LinkedList<>();
                 list.forEach(e -> {
-                    if (e.getHandler().equals(handler)) {
+                    if (e.handler().equals(handler)) {
                         list1.add(e);
                     }
                 });
@@ -128,9 +129,9 @@ public class WebsocketManager {
     public void executeConnectEvent(WebSocketConnection connection) {
         try {
             endpoints.get(connection.getRequest().getPath()).get(WebsocketConnectedEvent.class).forEach(bundle -> {
-                bundle.getMethod().setAccessible(true);
+                bundle.method().setAccessible(true);
                 try {
-                    bundle.getMethod().invoke(bundle.getHandler(), new WebsocketConnectedEvent(connection));
+                    bundle.method().invoke(bundle.handler(), new WebsocketConnectedEvent(connection));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
@@ -142,9 +143,9 @@ public class WebsocketManager {
     public void executeDisconnectEvent(WebSocketConnection connection) {
         try {
             endpoints.get(connection.getRequest().getPath()).get(WebsocketDisconnectedEvent.class).forEach(bundle -> {
-                bundle.getMethod().setAccessible(true);
+                bundle.method().setAccessible(true);
                 try {
-                    bundle.getMethod().invoke(bundle.getHandler(), new WebsocketDisconnectedEvent(connection));
+                    bundle.method().invoke(bundle.handler(), new WebsocketDisconnectedEvent(connection));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
@@ -156,9 +157,9 @@ public class WebsocketManager {
     public void executeMessageEvent(WebSocketConnection connection, String message) {
         try {
             endpoints.get(connection.getRequest().getPath()).get(WebsocketMessageEvent.class).forEach(bundle -> {
-                bundle.getMethod().setAccessible(true);
+                bundle.method().setAccessible(true);
                 try {
-                    bundle.getMethod().invoke(bundle.getHandler(), new WebsocketMessageEvent(connection, message));
+                    bundle.method().invoke(bundle.handler(), new WebsocketMessageEvent(connection, message));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
@@ -167,12 +168,12 @@ public class WebsocketManager {
         }
     }
 
-    public void executeBinaryEvent(WebSocketConnection connection, byte[] payload) {
+    public void executeBinaryEvent(WebSocketConnection connection, InputStream payload) {
         try {
             endpoints.get(connection.getRequest().getPath()).get(WebsocketBinaryDataEvent.class).forEach(bundle -> {
-                bundle.getMethod().setAccessible(true);
+                bundle.method().setAccessible(true);
                 try {
-                    bundle.getMethod().invoke(bundle.getHandler(), new WebsocketBinaryDataEvent(connection, payload));
+                    bundle.method().invoke(bundle.handler(), new WebsocketBinaryDataEvent(connection, payload));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }

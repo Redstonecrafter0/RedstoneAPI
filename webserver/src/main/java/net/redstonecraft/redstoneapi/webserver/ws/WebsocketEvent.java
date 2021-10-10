@@ -7,6 +7,6 @@ import java.lang.annotation.*;
 @Repeatable(WebsocketEvents.class)
 public @interface WebsocketEvent {
 
-    String path();
+    String value();
 
 }

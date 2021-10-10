@@ -1,6 +1,5 @@
 package net.redstonecraft.redstoneapi.webserver.internal;
 
-import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.obj.DynamicHandlerBundle;
@@ -97,6 +96,13 @@ public class HandlerManager {
             }
         }
         return false;
+    }
+
+    public Collection<HttpMethod> getUsedMethods() {
+        Set<HttpMethod> set = new HashSet<>();
+        set.addAll(handlers.keySet());
+        set.addAll(dynamicMap.keySet());
+        return set;
     }
 
 }

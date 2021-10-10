@@ -13,6 +13,10 @@ import net.redstonecraft.redstoneapi.webserver.ext.forms.FormValidator;
 import net.redstonecraft.redstoneapi.webserver.ext.login.LoginManager;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
+import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
 
 import java.io.IOException;
 import java.util.Date;
@@ -85,6 +89,26 @@ public class WebserverTest extends RequestHandler {
             e.printStackTrace();
             return e;
         }
+    }
+
+    @WebsocketEvent("/ws")
+    public void onConnect(WebsocketConnectedEvent event) {
+        System.out.println(event.getWebSocketConnection().getChannel().socket().getInetAddress().getHostAddress() + " connected.");
+    }
+
+    @WebsocketEvent("/ws")
+    public void onMessage(WebsocketMessageEvent event) {
+        System.out.println(event.getMessage());
+        try {
+            event.getWebSocketConnection().send(event.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @WebsocketEvent("/ws")
+    public void onDisconnect(WebsocketDisconnectedEvent event) {
+        System.out.println(event.getWebSocketConnection().getChannel().socket().getInetAddress().getHostAddress() + " disconnected.");
     }
 
 }

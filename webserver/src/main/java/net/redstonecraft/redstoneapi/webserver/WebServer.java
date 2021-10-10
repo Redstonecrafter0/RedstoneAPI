@@ -94,6 +94,7 @@ public class WebServer {
     private final File staticDir;
     private final File templateDir;
     private final int port;
+    private final long websocketMaxLength;
     private long lastKeepAlive = System.currentTimeMillis();
     private long lastKeepAliveId = 0;
     private boolean run = true;
@@ -114,11 +115,12 @@ public class WebServer {
     }
 
     public WebServer(String host, int port, boolean logging, ErrorHandler defaultErrorHandler, String baseDir) throws IOException {
-        this(new InetSocketAddress(host, port), logging, defaultErrorHandler, baseDir);
+        this(new InetSocketAddress(host, port), logging, defaultErrorHandler, baseDir, 4194304);
     }
 
-    public WebServer(SocketAddress address, boolean logging, ErrorHandler defaultErrorHandler, String baseDir) throws IOException {
+    public WebServer(SocketAddress address, boolean logging, ErrorHandler defaultErrorHandler, String baseDir, long websocketMaxLength) throws IOException {
         this.logging = logging;
+        this.websocketMaxLength = websocketMaxLength;
         this.port = address instanceof InetSocketAddress inetSocketAddress ? inetSocketAddress.getPort() : -1;
         errorHandlerManager = new ErrorHandlerManager(defaultErrorHandler);
         selector = Selector.open();
@@ -227,45 +229,11 @@ public class WebServer {
                 } else if (key.isReadable()) {
                     if (websocketManager.containsKey(getWebsocketConnectionBySocketChannel((SocketChannel) key.channel()))) {
                         WebSocketConnection webSocketConnection = Objects.requireNonNull(getWebsocketConnectionBySocketChannel((SocketChannel) key.channel()));
-                        ByteBuffer buffer = ByteBuffer.allocate(65544);
                         try {
-                            webSocketConnection.getChannel().read(buffer);
-                        } catch (IOException ignored) {
+                            webSocketConnection.handle(websocketManager, websocketMaxLength, threadPool);
+                        } catch (Throwable ignored) {
                             webSocketConnection.disconnect();
-                            continue;
                         }
-                        threadPool.submit(() -> {
-                            byte[] arr = buffer.array();
-                            try {
-                                byte[] encoded = new byte[length];
-                                for (int i = 0; i < length; i++) {
-                                    encoded[i] = arr[i + pos + 4];
-                                }
-                                byte[] decoded = new byte[length];
-                                for (int i = 0; i < encoded.length; i++) {
-                                    decoded[i] = (byte) (encoded[i] ^ maskKey[i % 4]);
-                                }
-                                if (action == 0xA) {
-                                    String id = new String(decoded, StandardCharsets.UTF_8);
-                                    if (id.equals(String.valueOf(websocketManager.getPing(webSocketConnection).getPayload()))) {
-                                        websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
-                                    }
-                                } else if (action == 0x1) {
-                                    String payload = new String(decoded, StandardCharsets.UTF_8);
-                                    websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
-                                    websocketManager.executeMessageEvent(webSocketConnection, payload);
-                                } else if (action == 0x9) {
-                                    webSocketConnection.send(decoded);
-                                } else if (action == 0x2) {
-                                    websocketManager.getPing(webSocketConnection).setTime(System.currentTimeMillis());
-                                    websocketManager.executeBinaryEvent(webSocketConnection, decoded);
-                                } else {
-                                    webSocketConnection.disconnect();
-                                }
-                            } catch (Exception ignored) {
-                                webSocketConnection.disconnect();
-                            }
-                        });
                     } else {
                         try {
                             Connection connection = getConnectionBySocketChannel((SocketChannel) key.channel());
@@ -304,20 +272,22 @@ public class WebServer {
                                                             Objects.requireNonNull(request.getHeaders().get("Upgrade")).equals("websocket") &&
                                                             request.getHeaders().get("Sec-WebSocket-Version") != null &&
                                                             request.getHeaders().get("Sec-WebSocket-Key") != null) {
-                                                        throw new NotImplementedException();
-                                                        // TODO: reimplement socket connection
-    //                                                    if (websocketManager.pathExists(webRequest.getPath())) {
-    //                                                        String wsKey = Objects.requireNonNull(HttpHeader.getByKey(headers, "Sec-WebSocket-Key")).getValue();
-    //                                                        String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
-    //                                                        sendResponse(connection.channel, "GET", path, HttpResponseCode.SWITCHING_PROTOCOLS, new byte[0], new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept));
-    //                                                        WebSocketConnection webSocketConnection = new WebSocketConnection(connection.channel, this, path);
-    //                                                        websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
-    //                                                        websocketManager.executeConnectEvent(webSocketConnection);
-    //                                                    } else {
-    //                                                        sendResponse(connection.channel, "GET", webRequest.getPath(), HttpResponseCode.NOT_FOUND, new byte[0]);
-    //                                                    }
-    //                                                    connections.remove(connection);
-    //                                                    return;
+                                                        if (websocketManager.pathExists(request.getPath())) {
+                                                            String wsKey = Objects.requireNonNull(request.getHeaders().get("Sec-WebSocket-Key"));
+                                                            String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
+                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.SWITCHING_PROTOCOLS, new ByteArrayInputStream(new byte[0]), new ArrayList<>(Arrays.asList(new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept))));
+                                                            WebSocketConnection webSocketConnection = new WebSocketConnection(connection.getChannel(), this, request);
+                                                            websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
+                                                            try {
+                                                                websocketManager.executeConnectEvent(webSocketConnection);
+                                                            } catch (Throwable e) {
+                                                                e.printStackTrace();
+                                                            }
+                                                        } else {
+                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.NOT_FOUND, new ByteArrayInputStream(new byte[0]), new ArrayList<>());
+                                                        }
+                                                        connections.remove(connection);
+                                                        return;
                                                     }
                                                 } catch (NullPointerException ignored) {
                                                 }
@@ -371,22 +341,18 @@ public class WebServer {
                                                             }
                                                             return;
                                                         }
-                                                        sendResponseAndClose(connection, request.getMethod(), request.getPath(), switch (response) {
-                                                            case WebResponse r -> r;
-                                                            case String s -> new WebResponse(s);
-                                                            case byte[] d -> new WebResponse(d);
-                                                            case ByteBuffer b -> new WebResponse(b.array());
-                                                            case InputStream s -> new WebResponse(s);
-                                                            case null -> new WebResponse("null");
-                                                            case Throwable throwable -> new WebResponse(StringUtils.stringFromError(throwable));
-                                                            default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
-                                                        });
+                                                        sendResponseAndClose(connection, request.getMethod(), request.getPath(), convertToResponse(request, response));
                                                     } catch (Throwable ignored) {
                                                     }
                                                 } else {
                                                     if (handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()) != null) {
-                                                        //noinspection ConstantConditions
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), (WebResponse) handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request));
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), convertToResponse(request, handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request)));
+                                                    } else if (request.getPath().equals("*")) {
+                                                        List<String> list = new ArrayList<>();
+                                                        for (HttpMethod i : handlerManager.getUsedMethods()) {
+                                                            list.add(i.name());
+                                                        }
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
                                                     } else {
                                                         Set<String> list = new HashSet<>();
                                                         list.add("OPTIONS");
@@ -436,6 +402,19 @@ public class WebServer {
             }
         }
         selector.selectedKeys().clear();
+    }
+
+    private WebResponse convertToResponse(WebRequest request, Object response) {
+        return switch (response) {
+            case WebResponse r -> r;
+            case String s -> new WebResponse(s);
+            case byte[] d -> new WebResponse(d);
+            case ByteBuffer b -> new WebResponse(b.array());
+            case InputStream s -> new WebResponse(s);
+            case null -> new WebResponse("null");
+            case Throwable throwable -> new WebResponse(StringUtils.stringFromError(throwable));
+            default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
+        };
     }
 
     void disconnectWebsocket(WebSocketConnection webSocketConnection) {
@@ -577,16 +556,16 @@ public class WebServer {
                 internalRegisterHandler(handler, i, j);
             } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
                 for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
-                    if (i.getParameterTypes().length == 1 && j.path().startsWith("/")) {
+                    if (i.getParameterTypes().length == 1 && j.value().startsWith("/")) {
                         if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
-                            websocketManager.addHandler(j.path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                            websocketManager.addHandler(j.value(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                         }
                     }
                 }
             } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
-                if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).path().startsWith("/")) {
+                if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).value().startsWith("/")) {
                     if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
-                        websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).path(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                        websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).value(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                     }
                 }
             }

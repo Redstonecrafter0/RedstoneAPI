@@ -190,17 +190,17 @@ public class WebRequest {
         if (!HttpMethod.isMethodAvailable(method)) {
             return new WebResponse("", HttpResponseCode.METHOD_NOT_ALLOWED);
         }
-        if (!path.startsWith("/") && !(path.startsWith("*") && method.equals(HttpMethod.OPTIONS.name()))) {
+        if (!path.startsWith("/") && !(path.equals("*") && method.equals(HttpMethod.OPTIONS.name()))) {
             return new WebResponse("", HttpResponseCode.BAD_REQUEST);
         }
         if (path.length() > 2048) {
             return new WebResponse("", HttpResponseCode.URI_TOO_LONG);
         }
-        if (!protocol.equals("HTTP/1.1") && !protocol.equals("HTTP/1.0")) {
+        if (!protocol.equals("HTTP/1.1")) {
             return new WebResponse("", HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED);
         }
         if (HttpMethod.valueOf(method).hasBody() && (headers.get("Content-Length") == null || headers.getContentLength() != is.available())) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return new WebResponse("", HttpResponseCode.LENGTH_REQUIRED);
         }
         return new WebRequest(HttpMethod.valueOf(method), path, protocol, headers, is, webServer);
     }

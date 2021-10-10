@@ -24,4 +24,5 @@ public class WebsocketConnectedEvent {
     public WebRequest getArguments() {
         return webSocketConnection.getRequest();
     }
+
 }
