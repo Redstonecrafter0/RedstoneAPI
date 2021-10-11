@@ -2,8 +2,15 @@ package net.redstonecraft.redstoneapi.core;
 
 import java.awt.*;
 
+/**
+ * Enum of all Minecraft color codes.
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ */
+@SuppressWarnings("unused")
 public enum MinecraftColors {
-    
+
     BLACK("0", "black", Color.decode("#000000"), Color.decode("#000000")),
     DARK_BLUE("1", "dark_blue", Color.decode("#0000AA"), Color.decode("#00002A")),
     DARK_GREEN("2", "dark_green", Color.decode("#00AA00"), Color.decode("#002A00")),
@@ -38,7 +45,6 @@ public enum MinecraftColors {
      * Get the color from the full name
      *
      * @param name full name of the color
-     *
      * @return color object
      * @since 1.0
      * */
@@ -55,7 +61,6 @@ public enum MinecraftColors {
      * Get the color from the color key
      *
      * @param key key of the color
-     *
      * @return color object
      * @since 1.0
      * */
@@ -68,18 +73,30 @@ public enum MinecraftColors {
         return MinecraftColors.NONE;
     }
 
+    /**
+     * @return the name of the color used in the json syntax
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return the key of the color used in the legacy format
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * @return the displayed background color in minecraft
+     */
     public Color getBackgroundColor() {
         return backgroundColor;
     }
 
+    /**
+     * @return the displayed foreground color in minecraft
+     */
     public Color getForegroundColor() {
         return foregroundColor;
     }

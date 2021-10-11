@@ -6,39 +6,60 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
- * A complete eventmanager
+ * An annotated EventManager with {@link CancellableEvent}s and priorities.
+ * If an {@link CancellableEvent} was cancelled no more {@link EventHandler}s are called.
+ * If an {@link Event}s class is been extended further, then the event class itself and all subclasses apply to the {@link EventHandler}.
  *
  * @author Redstonecrafter0
  * @since 1.2
  * */
+@SuppressWarnings("unused")
 public class EventManager {
 
     private final Map<Class<? extends Event>, List<HandlerBundle>> registry = new HashMap<>();
 
-    public void registerEventListener(EventHandler handler) {
+    /**
+     * Registers all the methods of an {@link EventListener}
+     * annotated by {@link EventHandler} that have {@link Event}
+     * as its single parameter or a subclass of it, are public and returning void.
+     *
+     * @param listener The {@link EventListener} to register.
+     */
+    public void registerEventListener(EventListener listener) {
         List<Class<? extends Event>> toSort = new ArrayList<>();
-        for (Method i : handler.getClass().getMethods()) {
-            if (i.isAnnotationPresent(EventListener.class) && !Modifier.isStatic(i.getModifiers()) && i.getReturnType().equals(void.class) && i.getParameterTypes().length == 1 && (Event.class.isAssignableFrom(i.getParameterTypes()[0]) || Event.class.equals(i.getParameterTypes()[0]))) {
+        for (Method i : listener.getClass().getMethods()) {
+            if (i.isAnnotationPresent(EventHandler.class) && !Modifier.isStatic(i.getModifiers()) && i.getReturnType().equals(void.class) && i.getParameterTypes().length == 1 && (Event.class.isAssignableFrom(i.getParameterTypes()[0]) || Event.class.equals(i.getParameterTypes()[0]))) {
                 if (!registry.containsKey((Class<? extends Event>) i.getParameterTypes()[0])) {
                     registry.put((Class<? extends Event>) i.getParameterTypes()[0], new ArrayList<>());
                 }
-                i.setAccessible(true);
-                registry.get((Class<? extends Event>) i.getParameterTypes()[0]).add(new HandlerBundle(i, handler, i.getAnnotation(EventListener.class).priority()));
+                registry.get((Class<? extends Event>) i.getParameterTypes()[0]).add(new HandlerBundle(i, listener, i.getAnnotation(EventHandler.class).priority()));
                 toSort.add((Class<? extends Event>) i.getParameterTypes()[0]);
             }
         }
         for (Class<? extends Event> i : toSort) {
-            registry.get(i).sort(Comparator.comparingInt(bundle -> bundle.priority));
+            registry.get(i).sort(Comparator.comparingInt(HandlerBundle::priority));
         }
     }
-    
-    public void unregisterEventListener(EventHandler handler) {
-        registry.forEach((eventType, handlerBundleList) -> handlerBundleList.removeIf(handlerBundle -> handlerBundle.eventHandler.equals(handler)));
+
+    /**
+     * Undo {@link #registerEventListener(EventListener)} so the resources get free.
+     *
+     * @param listener The {@link EventListener} to unregister.
+     */
+    public void unregisterEventListener(EventListener listener) {
+        registry.forEach((eventType, handlerBundleList) -> handlerBundleList.removeIf(handlerBundle -> handlerBundle.eventListener.equals(listener)));
         List<Class<? extends Event>> tmp = new ArrayList<>();
         registry.entrySet().stream().filter(e -> e.getValue().size() == 0).forEach(e -> tmp.add(e.getKey()));
         tmp.forEach(registry::remove);
     }
 
+    /**
+     * Fire an {@link Event} so that {@link EventHandler}s of registered {@link EventListener} receive that event.
+     * This method is blocking to allow seeing if a {@link CancellableEvent}s is cancelled or not.
+     * To do so call {@link CancellableEvent#isCancelled()} on the instance used as the parameter.
+     *
+     * @param event the event to fire
+     */
     public void fireEvent(Event event) {
         List<HandlerBundle> handlers = new LinkedList<>();
         for (Map.Entry<Class<? extends Event>, List<HandlerBundle>> i : registry.entrySet()) {
@@ -50,7 +71,7 @@ public class EventManager {
             if (CancellableEvent.class.isAssignableFrom(event.getClass())) {
                 for (HandlerBundle i : handlers) {
                     try {
-                        i.method.invoke(i.eventHandler, event);
+                        i.method.invoke(i.eventListener, event);
                         if (((CancellableEvent) event).isCancelled()) {
                             break;
                         }
@@ -61,7 +82,7 @@ public class EventManager {
             } else {
                 handlers.forEach(handlerBundle -> {
                     try {
-                        handlerBundle.method.invoke(handlerBundle.eventHandler, event);
+                        handlerBundle.method.invoke(handlerBundle.eventListener, event);
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         e.printStackTrace();
                     }
@@ -70,18 +91,7 @@ public class EventManager {
         }
     }
 
-    private static class HandlerBundle {
-
-        private final Method method;
-        private final EventHandler eventHandler;
-        private final int priority;
-
-        private HandlerBundle(Method method, EventHandler eventHandler, int priority) {
-            this.method = method;
-            this.eventHandler = eventHandler;
-            this.priority = priority;
-        }
-
+    private record HandlerBundle(Method method, EventListener eventListener, int priority) {
     }
 
 }

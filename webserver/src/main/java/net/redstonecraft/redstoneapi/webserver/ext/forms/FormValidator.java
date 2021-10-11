@@ -5,6 +5,7 @@ import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.obj.Cookie;
+import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -79,10 +80,11 @@ public class FormValidator {
         }
     }
 
-    public Pair<HttpHeader, String> generate() {
+    public String generate(WebResponse.Builder response) {
         clean();
         Pair<String, String> tokenPair = generateCsrfToken();
-        return new Pair<>(new SetCookieHeader(new Cookie("csrf", tokenPair.second()), null, null, null, null, secure, true, SetCookieHeader.SameSite.LAX), tokenPair.first());
+        response.addCookie(new Cookie("csrf", tokenPair.second()), null, null, null, null, secure, true, Cookie.SameSite.LAX);
+        return tokenPair.first();
     }
 
     private void clean() {

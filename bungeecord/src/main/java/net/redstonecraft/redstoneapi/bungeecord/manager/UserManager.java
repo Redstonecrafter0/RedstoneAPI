@@ -3,12 +3,9 @@ package net.redstonecraft.redstoneapi.bungeecord.manager;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.redstonecraft.redstoneapi.bungeecord.obj.User;
-import net.redstonecraft.redstoneapi.core.MojangAPI;
+import net.redstonecraft.redstoneapi.core.mojangapi.MojangAPI;
 import net.redstonecraft.redstoneapi.core.mojangapi.MojangProfile;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.UUID;
 
 /**
@@ -207,7 +204,7 @@ public class UserManager {
      * @return the user object
      * */
     private User fetchUser(String playername) {
-        UUID uuid = MojangAPI.getUnigueIdByName(playername);
+        UUID uuid = MojangAPI.getUniqueIdByName(playername);
         if (uuid != null) {
             updateUser(uuid, playername);
             return new User(uuid, playername);

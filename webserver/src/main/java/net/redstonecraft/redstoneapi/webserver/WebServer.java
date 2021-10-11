@@ -9,8 +9,8 @@ import net.redstonecraft.redstoneapi.webserver.annotations.*;
 import net.redstonecraft.redstoneapi.webserver.internal.*;
 import net.redstonecraft.redstoneapi.webserver.internal.exceptions.NoRouteParamException;
 import net.redstonecraft.redstoneapi.webserver.obj.*;
-import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvent;
-import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvents;
+import net.redstonecraft.redstoneapi.webserver.ws.Websocket;
+import net.redstonecraft.redstoneapi.webserver.ws.Websockets;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketBinaryDataEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
@@ -553,18 +553,18 @@ public class WebServer {
             } else if (i.isAnnotationPresent(Route.class) && !Modifier.isStatic(i.getModifiers()) && i.getParameters().length >= 1) {
                 Route j = i.getAnnotation(Route.class);
                 internalRegisterHandler(handler, i, j);
-            } else if (i.isAnnotationPresent(WebsocketEvents.class) && !Modifier.isStatic(i.getModifiers())) {
-                for (WebsocketEvent j : i.getAnnotation(WebsocketEvents.class).value()) {
+            } else if (i.isAnnotationPresent(Websockets.class) && !Modifier.isStatic(i.getModifiers())) {
+                for (Websocket j : i.getAnnotation(Websockets.class).value()) {
                     if (i.getParameterTypes().length == 1 && j.value().startsWith("/")) {
                         if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
                             websocketManager.addHandler(j.value(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                         }
                     }
                 }
-            } else if (i.isAnnotationPresent(WebsocketEvent.class) && !Modifier.isStatic(i.getModifiers())) {
-                if (i.getParameterTypes().length == 1 && i.getAnnotation(WebsocketEvent.class).value().startsWith("/")) {
+            } else if (i.isAnnotationPresent(Websocket.class) && !Modifier.isStatic(i.getModifiers())) {
+                if (i.getParameterTypes().length == 1 && i.getAnnotation(Websocket.class).value().startsWith("/")) {
                     if (Arrays.asList(WebsocketMessageEvent.class, WebsocketBinaryDataEvent.class, WebsocketConnectedEvent.class, WebsocketDisconnectedEvent.class).contains(i.getParameterTypes()[0])) {
-                        websocketManager.addHandler(i.getAnnotation(WebsocketEvent.class).value(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
+                        websocketManager.addHandler(i.getAnnotation(Websocket.class).value(), i.getParameterTypes()[0], new WebSocketBundle(handler, i));
                     }
                 }
             }

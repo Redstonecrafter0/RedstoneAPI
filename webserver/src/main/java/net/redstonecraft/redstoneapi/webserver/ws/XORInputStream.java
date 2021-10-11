@@ -28,7 +28,7 @@ public class XORInputStream extends ByteArrayInputStream {
     public int read(byte[] b, int off, int len) {
         byte[] tmp = new byte[b.length];
         int len1 = super.read(tmp, off, len);
-        for (int i = off; i < len; i++) {
+        for (int i = off; i < off + len; i++) {
             b[i] = (byte) (tmp[i] ^ maskKey[i % 4]);
         }
         return len1;
@@ -46,9 +46,9 @@ public class XORInputStream extends ByteArrayInputStream {
 
     @Override
     public byte[] readAllBytes() {
-        int tpos = pos;
+        int tPos = pos;
         byte[] tmp = super.readAllBytes();
-        for (int i = tpos; i < tmp.length; i++) {
+        for (int i = tPos; i < tmp.length; i++) {
             tmp[i] = (byte) (buf[i] ^ maskKey[i % 4]);
         }
         return tmp;

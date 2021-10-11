@@ -3,20 +3,35 @@ package net.redstonecraft.redstoneapi.core;
 import java.util.Iterator;
 
 /**
- * Class for enumerating like the python enumerate
+ * Class for enumerating like the python enumerate with the index and value.
+ * <pre>{@code for (Enumerate.Item<E> i : new Enumerate(iterable)) {
+ *     System.out.println(i.position() + " " + i.value());
+ * }
+ * }</pre>
  *
  * @author Redstonecrafter0
  * @since 1.2
  * */
+@SuppressWarnings("unused")
 public class Enumerate<T> implements Iterable<Enumerate.Item<T>>, Iterator<Enumerate.Item<T>> {
 
     private final Iterator<T> iterator;
     private int count = -1;
 
+    /**
+     * Constructs an enumerator from an iterator
+     *
+     * @param iterator iterator to enumerate
+     */
     public Enumerate(Iterator<T> iterator) {
         this.iterator = iterator;
     }
 
+    /**
+     * Constructs an enumerator from an iterable
+     *
+     * @param iterable iterable to enumerate
+     */
     public Enumerate(Iterable<T> iterable) {
         this.iterator = iterable.iterator();
     }
@@ -37,23 +52,7 @@ public class Enumerate<T> implements Iterable<Enumerate.Item<T>>, Iterator<Enume
         return new Item<>(count, iterator.next());
     }
 
-    public static class Item<V> {
-
-        private final int count;
-        private final V value;
-
-        private Item(int count, V value) {
-            this.count = count;
-            this.value = value;
-        }
-
-        public int getCount() {
-            return count;
-        }
-
-        public V getValue() {
-            return value;
-        }
+    public record Item<V>(int position, V value) {
     }
 
 }

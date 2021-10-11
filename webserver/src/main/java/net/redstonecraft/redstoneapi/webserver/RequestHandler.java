@@ -39,15 +39,27 @@ public abstract class RequestHandler {
     }
 
     public WebResponse.Builder renderTemplate(String template, Map<String, ?> items) throws IOException {
-        return WebResponse.create().setContent(webServer.getJinjava().render(Files.readString(new File(webServer.getTemplateDir(), template).toPath()), items));
+        return renderTemplate(WebResponse.create(), template, items);
+    }
+
+    public WebResponse.Builder renderTemplate(WebResponse.Builder response, String template, Map<String, ?> items) throws IOException {
+        return response.setContent(webServer.getJinjava().render(Files.readString(new File(webServer.getTemplateDir(), template).toPath()), items));
     }
 
     public WebResponse.Builder jsonify(JSONObject object) {
-        return WebResponse.create().setContent(object.toPrettyJsonString());
+        return jsonify(WebResponse.create(), object);
+    }
+
+    public WebResponse.Builder jsonify(WebResponse.Builder response, JSONObject object) {
+        return response.setContent(object.toPrettyJsonString());
     }
 
     public WebResponse.Builder jsonify(JSONArray array) {
-        return WebResponse.create().setContent(array.toPrettyJsonString());
+        return jsonify(WebResponse.create(), array);
+    }
+
+    public WebResponse.Builder jsonify(WebResponse.Builder response, JSONArray array) {
+        return response.setContent(array.toPrettyJsonString());
     }
 
     public WebResponse.Builder sendfile(File file) throws IOException {

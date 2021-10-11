@@ -8,6 +8,7 @@ import java.util.Random;
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings("unused")
 public class MinecraftTools {
 
     /**
@@ -16,7 +17,6 @@ public class MinecraftTools {
      * @param seed the seed of the world
      * @param x the x coordinate of the chunk (not of the block)
      * @param z the z coordinate of the chunk (not of the block)
-     *
      * @return whether the chunk is a slime chunk or not
      * */
     public static boolean isSlimeChunk(long seed, int x, int z) {
@@ -27,7 +27,6 @@ public class MinecraftTools {
      * Shortcut for converting a seed in String format to the used long
      *
      * @param seed seed as {@link String}
-     *
      * @return seed as long
      * */
     public static long textToSeed(String seed) {

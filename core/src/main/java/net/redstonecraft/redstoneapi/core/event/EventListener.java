@@ -1,14 +1,9 @@
 package net.redstonecraft.redstoneapi.core.event;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface EventListener {
-
-    public int priority() default 0;
-
+/**
+ * This is the interface to implement to declare the implementing class to receive events.
+ *
+ * @author Redstonecrafter0
+ */
+public interface EventListener {
 }

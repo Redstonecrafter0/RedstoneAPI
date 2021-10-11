@@ -11,11 +11,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * HttpRequest class for easier HTTP request usage
+ * HttpRequest class for simpler HTTP request usage
  *
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings("unused")
 public class HttpRequest {
 
     /**
@@ -26,7 +27,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse get(String url, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -46,7 +47,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse head(String url, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -66,7 +67,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse delete(String url, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -87,7 +88,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse post(String url, byte[] content, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -105,7 +106,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse put(String url, byte[] content, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -123,7 +124,7 @@ public class HttpRequest {
      *
      * @return response as {@link HttpResponse} object
      *
-     * @throws IOException if an I/O Exception occures
+     * @throws IOException if an I/O Exception occurs
      * */
     public static HttpResponse patch(String url, byte[] content, HttpHeader... header) throws IOException {
         URL urlUrl = new URL(url);
@@ -144,11 +145,11 @@ public class HttpRequest {
     }
 
     private static HttpResponse getHttpResponse(HttpURLConnection con) throws IOException {
-        byte[] response;
+        InputStream response;
         if (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
-            response = readAllBytes(con.getInputStream());
+            response = con.getInputStream();
         } else {
-            response = readAllBytes(con.getErrorStream());
+            response = con.getErrorStream();
         }
         int code = con.getResponseCode();
         String mime = con.getContentType();
@@ -160,54 +161,6 @@ public class HttpRequest {
         }
         con.disconnect();
         return new HttpResponse(response, code, mime, headers.toArray(new HttpHeader[0]));
-    }
-
-    private static byte[] readAllBytes(InputStream is) throws IOException {
-        int len = Integer.MAX_VALUE;
-        List<byte[]> bufs = null;
-        byte[] result = null;
-        int total = 0;
-        int remaining = len;
-        int n;
-        do {
-            byte[] buf = new byte[Math.min(remaining, 8192)];
-            int nread = 0;
-            while ((n = is.read(buf, nread, Math.min(buf.length - nread, remaining))) > 0) {
-                nread += n;
-                remaining -= n;
-            }
-            if (nread > 0) {
-                if (Integer.MAX_VALUE - 8 - total < nread) {
-                    throw new OutOfMemoryError("Required array size too large");
-                }
-                total += nread;
-                if (result == null) {
-                    result = buf;
-                } else {
-                    if (bufs == null) {
-                        bufs = new ArrayList<>();
-                        bufs.add(result);
-                    }
-                    bufs.add(buf);
-                }
-            }
-        } while (n >= 0 && remaining > 0);
-        if (bufs == null) {
-            if (result == null) {
-                return new byte[0];
-            }
-            return result.length == total ? result : Arrays.copyOf(result, total);
-        }
-        result = new byte[total];
-        int offset = 0;
-        remaining = total;
-        for (byte[] b : bufs) {
-            int count = Math.min(b.length, remaining);
-            System.arraycopy(b, 0, result, offset, count);
-            offset += count;
-            remaining -= count;
-        }
-        return result;
     }
 
 }

@@ -37,14 +37,13 @@ public class Version implements Comparable<Version> {
         String pre = "";
         String build = "";
         if (version.contains("-")) {
+            String[] tmp = version.split("-");
             if (version.contains("+")) {
-                String[] tmp = version.split("-");
                 String[] tmp1 = tmp[1].split("\\+");
                 main = tmp[0];
                 pre = tmp1[0];
                 build = tmp1[1];
             } else {
-                String[] tmp = version.split("-");
                 main = tmp[0];
                 pre = tmp[1];
             }

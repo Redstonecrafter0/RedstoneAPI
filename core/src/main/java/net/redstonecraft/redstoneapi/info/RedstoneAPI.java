@@ -17,7 +17,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 
-public class RedstoneAPI {
+/**
+ * A class to get information of this library like
+ * if there are new updates or what's the current version.
+ *
+ * @author Redstonecrafter0
+ * @since 1.0
+ */
+public final class RedstoneAPI {
 
     private static final Version VERSION = Version.fromVersionString("2.0");
 
@@ -26,6 +33,7 @@ public class RedstoneAPI {
 
     public static void main(String[] args) {
         try {
+            //noinspection SpellCheckingInspection
             if (Arrays.asList(args).contains("nogui")) {
                 throw new Exception();
             }
@@ -87,7 +95,7 @@ public class RedstoneAPI {
                 label3.setText(getUpdate().getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
-                label3.setText("An error occured while checking for a new version");
+                label3.setText("An error occurred while checking for a new version");
             }
         } catch (Exception ignored) {
             try {
@@ -108,13 +116,19 @@ public class RedstoneAPI {
                 try {
                     System.out.println(Ansi.colorize(getUpdate().getMessageColor(), Attribute.RED_TEXT()));
                 } catch (Exception ignored1) {
-                    System.out.println(Ansi.colorize("An error occured while checking for a new version", Attribute.RED_TEXT()));
+                    System.out.println(Ansi.colorize("An error occurred while checking for a new version", Attribute.RED_TEXT()));
                 }
             } catch (Exception ignored1) {
             }
         }
     }
 
+    /**
+     * Fetches a new update
+     *
+     * @return information about a new version or if it's the current
+     * @throws IOException if any I/O error occurs
+     */
     public static Update getUpdate() throws IOException {
         HttpResponse response = HttpRequest.get("https://api.github.com/repos/Redstonecrafter0/RedstoneAPI/releases", new HttpHeader("Accept", "application/vnd.github.v3+json"));
         JSONArray arr = response.getJsonArray();
@@ -133,7 +147,12 @@ public class RedstoneAPI {
         return version.equals(RedstoneAPI.VERSION) ? new Update(Update.State.LATEST_VERSION, null) : new Update(Update.State.NEW_VERSION_AVAILABLE, version);
     }
 
-    public static class Update {
+    /**
+     * Information of a new version of the RedstoneAPI
+     *
+     * @author Redstonecrafter0
+     */
+    public static final class Update {
 
         private final State state;
         private final Version version;
@@ -147,10 +166,16 @@ public class RedstoneAPI {
             messageColor = this.state.equals(State.LATEST_VERSION) ? Ansi.colorize("This is the latest version available", Attribute.GREEN_TEXT()) : Ansi.colorize("There is a newer version " + this.version + " available", Attribute.RED_TEXT());
         }
 
+        /**
+         * @return if a new version is available
+         */
         public State getState() {
             return state;
         }
 
+        /**
+         * @return the newest version of the RedstoneAPI
+         */
         public Version getVersion() {
             return version;
         }
@@ -163,8 +188,14 @@ public class RedstoneAPI {
             return messageColor;
         }
 
+        /**
+         * The state if there is a new version or if the current version is the latest
+         *
+         * @author Redstonecrafter0
+         */
         public enum State {
-            LATEST_VERSION, NEW_VERSION_AVAILABLE
+            LATEST_VERSION,
+            NEW_VERSION_AVAILABLE
         }
     }
 

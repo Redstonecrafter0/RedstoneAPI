@@ -6,6 +6,7 @@ package net.redstonecraft.redstoneapi.core;
  * @author Redstonecrafter0
  * @since 1.2
  * */
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public enum MimeType {
 
     DEFAULT("application/octet-stream", ".bin"),
@@ -76,7 +77,7 @@ public enum MimeType {
     XML("text/xml", ".xml"),
     XUL("application/vnd.mozilla.xul+xml", ".xul"),
     ZIP("application/zip", ".zip"),
-    SEVENZIP("application/x-7z-compressed", ".7z");
+    SEVEN_ZIP("application/x-7z-compressed", ".7z");
 
     private final String mimetype;
     private final String[] extensions;
@@ -86,18 +87,31 @@ public enum MimeType {
         this.extensions = extensions;
     }
 
+    /**
+     * @return registered file extensions
+     */
     public String[] getExtensions() {
         return extensions;
     }
 
+    /**
+     * @return the mainly used file extension for this type
+     */
     public String getPrimaryExtension() {
         return extensions[0];
     }
 
+    /**
+     * @return get string representation of this type used in HTTP headers
+     */
     public String getMimetype() {
         return mimetype;
     }
 
+    /**
+     * @param filename of the file to check or only the extension with the prefixed dot
+     * @return the type this the extension is used for or {@link #DEFAULT} if none was found
+     */
     public static MimeType getByFilename(String filename) {
         for (MimeType i : MimeType.values()) {
             for (String j : i.getExtensions()) {
@@ -109,6 +123,10 @@ public enum MimeType {
         return DEFAULT;
     }
 
+    /**
+     * @param ext file extension with prefixed dot
+     * @return the type this the extension is used for or {@link #DEFAULT} if none was found
+     */
     public static MimeType getByExtension(String ext) {
         for (MimeType i : MimeType.values()) {
             for (String j : i.getExtensions()) {
@@ -120,6 +138,10 @@ public enum MimeType {
         return DEFAULT;
     }
 
+    /**
+     * @param mimetype string representation of the type
+     * @return the instance of the specified type or {@link #DEFAULT}
+     */
     public static MimeType getByMimeType(String mimetype) {
         for (MimeType i : MimeType.values()) {
             if (i.getMimetype().equals(mimetype)) {

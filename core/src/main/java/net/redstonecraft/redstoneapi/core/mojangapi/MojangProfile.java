@@ -1,7 +1,5 @@
 package net.redstonecraft.redstoneapi.core.mojangapi;
 
-import net.redstonecraft.redstoneapi.core.MojangAPI;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -11,11 +9,12 @@ import java.util.Base64;
 import java.util.UUID;
 
 /**
- * MojangProfile object to provide the results of the {@link MojangAPI} lookup
+ * MojangProfile object to provide the results of the {@link MojangAPI} lookup.
  *
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class MojangProfile {
 
     private final UUID uuid;
@@ -28,7 +27,7 @@ public class MojangProfile {
     private final String signature;
     private final String skinTexture;
 
-    public MojangProfile(UUID uuid, String name, String skinUrl, String capeUrl, long timestamp, String signature, String skinTexture) {
+    MojangProfile(UUID uuid, String name, String skinUrl, String capeUrl, long timestamp, String signature, String skinTexture) {
         this.uuid = uuid;
         this.name = name;
         this.skinUrl = skinUrl;
@@ -65,11 +64,6 @@ public class MojangProfile {
         return timestamp;
     }
 
-    /**
-     * Fetch the skin
-     *
-     * @return the skin object as {@link BufferedImage}
-     * */
     private BufferedImage fetchSkin() {
         try {
             return ImageIO.read(new URL(skinUrl));
@@ -108,11 +102,6 @@ public class MojangProfile {
         return null;
     }
 
-    /**
-     * Fetch cape
-     *
-     * @return the cape object as {@link BufferedImage}
-     * */
     private BufferedImage fetchCape() {
         try {
             return ImageIO.read(new URL(capeUrl));

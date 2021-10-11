@@ -4,8 +4,8 @@ import java.lang.annotation.*;
 
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-@Repeatable(WebsocketEvents.class)
-public @interface WebsocketEvent {
+@Repeatable(Websockets.class)
+public @interface Websocket {
 
     String value();
 

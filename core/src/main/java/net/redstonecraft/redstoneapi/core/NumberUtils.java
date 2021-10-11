@@ -6,6 +6,7 @@ package net.redstonecraft.redstoneapi.core;
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings("unused")
 public class NumberUtils {
 
     /**
@@ -13,7 +14,6 @@ public class NumberUtils {
      *
      * @param a a number
      * @param b b number
-     *
      * @return random number between min and max
      * */
     public static int random(int a, int b) {
@@ -23,11 +23,11 @@ public class NumberUtils {
     }
 
     /**
-     * Small utility for rounding a number to a specifix position
+     * Small utility for rounding a number to a specific position
      *
+     * @see java.text.DecimalFormat for displaying
      * @param num number to round
      * @param d position to round
-     *
      * @return rounded number
      * */
     public static double round(double num, int d) {
@@ -36,7 +36,6 @@ public class NumberUtils {
 
     /**
      * @param inputValues the values to base on
-     *
      * @return an array of doubles that are between 0 and 1 calculated on base of the input
      * */
     public static double[] normalize(double... inputValues) {
@@ -63,6 +62,10 @@ public class NumberUtils {
         return values;
     }
 
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
     public static Integer toInt(String s) {
         try {
             return Integer.parseInt(s);
@@ -71,7 +74,11 @@ public class NumberUtils {
         }
     }
 
-    public static Integer hexInt(String s) {
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
+    public static Integer hexToInt(String s) {
         try {
             return Integer.parseInt(s, 16);
         } catch (NumberFormatException ignored) {
@@ -79,7 +86,11 @@ public class NumberUtils {
         }
     }
 
-    public static Integer binInt(String s) {
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
+    public static Integer binToInt(String s) {
         try {
             return Integer.parseInt(s, 2);
         } catch (NumberFormatException ignored) {
@@ -87,6 +98,10 @@ public class NumberUtils {
         }
     }
 
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
     public static Long toLong(String s) {
         try {
             return Long.parseLong(s);
@@ -95,7 +110,11 @@ public class NumberUtils {
         }
     }
 
-    public static Long hexLong(String s) {
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
+    public static Long hexToLong(String s) {
         try {
             return Long.parseLong(s, 16);
         } catch (NumberFormatException ignored) {
@@ -103,7 +122,11 @@ public class NumberUtils {
         }
     }
 
-    public static Long binLong(String s) {
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
+    public static Long binToLong(String s) {
         try {
             return Long.parseLong(s, 2);
         } catch (NumberFormatException ignored) {
@@ -111,6 +134,10 @@ public class NumberUtils {
         }
     }
 
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
     public static Float toFloat(String s) {
         try {
             return Float.parseFloat(s);
@@ -119,6 +146,10 @@ public class NumberUtils {
         }
     }
 
+    /**
+     * @param s string to convert
+     * @return the parsed number or null
+     */
     public static Double toDouble(String s) {
         try {
             return Double.parseDouble(s);

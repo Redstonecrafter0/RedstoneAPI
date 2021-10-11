@@ -6,6 +6,7 @@ package net.redstonecraft.redstoneapi.core;
  * @author Redstonecrafter0
  * @since 1.2
  * */
+@SuppressWarnings("unused")
 public enum HttpResponseCode {
 
     NONE(0, "NONE"),
@@ -67,7 +68,7 @@ public enum HttpResponseCode {
     PRECONDITION_REQUIRED(428, "Precondition Required"),
     TOO_MANY_REQUESTS(429, "Too Many Requests"),
     REQUEST_HEADER_FIELDS_TOO_LARGE(431, "Request Header Fields Too Large"),
-    UNAVAILABE_FOR_LEGAL_REASONS(451, "Unavailable For Legal Reasons"),
+    UNAVAILABLE_FOR_LEGAL_REASONS(451, "Unavailable For Legal Reasons"),
 
     // 5xx Server-Error
     INTERNAL_SERVER_ERROR(500, "Internal Server Error"),
@@ -77,7 +78,7 @@ public enum HttpResponseCode {
     GATEWAY_TIMEOUT(504, "Gateway Timeout"),
     HTTP_VERSION_NOT_SUPPORTED(505, "HTTP Version Not Supported"),
     VARIANT_ALSO_NEGOTIATES(506, "Variant Also Negotiates"),
-    INSUFFICIANT_STORAGE(507, "Insufficiant Storage"),
+    INSUFFICIENT_STORAGE(507, "Insufficient Storage"),
     LOOP_DETECTED(508, "Loop Detected"),
     NOT_EXTENDED(510, "Not Extended"),
     NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required");
@@ -90,14 +91,26 @@ public enum HttpResponseCode {
         this.description = description;
     }
 
+    /**
+     * @return the numeric response code
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * Gets the description of the response code like OK for 200
+     *
+     * @return the description of the response code
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * @param code numeric response code
+     * @return enum instance of the response code
+     */
     public static HttpResponseCode getByCode(int code) {
         for (HttpResponseCode i : HttpResponseCode.values()) {
             if (i.getCode() == code) {
@@ -107,6 +120,10 @@ public enum HttpResponseCode {
         return NONE;
     }
 
+    /**
+     * @param description of the response code
+     * @return enum instance of the response code
+     */
     public static HttpResponseCode getByDescription(String description) {
         for (HttpResponseCode i : HttpResponseCode.values()) {
             if (i.getDescription().equalsIgnoreCase(description)) {
@@ -116,10 +133,18 @@ public enum HttpResponseCode {
         return NONE;
     }
 
+    /**
+     * @param code to check
+     * @return if the core is in the error range
+     */
     public static boolean isError(HttpResponseCode code) {
         return code != null && code.getCode() >= HttpResponseCode.BAD_REQUEST.getCode() && code.getCode() <= HttpResponseCode.NETWORK_AUTHENTICATION_REQUIRED.getCode();
     }
 
+    /**
+     * @param code to check
+     * @return if the core is in the error range
+     */
     public static boolean isError(int code) {
         return getByCode(code) != NONE && code >= HttpResponseCode.BAD_REQUEST.getCode() && code <= HttpResponseCode.NETWORK_AUTHENTICATION_REQUIRED.getCode();
     }

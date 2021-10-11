@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
  * @author Redstonecrafter0
  * @since 1.2
  * */
+@SuppressWarnings("unused")
 public class Hashlib {
 
     public static String sha256(String str) {
@@ -156,14 +157,24 @@ public class Hashlib {
         return null;
     }
 
-    public static String bcrypt_hash(String str) {
-        return BCrypt.hashpw(str, "");
-    }
-
+    /**
+     * Crypt a string with the BCrypt algorithm with a salt
+     *
+     * @param str to hash
+     * @param salt to use
+     * @return the hash
+     */
     public static String bcrypt_hash(String str, String salt) {
         return BCrypt.hashpw(str, salt);
     }
 
+    /**
+     * Verify a string with the hash generated in {@link #bcrypt_hash(String, String)}
+     *
+     * @param str to check
+     * @param hash to check
+     * @return whether the hash is valid
+     */
     public static boolean bcrypt_check(String str, String hash) {
         return BCrypt.checkpw(str, hash);
     }

@@ -13,11 +13,12 @@ import java.util.TimerTask;
 import java.util.function.Consumer;
 
 /**
- * Minecraft Server's remote Console (rcon) client
+ * A Minecraft Server's remote Console (RCon) client
  *
  * @author Redstonecrafter0
  * @since 1.4
  */
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public class MCRcon implements Closeable {
 
     private final Socket socket;
@@ -28,6 +29,13 @@ public class MCRcon implements Closeable {
     private boolean loggedIn = false;
     private boolean usePassword = false;
 
+    /**
+     * Login without a password
+     *
+     * @param host of the server
+     * @param port of the server
+     * @throws IOException if an I/O error occurs
+     */
     public MCRcon(String host, int port) throws IOException {
         socket = new Socket(host, port);
         new Thread(() -> {
@@ -66,14 +74,35 @@ public class MCRcon implements Closeable {
         }).start();
     }
 
+    /**
+     * Login without a password on the default port (25575)
+     *
+     * @param host of the server
+     * @throws IOException if an I/O error occurs
+     */
     public MCRcon(String host) throws IOException {
         this(host, 25575);
     }
 
+    /**
+     * Login with a password on the default port (25575)
+     *
+     * @param host of the server
+     * @param password to use
+     * @throws IOException if an I/O error occurs
+     */
     public MCRcon(String host, String password) throws IOException {
         this(host, 25575, password);
     }
 
+    /**
+     * Login with a password
+     *
+     * @param host of the server
+     * @param port of the server
+     * @param password to use
+     * @throws IOException if an I/O error occurs
+     */
     public MCRcon(String host, int port, String password) throws IOException {
         this(host, port);
         this.usePassword = true;
@@ -84,10 +113,26 @@ public class MCRcon implements Closeable {
         sendPacket(3, password);
     }
 
+    /**
+     * Execute a command asynchronously with a timeout of 60 seconds
+     *
+     * @see #execute(String, int, Consumer)
+     * @param command to run
+     * @param callback to run when a response comes in
+     * @throws IOException if an I/O error occurs
+     */
     public void execute(String command, Consumer<String> callback) throws IOException {
         execute(command, 60, callback);
     }
 
+    /**
+     * Execute a command asynchronously
+     *
+     * @param command to run
+     * @param timeout to wait until responses to this command are ignored
+     * @param callback to send responses
+     * @throws IOException if an I/O error occurs
+     */
     public void execute(String command, int timeout, Consumer<String> callback) throws IOException {
         int id = sendPacket(2, command);
         callbacks.put(id, callback);
@@ -127,6 +172,9 @@ public class MCRcon implements Closeable {
         return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(a).array();
     }
 
+    /**
+     * @return whether the connection is closed
+     */
     public boolean isClosed() {
         return socket.isClosed();
     }
@@ -134,16 +182,21 @@ public class MCRcon implements Closeable {
     @Override
     public void close() throws IOException {
         socket.close();
+        timer.cancel();
         run = false;
     }
 
     /**
-     * @return true if the login process was succesfull. That means if no password was provided this will keep false. Check {@link MCRcon#isUsePassword()} for this.
+     * @see MCRcon#isUsePassword()
+     * @return true if the login process was successful. That means if no password was provided this will keep false.
      * */
     public boolean isLoggedIn() {
         return loggedIn;
     }
 
+    /**
+     * @return true if a password was used in the login process
+     */
     public boolean isUsePassword() {
         return usePassword;
     }

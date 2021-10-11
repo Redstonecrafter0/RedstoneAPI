@@ -1,10 +1,10 @@
-package net.redstonecraft.redstoneapi.core;
+package net.redstonecraft.redstoneapi.core.mojangapi;
 
+import net.redstonecraft.redstoneapi.core.HttpRequest;
+import net.redstonecraft.redstoneapi.core.HttpResponse;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
-import net.redstonecraft.redstoneapi.core.mojangapi.MojangProfile;
-import net.redstonecraft.redstoneapi.core.mojangapi.NameHistory;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -12,25 +12,26 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * A class to provide the basics of the MojangAPI
+ * A class to provide the basics of the MojangAPI like uuid fetching
  *
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class MojangAPI {
 
     /**
      * Get the players {@link UUID} by the players name
      *
-     * @param name playername
+     * @param name player name
      *
-     * @return the uuid of the player
+     * @return the uuid of the player or null if not found
      * */
-    public static UUID getUnigueIdByName(String name) {
+    public static UUID getUniqueIdByName(String name) {
         try {
             HttpResponse response = HttpRequest.get("https://api.mojang.com/users/profiles/minecraft/" + URLEncoder.encode(name, StandardCharsets.UTF_8.toString()));
             if (response.responseCode() == 200) {
-                JSONObject resp = JSONParser.parseObject(new String(response.content(), StandardCharsets.UTF_8));
+                JSONObject resp = response.getJsonObject();
                 if (resp == null) {
                     return null;
                 }
@@ -51,13 +52,13 @@ public class MojangAPI {
      *
      * @param uuid the players uuid
      *
-     * @return a object containing all the names and the change timestamps
+     * @return a list containing all the names and the change timestamps or an empty list if not found
      * */
     public static List<NameHistory> getNameHistory(UUID uuid) {
         try {
             HttpResponse response = HttpRequest.get("https://api.mojang.com/user/profiles/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "/names");
             if (response.responseCode() == 200) {
-                JSONArray obj = JSONParser.parseArray(new String(response.content(), StandardCharsets.UTF_8));
+                JSONArray obj = response.getJsonArray();
                 if (obj != null) {
                     List<NameHistory> list = new ArrayList<>();
                     for (Object o : obj) {
@@ -87,13 +88,13 @@ public class MojangAPI {
      *
      * @param uuid the players uuid
      *
-     * @return a {@link MojangProfile} object that provides all the information
+     * @return a {@link MojangProfile} that provides all the information or null if not found
      * */
     public static MojangProfile getProfile(UUID uuid) {
         try {
             HttpResponse response = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "?unsigned=false");
             if (response.responseCode() == 200) {
-                JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(response.content(), StandardCharsets.UTF_8)));
+                JSONObject resp = response.getJsonObject();
                 UUID uuid1 = getUniqueIdByString(resp.getString("id"));
                 String name = resp.getString("name");
                 JSONObject prop = resp.getArray("properties").getObject(0);
@@ -112,7 +113,7 @@ public class MojangAPI {
     }
 
     /**
-     * A small utlitity to convert the uuid
+     * A small utlitity to convert the uuid withoud dashes to {@link UUID}
      *
      * @param uuid uuid
      *
@@ -131,7 +132,7 @@ public class MojangAPI {
     }
 
     /**
-     * A small utlitity to convert the uuid
+     * A small utlitity to convert the uuid to a {@link String} withour dashes
      *
      * @param uuid uuid
      *

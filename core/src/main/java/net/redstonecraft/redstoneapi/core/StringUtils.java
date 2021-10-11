@@ -8,21 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utility class for {@link String}
+ * Utility class for {@link String}s
  *
  * @author Redstonecrafter0
  * @since 1.0
  * */
+@SuppressWarnings("unused")
 public class StringUtils {
 
+    @SuppressWarnings("SpellCheckingInspection")
     public static final char[] DEFAULT_WHITELISTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?^°,.-;:_µ€@üöäÜÖÄ#+'*~<>| \\ß{[]}".toCharArray();
 
     /**
      * Get a {@link String} of a with the length of c
      *
+     * @see String#repeat(int) to use instead
      * @param a char to use
      * @param c length
-     *
      * @return {@link String} of same char
      * */
     public static String sameChar(char a, int c) {
@@ -47,13 +49,6 @@ public class StringUtils {
         return true;
     }
 
-    /**
-     * Internal method to work with on {@link StringUtils#isValid(String, char[])}
-     *
-     * @param arr char array to convert
-     *
-     * @return the array as {@link List<Character>}
-     * */
     private static List<Character> arrayToList(char[] arr) {
         List<Character> list = new ArrayList<>();
         for (char i : arr) {
@@ -69,7 +64,7 @@ public class StringUtils {
     }
 
     /**
-     * Parse arguments splitted by spaces but joining them when used with quotation marks.
+     * Parse arguments split by spaces but joining them when used with quotation marks.
      *
      * @param str the string to parse
      *
@@ -82,7 +77,7 @@ public class StringUtils {
         StringBuilder buffer = new StringBuilder(str.length());
         for (char i : str.toCharArray()) {
             switch (i) {
-                case '"':
+                case '"' -> {
                     if (escaped) {
                         buffer.append('"');
                         escaped = false;
@@ -91,24 +86,22 @@ public class StringUtils {
                         buffer = new StringBuilder();
                         longArg = !longArg;
                     }
-                    break;
-                case ' ':
+                }
+                case ' ' -> {
                     if (longArg) {
                         buffer.append(i);
                     } else {
                         add(list, buffer.toString());
                         buffer = new StringBuilder();
                     }
-                    break;
-                case '\\':
+                }
+                case '\\' -> {
                     if (escaped) {
                         buffer.append('\\');
                     }
                     escaped = !escaped;
-                    break;
-                default:
-                    buffer.append(i);
-                    break;
+                }
+                default -> buffer.append(i);
             }
         }
         add(list, buffer.toString());
@@ -124,7 +117,7 @@ public class StringUtils {
      *
      * @param exception the exception to get the stacktrace from
      *
-     * @return the stackstrace as {@link String}
+     * @return the stacktrace as {@link String}
      * */
     public static String stringFromError(Throwable exception) {
         Writer w = new StringWriter();

@@ -15,16 +15,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * Class to ping a Minecraft server to get some data.
- * Might have problems with DNS resolving when used in MCP, Forge or Fabric projects so use instead the buildin methods for pinging a server.
+ * Class to ping a Minecraft server to get some data about it.
  *
+ * @see #ping(String, int) to get some server data
  * @author Redstonecrafter0
  * @since 1.0
  */
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public record ServerListPing(String motd, String motdColored, String faviconB64,
                              RenderedImage favicon, String version, long onlinePlayers,
                              long maxPlayers, int protocol, long latency,
-                             net.redstonecraft.redstoneapi.core.ServerListPing.Sample[] sample) {
+                             ServerListPing.Sample[] sample) {
 
     private final static int CHUNK_SIZE = 16;
 

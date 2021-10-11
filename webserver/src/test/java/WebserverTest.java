@@ -1,5 +1,3 @@
-import net.redstonecraft.redstoneapi.core.HttpHeader;
-import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
@@ -13,7 +11,7 @@ import net.redstonecraft.redstoneapi.webserver.ext.forms.FormValidator;
 import net.redstonecraft.redstoneapi.webserver.ext.login.LoginManager;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
-import net.redstonecraft.redstoneapi.webserver.ws.WebsocketEvent;
+import net.redstonecraft.redstoneapi.webserver.ws.Websocket;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
@@ -72,9 +70,10 @@ public class WebserverTest extends RequestHandler {
                     data.put("msg", "Timeout");
                 }
             }
-            Pair<HttpHeader, String> tokens = formValidator.generate();
-            data.put("csrf", tokens.second());
-            return renderTemplate("login.html.j2", data).addHeader(tokens.first()).addHeader(new HttpHeader("test", "lol"));
+            WebResponse.Builder response = WebResponse.create();
+            String token = formValidator.generate(response);
+            data.put("csrf", token);
+            return renderTemplate(response, "login.html.j2", data);
         } catch (Throwable e) {
             e.printStackTrace();
             return e;
@@ -91,12 +90,12 @@ public class WebserverTest extends RequestHandler {
         }
     }
 
-    @WebsocketEvent("/ws")
+    @Websocket("/ws")
     public void onConnect(WebsocketConnectedEvent event) {
         System.out.println(event.getWebSocketConnection().getChannel().socket().getInetAddress().getHostAddress() + " connected.");
     }
 
-    @WebsocketEvent("/ws")
+    @Websocket("/ws")
     public void onMessage(WebsocketMessageEvent event) {
         System.out.println(event.getMessage());
         try {
@@ -106,7 +105,7 @@ public class WebserverTest extends RequestHandler {
         }
     }
 
-    @WebsocketEvent("/ws")
+    @Websocket("/ws")
     public void onDisconnect(WebsocketDisconnectedEvent event) {
         System.out.println(event.getWebSocketConnection().getChannel().socket().getInetAddress().getHostAddress() + " disconnected.");
     }
