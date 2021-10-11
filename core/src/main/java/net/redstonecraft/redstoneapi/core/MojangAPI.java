@@ -28,9 +28,9 @@ public class MojangAPI {
      * */
     public static UUID getUnigueIdByName(String name) {
         try {
-            HttpRequest req = HttpRequest.get("https://api.mojang.com/users/profiles/minecraft/" + URLEncoder.encode(name, StandardCharsets.UTF_8.toString()));
-            if (req.getResponseCode() == 200) {
-                JSONObject resp = JSONParser.parseObject(new String(req.getContent(), StandardCharsets.UTF_8));
+            HttpResponse response = HttpRequest.get("https://api.mojang.com/users/profiles/minecraft/" + URLEncoder.encode(name, StandardCharsets.UTF_8.toString()));
+            if (response.responseCode() == 200) {
+                JSONObject resp = JSONParser.parseObject(new String(response.content(), StandardCharsets.UTF_8));
                 if (resp == null) {
                     return null;
                 }
@@ -55,9 +55,9 @@ public class MojangAPI {
      * */
     public static List<NameHistory> getNameHistory(UUID uuid) {
         try {
-            HttpRequest req = HttpRequest.get("https://api.mojang.com/user/profiles/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "/names");
-            if (req.getResponseCode() == 200) {
-                JSONArray obj = JSONParser.parseArray(new String(req.getContent(), StandardCharsets.UTF_8));
+            HttpResponse response = HttpRequest.get("https://api.mojang.com/user/profiles/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "/names");
+            if (response.responseCode() == 200) {
+                JSONArray obj = JSONParser.parseArray(new String(response.content(), StandardCharsets.UTF_8));
                 if (obj != null) {
                     List<NameHistory> list = new ArrayList<>();
                     for (Object o : obj) {
@@ -91,9 +91,9 @@ public class MojangAPI {
      * */
     public static MojangProfile getProfile(UUID uuid) {
         try {
-            HttpRequest req = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "?unsigned=false");
-            if (req.getResponseCode() == 200) {
-                JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(req.getContent(), StandardCharsets.UTF_8)));
+            HttpResponse response = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + URLEncoder.encode(uniqueIdToString(uuid), StandardCharsets.UTF_8.toString()) + "?unsigned=false");
+            if (response.responseCode() == 200) {
+                JSONObject resp = Objects.requireNonNull(JSONParser.parseObject(new String(response.content(), StandardCharsets.UTF_8)));
                 UUID uuid1 = getUniqueIdByString(resp.getString("id"));
                 String name = resp.getString("name");
                 JSONObject prop = resp.getArray("properties").getObject(0);

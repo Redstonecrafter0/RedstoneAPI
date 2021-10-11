@@ -34,7 +34,6 @@ public class ErrorHandlerManager {
 
     public WebResponse handle(HttpResponseCode code, String url, Map<String, String> webArgs, HttpHeaders headers) {
         WebResponse errorResponse = getHandler(code).handleError(code, url, webArgs, headers);
-        errorResponse.setErrorCode(code);
         return errorResponse;
     }
 

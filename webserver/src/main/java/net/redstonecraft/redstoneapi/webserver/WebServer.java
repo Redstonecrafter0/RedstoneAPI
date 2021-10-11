@@ -15,7 +15,6 @@ import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketBinaryDataEven
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketConnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketDisconnectedEvent;
 import net.redstonecraft.redstoneapi.webserver.ws.events.WebsocketMessageEvent;
-import org.apache.commons.lang.NotImplementedException;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -26,7 +25,6 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -60,9 +58,9 @@ public class WebServer {
                 } catch (IOException | NullPointerException ignored) {
                 }
             }
-            return new WebResponse(html.replace("{code}", String.valueOf(code.getCode()))
+            return WebResponse.create().setContent(html.replace("{code}", String.valueOf(code.getCode()))
                     .replace("{desc}", code.getDescription())
-                    .replace("{text}", code.getCode() < 500 ? "Ohh. There was an error. Try another page." : "Ohh. There was an error. Try again later."), code);
+                    .replace("{text}", code.getCode() < 500 ? "Ohh. There was an error. Try another page." : "Ohh. There was an error. Try again later.")).setResponseCode(code).build();
         }
     };
     private static final Logger logger = Logger.getLogger(WebServer.class.getName());
@@ -275,7 +273,7 @@ public class WebServer {
                                                         if (websocketManager.pathExists(request.getPath())) {
                                                             String wsKey = Objects.requireNonNull(request.getHeaders().get("Sec-WebSocket-Key"));
                                                             String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
-                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.SWITCHING_PROTOCOLS, new ByteArrayInputStream(new byte[0]), new ArrayList<>(Arrays.asList(new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept))));
+                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.SWITCHING_PROTOCOLS, new ByteArrayInputStream(new byte[0]), new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept));
                                                             WebSocketConnection webSocketConnection = new WebSocketConnection(connection.getChannel(), this, request);
                                                             websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
                                                             try {
@@ -284,7 +282,7 @@ public class WebServer {
                                                                 e.printStackTrace();
                                                             }
                                                         } else {
-                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.NOT_FOUND, new ByteArrayInputStream(new byte[0]), new ArrayList<>());
+                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.NOT_FOUND, new ByteArrayInputStream(new byte[0]));
                                                         }
                                                         connections.remove(connection);
                                                         return;
@@ -308,7 +306,7 @@ public class WebServer {
                                                 } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
                                                     File favicon = new File(new File(staticDir, "static"), "favicon.ico");
                                                     if (favicon.exists()) {
-                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), new WebResponse(Files.readAllBytes(favicon.toPath()), HttpResponseCode.OK, new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype())));
+                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), WebResponse.create().setContent(new FileInputStream(favicon)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype())).build());
                                                     } else {
                                                         sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
                                                     }
@@ -352,7 +350,7 @@ public class WebServer {
                                                         for (HttpMethod i : handlerManager.getUsedMethods()) {
                                                             list.add(i.name());
                                                         }
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), WebResponse.create().setResponseCode(HttpResponseCode.NO_CONTENT).addHeader(new HttpHeader("Allow", String.join(", ", list))).build());
                                                     } else {
                                                         Set<String> list = new HashSet<>();
                                                         list.add("OPTIONS");
@@ -367,7 +365,7 @@ public class WebServer {
                                                             } catch (IllegalStateException ignored) {
                                                             }
                                                         }
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), new WebResponse(new byte[0], HttpResponseCode.NO_CONTENT, new HttpHeader("Allow", String.join(", ", list))));
+                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), WebResponse.create().setResponseCode(HttpResponseCode.NO_CONTENT).addHeader(new HttpHeader("Allow", String.join(", ", list))).build());
                                                     }
                                                 }
                                             } catch (Throwable ignored) {
@@ -407,12 +405,13 @@ public class WebServer {
     private WebResponse convertToResponse(WebRequest request, Object response) {
         return switch (response) {
             case WebResponse r -> r;
-            case String s -> new WebResponse(s);
-            case byte[] d -> new WebResponse(d);
-            case ByteBuffer b -> new WebResponse(b.array());
-            case InputStream s -> new WebResponse(s);
-            case null -> new WebResponse("null");
-            case Throwable throwable -> new WebResponse(StringUtils.stringFromError(throwable));
+            case WebResponse.Builder b -> b.build();
+            case String s -> WebResponse.create().setContent(s).build();
+            case byte[] d -> WebResponse.create().setContent(d).build();
+            case ByteBuffer b -> WebResponse.create().setContent(b).build();
+            case InputStream s -> WebResponse.create().setContent(s).build();
+            case null -> WebResponse.create().setContent("null").build();
+            case Throwable throwable -> WebResponse.create().setContent(StringUtils.stringFromError(throwable)).build();
             default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
         };
     }
@@ -470,7 +469,7 @@ public class WebServer {
     @SuppressWarnings("SameParameterValue")
     private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
-            sendResponse(conn.getChannel(), method, path, code, content, Arrays.asList(headers));
+            sendResponse(conn.getChannel(), method, path, code, content, headers);
         } catch (IOException ignored) {
         }
         try {
@@ -481,7 +480,7 @@ public class WebServer {
     }
 
     private void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
-        sendResponse(channel, method, path, response.getCode(), response.getContent(), response.getHeaders());
+        sendResponse(channel, method, path, response.code(), response.content(), response.headers());
     }
 
     public static String toServerTime(Date date) {
@@ -495,11 +494,11 @@ public class WebServer {
         return toServerTime(new Date());
     }
 
-    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, Collection<HttpHeader> headers) throws IOException {
+    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
         List<String> list = new ArrayList<>();
         list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {
-            list.add(i.getKey() + ": " + i.getValue());
+            list.add(i.key() + ": " + i.value());
         }
         list.add("Server: RedstoneAPI/" + RedstoneAPI.getVersion().toString());
         list.add("Date: " + getServerTime());

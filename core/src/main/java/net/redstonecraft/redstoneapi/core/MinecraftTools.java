@@ -20,7 +20,7 @@ public class MinecraftTools {
      * @return whether the chunk is a slime chunk or not
      * */
     public static boolean isSlimeChunk(long seed, int x, int z) {
-        return new Random(seed + (int) (x * x * 0x4c1906) + (int) (x * 0x5ac0db) + (int) (z * z) * 0x4307a7L + (int) (z * 0x5f24f) ^ 0x3ad8025fL).nextInt(10) == 0;
+        return new Random(seed + ((long) x * x * 0x4c1906) + (x * 0x5ac0dbL) + ((long) z * z) * 0x4307a7L + (z * 0x5f24fL) ^ 0x3ad8025fL).nextInt(10) == 0;
     }
 
     /**

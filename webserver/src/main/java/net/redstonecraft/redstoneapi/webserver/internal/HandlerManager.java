@@ -30,7 +30,7 @@ public class HandlerManager {
             if (!dynamicMap.containsKey(method)) {
                 dynamicMap.put(method, new LinkedHashMap<>());
             }
-            dynamicMap.get(method).put(Arrays.stream(dynamicHandlerBundle.getRoute()).map(i -> i.getSecond() ? null : i.getFirst()).toArray(String[]::new), dynamicHandlerBundle);
+            dynamicMap.get(method).put(Arrays.stream(dynamicHandlerBundle.getRoute()).map(i -> i.second() ? null : i.first()).toArray(String[]::new), dynamicHandlerBundle);
         } else {
             if (!handlers.containsKey(method)) {
                 handlers.put(method, new HashMap<>());

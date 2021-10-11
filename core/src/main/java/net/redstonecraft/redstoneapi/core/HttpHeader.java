@@ -8,29 +8,7 @@ import java.util.List;
  * @author Redstonecrafter0
  * @since 1.0
  * */
-public class HttpHeader implements Comparable<HttpHeader> {
-
-    private final String key;
-    private final String value;
-
-    /**
-     * Create a http header for {@link HttpRequest}
-     *
-     * @param key header key
-     * @param value header value
-     * */
-    public HttpHeader(String key, String value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getValue() {
-        return value;
-    }
+public record HttpHeader(String key, String value) implements Comparable<HttpHeader> {
 
     /**
      * Get a {@link HttpHeader} by the key.
@@ -42,7 +20,7 @@ public class HttpHeader implements Comparable<HttpHeader> {
      * */
     public static HttpHeader getByKey(HttpHeader[] headers, String key) {
         for (HttpHeader i : headers) {
-            if (i.getKey().equalsIgnoreCase(key)) {
+            if (i.key().equalsIgnoreCase(key)) {
                 return i;
             }
         }
@@ -59,7 +37,7 @@ public class HttpHeader implements Comparable<HttpHeader> {
      * */
     public static HttpHeader getByKey(List<HttpHeader> headers, String key) {
         for (HttpHeader i : headers) {
-            if (i.getKey().equalsIgnoreCase(key)) {
+            if (i.key().equalsIgnoreCase(key)) {
                 return i;
             }
         }
@@ -76,14 +54,6 @@ public class HttpHeader implements Comparable<HttpHeader> {
      * */
     public static boolean containsKey(HttpHeader[] headers, String key) {
         return getByKey(headers, key) != null;
-    }
-
-    @Override
-    public String toString() {
-        return "HttpHeader{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
     }
 
     @Override

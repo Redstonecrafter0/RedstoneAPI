@@ -36,7 +36,7 @@ public class ButtonManager implements DiscordEventListener {
                     e.printStackTrace();
                 }
                 List<String> remove = new ArrayList<>();
-                buttons.entrySet().stream().filter(e -> e.getValue().getFirst() < System.currentTimeMillis()).forEach(e -> remove.add(e.getKey()));
+                buttons.entrySet().stream().filter(e -> e.getValue().first() < System.currentTimeMillis()).forEach(e -> remove.add(e.getKey()));
                 remove.forEach(buttons::remove);
             }
         }, 0L, 1000L);
@@ -46,7 +46,7 @@ public class ButtonManager implements DiscordEventListener {
     public void onButtonClick(ButtonClickEvent event) {
         Pair<Long, Consumer<ButtonClickEvent>> cb = buttons.get(event.getComponentId());
         if (cb != null) {
-            cb.getSecond().accept(event);
+            cb.second().accept(event);
             if (!event.isAcknowledged()) {
                 event.deferEdit().queue();
             }

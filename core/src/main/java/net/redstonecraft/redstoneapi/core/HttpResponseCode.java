@@ -1,7 +1,7 @@
 package net.redstonecraft.redstoneapi.core;
 
 /**
- * Enum containing all HTTP response codes documented on <a href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">IANA</a> plus Code 418
+ * Enum containing all HTTP response codes defined at <a href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">IANA</a> plus Code 418
  *
  * @author Redstonecrafter0
  * @since 1.2
@@ -104,7 +104,7 @@ public enum HttpResponseCode {
                 return i;
             }
         }
-        return null;
+        return NONE;
     }
 
     public static HttpResponseCode getByDescription(String description) {
@@ -113,7 +113,7 @@ public enum HttpResponseCode {
                 return i;
             }
         }
-        return null;
+        return NONE;
     }
 
     public static boolean isError(HttpResponseCode code) {
@@ -121,6 +121,6 @@ public enum HttpResponseCode {
     }
 
     public static boolean isError(int code) {
-        return getByCode(code) != null && code >= HttpResponseCode.BAD_REQUEST.getCode() && code <= HttpResponseCode.NETWORK_AUTHENTICATION_REQUIRED.getCode();
+        return getByCode(code) != NONE && code >= HttpResponseCode.BAD_REQUEST.getCode() && code <= HttpResponseCode.NETWORK_AUTHENTICATION_REQUIRED.getCode();
     }
 }

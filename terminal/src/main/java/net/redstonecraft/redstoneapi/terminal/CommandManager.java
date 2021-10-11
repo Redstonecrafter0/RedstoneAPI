@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class CommandManager implements Completer {
 
     private final Map<String, Command> commandMap = new TreeMap<>();
-    private Consumer<Pair<String, String[]>> commandNotFoundHandler = command -> System.err.println("Command " + command.getFirst().toLowerCase() + " not found.");
+    private Consumer<Pair<String, String[]>> commandNotFoundHandler = command -> System.err.println("Command " + command.first().toLowerCase() + " not found.");
 
     @Override
     public void complete(LineReader lineReader, ParsedLine parsedLine, List<Candidate> list) {

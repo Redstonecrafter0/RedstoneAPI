@@ -9,7 +9,6 @@ import net.redstonecraft.redstoneapi.core.Hashlib;
 import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.obj.Cookie;
-import net.redstonecraft.redstoneapi.webserver.obj.SetCookieHeader;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.io.File;
@@ -64,14 +63,14 @@ public class LoginManager<T extends User> {
         verifier = JWT.require(algorithm).withIssuer("redstoneapi").build();
     }
 
-    public void loginUser(String username, String password, Date expiresAt, WebResponse response) {
+    public void loginUser(String username, String password, Date expiresAt, WebResponse.Builder response) {
         User user = userProvider.login(username, password);
         updateUserRefreshToken(user, expiresAt, response);
     }
 
-    public void updateUserRefreshToken(User user, Date expiresAt, WebResponse response) {
+    public void updateUserRefreshToken(User user, Date expiresAt, WebResponse.Builder response) {
         if (user != null) {
-            response.addHeader(new SetCookieHeader(new Cookie("Jsessionid", JWT.create().withExpiresAt(expiresAt).withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, SetCookieHeader.SameSite.LAX));
+            response.addCookie(new Cookie("Jsessionid", JWT.create().withExpiresAt(expiresAt).withIssuer("redstoneapi").withClaim("uid", user.getId()).sign(algorithm)), expiresAt, null, domain, null, httpsOnly, true, Cookie.SameSite.LAX);
         }
     }
 

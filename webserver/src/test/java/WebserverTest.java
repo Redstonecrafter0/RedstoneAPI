@@ -65,7 +65,7 @@ public class WebserverTest extends RequestHandler {
             Map<String, String> data = new HashMap<>();
             if (request.getMethod().equals(HttpMethod.POST)) {
                 if (formValidator.isValid(request, csrf, 60000)) {
-                    WebResponse response = redirect("/userdata");
+                    WebResponse.Builder response = redirect("/userdata");
                     loginManager.loginUser(username, password, new Date(System.currentTimeMillis() + 120000000), response);
                     return response;
                 } else {
@@ -73,8 +73,8 @@ public class WebserverTest extends RequestHandler {
                 }
             }
             Pair<HttpHeader, String> tokens = formValidator.generate();
-            data.put("csrf", tokens.getSecond());
-            return renderTemplate("login.html.j2", data, tokens.getFirst());
+            data.put("csrf", tokens.second());
+            return renderTemplate("login.html.j2", data).addHeader(tokens.first()).addHeader(new HttpHeader("test", "lol"));
         } catch (Throwable e) {
             e.printStackTrace();
             return e;

@@ -3,7 +3,7 @@ package net.redstonecraft.redstoneapi.core;
 import java.util.Arrays;
 
 /**
- * Version class
+ * Version class using <a href="https://semver.org/">SemVer version naming convention</a>
  *
  * @author Redstonecrafter0
  * @since 1.1
@@ -11,92 +11,107 @@ import java.util.Arrays;
 public class Version implements Comparable<Version> {
 
     private final int[] version;
-    private final boolean includeV;
-    private final boolean preRelease;
+    private final String preRelease;
+    private final String buildData;
 
-    public Version(String version) {
+    public Version(int major, int minor, int patch, String preRelease, String buildData) throws IllegalArgumentException {
+        if (major < 0 || minor < 0 || patch < 0) {
+            throw new IllegalArgumentException("Version numbers are not allowed to be negative");
+        }
+        if (!preRelease.matches("[0-9A-Za-z-.]")) {
+            throw new IllegalArgumentException("Version preRelease data must only contain ASCII alphanumerics, hyphens and dots as separators");
+        }
+        if (!buildData.matches("[0-9A-Za-z-.]")) {
+            throw new IllegalArgumentException("Version preRelease data must only contain ASCII alphanumerics, hyphens and dots as separators");
+        }
+        version = new int[]{major, minor, patch};
+        this.preRelease = preRelease;
+        this.buildData = buildData;
+    }
+
+    public static Version fromVersionString(String version) throws IllegalArgumentException {
         if (version.startsWith("v")) {
             version = version.substring(1);
-            includeV = true;
-            preRelease = false;
-        } else if (version.startsWith("pre-")) {
-            version = version.substring(4);
-            includeV = false;
-            preRelease = true;
-        } else {
-            includeV = false;
-            preRelease = false;
         }
-        if (!version.matches("[0-9]+(\\.[0-9]+)*")) {
+        String main;
+        String pre = "";
+        String build = "";
+        if (version.contains("-")) {
+            if (version.contains("+")) {
+                String[] tmp = version.split("-");
+                String[] tmp1 = tmp[1].split("\\+");
+                main = tmp[0];
+                pre = tmp1[0];
+                build = tmp1[1];
+            } else {
+                String[] tmp = version.split("-");
+                main = tmp[0];
+                pre = tmp[1];
+            }
+        } else if (version.contains("+")) {
+            String[] tmp = version.split("\\+");
+            main = tmp[0];
+            build = tmp[1];
+        } else {
+            main = version;
+        }
+        if (!main.matches("[0-9]+(\\.[0-9]+){0,2}")) {
             throw new IllegalArgumentException("Invalid Version");
         }
-        String[] nums = version.split("\\.");
-        this.version = new int[nums.length];
+        String[] nums = main.split("\\.");
+        int[] n = ArrayUtils.arrayOf(0, 3);
         for (int i = 0; i < nums.length; i++) {
-            this.version[i] = Integer.parseInt(nums[i]);
+            n[i] = Integer.parseInt(nums[i]);
         }
-    }
-
-    public Version(int[] numbers) {
-        version = numbers;
-        includeV = false;
-        preRelease = false;
-    }
-
-    public Version(int[] numbers, boolean includeV, boolean preRelease) {
-        version = numbers;
-        this.includeV = includeV;
-        this.preRelease = preRelease;
+        return new Version(n[0], n[1], n[2], pre, build);
     }
 
     public int getMajor() {
-        return getOnPos(0) == null ? 0 : getOnPos(0);
+        return version[0];
     }
 
     public int getMinor() {
-        return getOnPos(1) == null ? 0 : getOnPos(1);
+        return version[1];
     }
 
     public int getPatch() {
-        return getOnPos(2) == null ? 0 : getOnPos(2);
+        return version[2];
     }
 
-    public int getBuild() {
-        return getOnPos(3) == null ? 0 : getOnPos(3);
+    public boolean isPrerelease() {
+        return !preRelease.equals("");
     }
 
-    public Integer getOnPos(int pos) {
-        try {
-            return version[pos];
-        } catch (ArrayIndexOutOfBoundsException ignored) {
-            return null;
-        }
+    public boolean isAlpha() {
+        return preRelease.contains("alpha");
     }
 
-    public int getDepth() {
-        return version.length;
+    public boolean isBeta() {
+        return preRelease.contains("beta");
+    }
+
+    public boolean isReleaseCandidate() {
+        return preRelease.contains("rc");
+    }
+
+    public boolean hasBuildData() {
+        return !buildData.equals("");
     }
 
     public boolean isOlderThan(Version compare) {
-        for (int i = 0; i < Math.max(getDepth(), compare.getDepth()); i++) {
-            if (getOnPos(i) == null || compare.getOnPos(i) == null) {
-                return getOnPos(i) == null && compare.getOnPos(i) != null;
-            }
-            if (getOnPos(i) > compare.getOnPos(i)) {
-                return false;
-            } else if (getOnPos(i) < compare.getOnPos(i)) {
+        for (int i = 0; i < version.length; i++) {
+            if (version[i] < compare.version[i]) {
                 return true;
             }
         }
+        if (!isPrerelease() && compare.isPrerelease()) {
+            return false;
+        }
+        // TODO: https://semver.org/
         return false;
     }
 
     public boolean isNewerThan(Version compare) {
-        return !isOlderThan(compare) && !equals(compare);
-    }
-
-    public boolean isPreRelease() {
-        return preRelease;
     }
 
     @Override
@@ -107,8 +122,7 @@ public class Version implements Comparable<Version> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Version version1 = (Version) o;
-        return Arrays.equals(version, version1.version);
+        return compareTo((Version) o) == 0;
     }
 
     @Override
@@ -118,21 +132,17 @@ public class Version implements Comparable<Version> {
 
     @Override
     public String toString() {
-        String[] nums = new String[version.length];
-        for (int i = 0; i < version.length; i++) {
-            nums[i] = String.valueOf(version[i]);
-        }
-        return includeV ? "v" + String.join(".", nums) : (preRelease ? "pre-" + String.join(".", nums) : String.join(".", nums));
+        return version[0] + "." + version[1] + "." + version[2] + (isPrerelease() ? "-" + preRelease : "") + (hasBuildData() ? "+" + buildData : "");
     }
 
     @Override
     public int compareTo(Version o) {
         if (isOlderThan(o)) {
             return -1;
-        } else if (equals(o)) {
-            return 0;
-        } else {
+        } else if (isNewerThan(o)) {
             return 1;
+        } else {
+            return 0;
         }
     }
 

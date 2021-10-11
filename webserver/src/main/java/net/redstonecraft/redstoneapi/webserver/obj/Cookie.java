@@ -20,4 +20,23 @@ public record Cookie(String key, String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
+    public enum SameSite {
+
+        STRICT("Strict"),
+        LAX("Lax"),
+        NONE("None");
+
+        private final String string;
+
+        SameSite(String string) {
+            this.string = string;
+        }
+
+        @Override
+        public String toString() {
+            return string;
+        }
+
+    }
+
 }

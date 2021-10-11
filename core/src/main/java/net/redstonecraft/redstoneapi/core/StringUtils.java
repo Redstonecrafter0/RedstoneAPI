@@ -26,11 +26,7 @@ public class StringUtils {
      * @return {@link String} of same char
      * */
     public static String sameChar(char a, int c) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < c; i++) {
-            sb.append(a);
-        }
-        return sb.toString();
+        return String.valueOf(a).repeat(Math.max(0, c));
     }
 
     /**

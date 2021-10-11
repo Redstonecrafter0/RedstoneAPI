@@ -20,42 +20,20 @@ import java.util.*;
  *
  * @author Redstonecrafter0
  * @since 1.0
- * */
-public class ServerListPing {
+ */
+public record ServerListPing(String motd, String motdColored, String faviconB64,
+                             RenderedImage favicon, String version, long onlinePlayers,
+                             long maxPlayers, int protocol, long latency,
+                             net.redstonecraft.redstoneapi.core.ServerListPing.Sample[] sample) {
 
     private final static int CHUNK_SIZE = 16;
-
-    private final String faviconB64;
-    private final String motd;
-    private final String motdColored;
-    private final RenderedImage favicon;
-    private final String version;
-    private final int protocol;
-    private final long onlinePlayers;
-    private final long maxPlayers;
-    private final long latency;
-    private final Sample[] sample;
-
-    private ServerListPing(String motd, String motdColored, String faviconB64, RenderedImage favicon, String version, long onlinePlayers, long maxPlayers, int protocol, long latency, Sample[] sample) {
-        this.motd = motd;
-        this.motdColored = motdColored;
-        this.faviconB64 = faviconB64;
-        this.favicon = favicon;
-        this.version = version;
-        this.onlinePlayers = onlinePlayers;
-        this.maxPlayers = maxPlayers;
-        this.protocol = protocol;
-        this.latency = latency;
-        this.sample = sample;
-    }
 
     /**
      * Ping the server with port 25565
      *
      * @param host server hostname
-     *
      * @return response object as {@link ServerListPing}
-     * */
+     */
     public static ServerListPing ping(String host) {
         return ping(host, 25565);
     }
@@ -65,14 +43,13 @@ public class ServerListPing {
      *
      * @param host server hostname
      * @param port server port
-     *
      * @return response object as {@link ServerListPing}
-     * */
+     */
     public static ServerListPing ping(String host, int port) {
         try {
             try {
-                SRVRecord srvRecord = (SRVRecord) lookupRecord("_minecraft._tcp." + host, Type.SRV);
-                host = srvRecord.getTarget().toString().replaceFirst("\\.$","");
+                SRVRecord srvRecord = (SRVRecord) lookupRecord("_minecraft._tcp." + host);
+                host = srvRecord.getTarget().toString().replaceFirst("\\.$", "");
             } catch (UnknownHostException ignored) {
             }
             Socket socket = new Socket(host, port);
@@ -93,7 +70,7 @@ public class ServerListPing {
             dataOutputStream.writeByte(0x01);
             dataOutputStream.writeByte(0x00);
             DataInputStream dataInputStream = new DataInputStream(inputStream);
-            int size = readVarInt(dataInputStream);
+            readVarInt(dataInputStream);
             int id = readVarInt(dataInputStream);
             if (id == -1) {
                 throw new IOException("Premature end of stream.");
@@ -213,23 +190,7 @@ public class ServerListPing {
         return null;
     }
 
-    public static class Sample {
-
-        private final String name;
-        private final UUID uuid;
-
-        private Sample(String name, UUID uuid) {
-            this.name = name;
-            this.uuid = uuid;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public UUID getUniqueId() {
-            return uuid;
-        }
+    public record Sample(String name, UUID uniqueId) {
     }
 
     private static RenderedImage b64toImage(String base64) throws IOException {
@@ -291,12 +252,11 @@ public class ServerListPing {
         return key.equals("") ? "" : "§" + key;
     }
 
-    private static Record lookupRecord(String hostName, int type) throws UnknownHostException {
-        Record record;
+    private static Record lookupRecord(String hostName) throws UnknownHostException {
         Lookup lookup;
         int result;
         try {
-            lookup = new Lookup(hostName, type);
+            lookup = new Lookup(hostName, Type.SRV);
         } catch (TextParseException e) {
             throw new UnknownHostException(String.format("Host '%s' parsing error:%s", hostName, e.getMessage()));
         }
@@ -305,85 +265,26 @@ public class ServerListPing {
         if (result == Lookup.SUCCESSFUL) {
             return lookup.getAnswers()[0];
         } else {
-            switch (result) {
-                case Lookup.HOST_NOT_FOUND:
-                    throw new UnknownHostException(String.format("Host '%s' not found", hostName));
-                case Lookup.TYPE_NOT_FOUND:
-                    throw new UnknownHostException(String.format("Host '%s' not found (no A record)", hostName));
-                case Lookup.UNRECOVERABLE:
-                    throw new UnknownHostException(String.format("Cannot lookup host '%s'", hostName));
-                case Lookup.TRY_AGAIN:
-                    throw new UnknownHostException(String.format("Temporary failure to lookup host '%s'", hostName));
-                default:
-                    throw new UnknownHostException(String.format("Unknown error %d in host lookup of '%s'", result, hostName));
-            }
+            throw switch (result) {
+                case Lookup.HOST_NOT_FOUND -> new UnknownHostException(String.format("Host '%s' not found", hostName));
+                case Lookup.TYPE_NOT_FOUND -> new UnknownHostException(String.format("Host '%s' not found (no A record)", hostName));
+                case Lookup.UNRECOVERABLE -> new UnknownHostException(String.format("Cannot lookup host '%s'", hostName));
+                case Lookup.TRY_AGAIN -> new UnknownHostException(String.format("Temporary failure to lookup host '%s'", hostName));
+                default -> new UnknownHostException(String.format("Unknown error %d in host lookup of '%s'", result, hostName));
+            };
         }
-    }
-
-    public String getFaviconB64() {
-        return faviconB64;
-    }
-
-    public RenderedImage getFavicon() {
-        return favicon;
-    }
-
-    public long getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public long getOnlinePlayers() {
-        return onlinePlayers;
-    }
-
-    public String getMotd() {
-        return motd;
-    }
-
-    public String getMotdColored() {
-        return motdColored;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public int getProtocol() {
-        return protocol;
-    }
-
-    public long getLatency() {
-        return latency;
-    }
-
-    public Sample[] getSample() {
-        return sample;
     }
 
     public String getSampleAsString() {
         String[] tmp = new String[sample.length];
         for (int i = 0; i < sample.length; i++) {
-            tmp[i] = sample[i].getName();
+            tmp[i] = sample[i].name();
         }
         return String.join("\n", tmp);
     }
 
     public List<Sample> getSampleAsList() {
-        return Arrays.asList(getSample());
+        return Arrays.asList(sample());
     }
 
-    @Override
-    public String toString() {
-        return "ServerListPing{" +
-                "motd='" + motd + '\'' +
-                ", motdColored='" + motdColored + '\'' +
-                ", version='" + version + '\'' +
-                ", protocol=" + protocol +
-                ", onlinePlayers=" + onlinePlayers +
-                ", maxPlayers=" + maxPlayers +
-                ", latency=" + latency +
-                ", sample=" + Arrays.toString(sample) +
-                ", faviconB64='" + faviconB64 + '\'' +
-                '}';
-    }
 }

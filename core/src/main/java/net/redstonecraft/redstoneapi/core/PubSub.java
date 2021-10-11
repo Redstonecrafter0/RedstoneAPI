@@ -2,6 +2,8 @@ package net.redstonecraft.redstoneapi.core;
 
 /**
  * @author Redstonecrafter0
+ *
+ * @since 2.0
  */
 public class PubSub {
     

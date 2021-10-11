@@ -3,6 +3,7 @@ package net.redstonecraft.redstoneapi.info;
 import com.diogonunes.jcolor.Ansi;
 import com.diogonunes.jcolor.Attribute;
 import com.github.lalyos.jfiglet.FigletFont;
+import net.redstonecraft.redstoneapi.core.HttpResponse;
 import net.redstonecraft.redstoneapi.core.Version;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
@@ -18,7 +19,7 @@ import java.util.Arrays;
 
 public class RedstoneAPI {
 
-    private static final Version VERSION = new Version("2.0");// ""${version}");
+    private static final Version VERSION = Version.fromVersionString("2.0");
 
     private static final int WIDTH = 600;
     private static final int HEIGHT = 250;
@@ -115,13 +116,13 @@ public class RedstoneAPI {
     }
 
     public static Update getUpdate() throws IOException {
-        HttpRequest response = HttpRequest.get("https://api.github.com/repos/Redstonecrafter0/RedstoneAPI/releases", new HttpHeader("Accept", "application/vnd.github.v3+json"));
+        HttpResponse response = HttpRequest.get("https://api.github.com/repos/Redstonecrafter0/RedstoneAPI/releases", new HttpHeader("Accept", "application/vnd.github.v3+json"));
         JSONArray arr = response.getJsonArray();
         Version version = RedstoneAPI.VERSION;
         for (int i = 0; i < arr.size(); i++) {
             try {
                 if (!arr.getObject(i).getBoolean("prerelease")) {
-                    Version tmp = new Version(arr.getObject(i).getString("tag_name"));
+                    Version tmp = Version.fromVersionString(arr.getObject(i).getString("tag_name"));
                     if (tmp.isNewerThan(version)) {
                         version = tmp;
                     }

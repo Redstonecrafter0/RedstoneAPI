@@ -16,7 +16,7 @@ public record HttpHeaders(List<HttpHeader> headers) {
 
     public String get(String key) {
         HttpHeader header = HttpHeader.getByKey(headers, key);
-        return header == null ? null : header.getValue();
+        return header == null ? null : header.value();
     }
 
     public long getContentLength() {
@@ -46,7 +46,7 @@ public record HttpHeaders(List<HttpHeader> headers) {
         StringBuilder sb = new StringBuilder();
         for (HttpHeader i : headers) {
             //noinspection StringConcatenationInsideStringBufferAppend
-            sb.append(i.getKey() + ": " + i.getValue() + "\r\n");
+            sb.append(i.key() + ": " + i.value() + "\r\n");
         }
         return sb.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
     }

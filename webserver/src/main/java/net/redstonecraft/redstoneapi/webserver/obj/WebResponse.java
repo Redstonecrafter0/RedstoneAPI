@@ -2,86 +2,108 @@ package net.redstonecraft.redstoneapi.webserver.obj;
 
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.core.HttpResponseCode;
+import net.redstonecraft.redstoneapi.webserver.WebServer;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * The response sent to the client when an HTTP request came in to the {@link net.redstonecraft.redstoneapi.webserver.WebServer}
  *
  * @author Redstonecrafter0
  * @since 1.2
- * */
-public class WebResponse {
-
-    private final InputStream content;
-    private final List<HttpHeader> headers;
-    private HttpResponseCode code;
-
-    public WebResponse(String content, HttpHeader... headers) {
-        this(content, HttpResponseCode.OK, headers);
-    }
-
-    public WebResponse(String content, HttpResponseCode code, HttpHeader... headers) {
-        this((content != null ? content : "null").getBytes(StandardCharsets.UTF_8), code, headers);
-    }
-
-    public WebResponse(byte[] content, HttpHeader... headers) {
-        this(content, HttpResponseCode.OK, headers);
-    }
-
-    public WebResponse(byte[] content, HttpResponseCode code, HttpHeader... headers) {
-        this(new ByteArrayInputStream(content), code, headers);
-    }
-
-    public WebResponse(ByteBuffer content, HttpHeader... headers) {
-        this(content, HttpResponseCode.OK, headers);
-    }
-
-    public WebResponse(ByteBuffer content, HttpResponseCode code, HttpHeader... headers) {
-        this(content.array(), code, headers);
-    }
-
-    public WebResponse(InputStream content, HttpHeader... headers) {
-        this(content, HttpResponseCode.OK, headers);
-    }
-
-    public WebResponse(InputStream content, HttpResponseCode code, HttpHeader... headers) {
-        this.content = content;
-        this.headers = new ArrayList<>(Arrays.asList(headers));
-        this.code = code;
-    }
-
-    public HttpResponseCode getCode() {
-        return code;
-    }
-
-    public InputStream getContent() {
-        return content;
-    }
-
-    public List<HttpHeader> getHeaders() {
-        return headers;
-    }
-
-    public void addHeader(HttpHeader header) {
-        headers.add(header);
-    }
-
-    public void setErrorCode(HttpResponseCode code) {
-        this.code = code;
-    }
+ */
+public record WebResponse(InputStream content, HttpResponseCode code, HttpHeader... headers) {
 
     @Override
-    public String toString() {
-        return "WebResponse{" +
-                "headers=" + headers +
-                ", code=" + code.getCode() +
-                '}';
+    public HttpResponseCode code() {
+        return code == null ? HttpResponseCode.INTERNAL_SERVER_ERROR : code;
     }
+
+    public static Builder create() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private InputStream content = new ByteArrayInputStream(new byte[0]);
+        private final Map<String, HttpHeader> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        private HttpResponseCode code = HttpResponseCode.OK;
+
+        private Builder() {
+        }
+
+        public Builder setContent(String content) {
+            return setContent(content.getBytes(StandardCharsets.UTF_8));
+        }
+
+        public Builder setContent(ByteBuffer buffer) {
+            return setContent(buffer.array());
+        }
+
+        public Builder setContent(byte[] data) {
+            return setContent(new ByteArrayInputStream(data));
+        }
+
+        public Builder setContent(InputStream is) {
+            this.content = is;
+            return this;
+        }
+
+        public Builder addHeader(HttpHeader header) {
+            if (!header.key().equalsIgnoreCase("Set-Cookie")) {
+                headers.remove(header.key());
+            }
+            headers.put(header.key(), header);
+            return this;
+        }
+
+        public Builder addCookie(Cookie cookie) {
+            return addCookie(cookie, null, null, null, null, false, false, null);
+        }
+
+        public Builder addCookie(Cookie cookie, Date expires, Long maxAge, String domain, String path, boolean secure, boolean httpOnly, Cookie.SameSite sameSite) {
+            return addHeader(new HttpHeader("Set-Cookie", serializeCookie(cookie, expires, maxAge, domain, path, secure, httpOnly, sameSite)));
+        }
+
+        public Builder setResponseCode(HttpResponseCode code) {
+            this.code = code;
+            return this;
+        }
+
+        public WebResponse build() {
+            return new WebResponse(content, code, headers.values().toArray(new HttpHeader[0]));
+        }
+
+        private static String serializeCookie(Cookie cookie, Date expires, Long maxAge, String domain, String path, boolean secure, boolean httpOnly, Cookie.SameSite sameSite) {
+            StringBuilder sb = new StringBuilder(cookie.key() + "=" + cookie.value());
+            if (expires != null) {
+                sb.append("; Expires=").append(WebServer.toServerTime(expires));
+            }
+            if (maxAge != null) {
+                sb.append("; Max-Age=").append(maxAge);
+            }
+            if (domain != null) {
+                sb.append("; Domain=").append(domain);
+            }
+            if (path != null) {
+                sb.append("; Path=").append(path);
+            }
+            if (sameSite != null) {
+                sb.append("; SameSite=").append(sameSite);
+            }
+            if (secure) {
+                sb.append("; Secure");
+            }
+            if (httpOnly) {
+                sb.append("; HttpOnly");
+            }
+            return sb.toString();
+        }
+
+    }
+
 }

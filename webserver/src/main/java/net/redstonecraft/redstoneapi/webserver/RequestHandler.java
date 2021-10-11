@@ -8,8 +8,8 @@ import net.redstonecraft.redstoneapi.core.MimeType;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,45 +26,32 @@ public abstract class RequestHandler {
         }
     }
 
-    public WebResponse redirect(String url) {
+    public WebResponse.Builder redirect(String url) {
         return redirect(url, false);
     }
 
-    public WebResponse redirect(String url, boolean permanent) {
-        return new WebResponse(new byte[0], permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND, new HttpHeader("Location", url));
+    public WebResponse.Builder redirect(String url, boolean permanent) {
+        return WebResponse.create().setResponseCode(permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND).addHeader(new HttpHeader("Location", url));
     }
 
-    public WebResponse renderTemplate(String template) throws IOException {
+    public WebResponse.Builder renderTemplate(String template) throws IOException {
         return renderTemplate(template, new HashMap<>());
     }
 
-    public WebResponse renderTemplate(String template, Map<String, ?> items, HttpHeader... headers) throws IOException {
-        return renderTemplate(template, items, HttpResponseCode.OK, headers);
+    public WebResponse.Builder renderTemplate(String template, Map<String, ?> items) throws IOException {
+        return WebResponse.create().setContent(webServer.getJinjava().render(Files.readString(new File(webServer.getTemplateDir(), template).toPath()), items));
     }
 
-    public WebResponse renderTemplate(String template, Map<String, ?> items, HttpResponseCode code, HttpHeader... headers) throws IOException {
-        //noinspection ReadWriteStringCanBeUsed
-        return new WebResponse(webServer.getJinjava().render(new String(Files.readAllBytes(new File(webServer.getTemplateDir(), template).toPath()), StandardCharsets.UTF_8), items), code, headers);
+    public WebResponse.Builder jsonify(JSONObject object) {
+        return WebResponse.create().setContent(object.toPrettyJsonString());
     }
 
-    public WebResponse jsonify(JSONObject object, HttpHeader... headers) {
-        return jsonify(object, HttpResponseCode.OK, headers);
+    public WebResponse.Builder jsonify(JSONArray array) {
+        return WebResponse.create().setContent(array.toPrettyJsonString());
     }
 
-    public WebResponse jsonify(JSONObject object, HttpResponseCode code, HttpHeader... headers) {
-        return new WebResponse(object.toPrettyJsonString(), code, headers);
-    }
-
-    public WebResponse jsonify(JSONArray array, HttpHeader... headers) {
-        return jsonify(array, HttpResponseCode.OK, headers);
-    }
-
-    public WebResponse jsonify(JSONArray array, HttpResponseCode code, HttpHeader... headers) {
-        return new WebResponse(array.toPrettyJsonString(), code, headers);
-    }
-
-    public WebResponse sendfile(File file) throws IOException {
-        return new WebResponse(Files.readAllBytes(file.toPath()), HttpResponseCode.OK, new HttpHeader("Content-Type", MimeType.getByFilename(file.getName()).getMimetype()));
+    public WebResponse.Builder sendfile(File file) throws IOException {
+        return WebResponse.create().setContent(new FileInputStream(file)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(file.getName()).getMimetype()));
     }
 
     public WebServer getWebServer() {

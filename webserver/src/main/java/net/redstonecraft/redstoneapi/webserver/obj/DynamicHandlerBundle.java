@@ -32,7 +32,7 @@ public class DynamicHandlerBundle extends HandlerBundle {
         for (int i = 0; i < parts.length; i++) {
             route[i] = parts[i].startsWith("<") && parts[i].endsWith(">") ? new Pair<>(parts[i].substring(1, parts[i].length() - 1), true) : new Pair<>(parts[i], false);
         }
-        if (Arrays.stream(route).noneMatch(Pair::getSecond)) {
+        if (Arrays.stream(route).noneMatch(Pair::second)) {
             throw new NoRouteParamException();
         }
     }
@@ -42,8 +42,8 @@ public class DynamicHandlerBundle extends HandlerBundle {
         String[] parts = request.getPath().substring(1).split("/");
         Map<String, String> routeParams = new HashMap<>();
         for (int i = 0; i < parts.length; i++) {
-            if (route[i].getSecond()) {
-                routeParams.put(route[i].getFirst(), parts[i]);
+            if (route[i].second()) {
+                routeParams.put(route[i].first(), parts[i]);
             }
         }
         List<Object> params = new ArrayList<>();

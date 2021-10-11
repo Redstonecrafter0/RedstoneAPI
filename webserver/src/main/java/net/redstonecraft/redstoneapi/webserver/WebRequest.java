@@ -138,7 +138,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
         }
         String method = sb.toString();
         sb = new StringBuilder();
@@ -146,7 +146,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
         }
         String path = sb.toString();
         sb = new StringBuilder();
@@ -156,7 +156,7 @@ public class WebRequest {
             prev1 = t;
         }
         if (t == -1) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
         }
         String protocol = sb.toString().trim();
         sb = new StringBuilder();
@@ -179,7 +179,7 @@ public class WebRequest {
             }
         }
         if (!eoh) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
         }
         List<HttpHeader> tmpHeaders = new LinkedList<>();
         for (String i : sb.toString().split("\r\n")) {
@@ -188,19 +188,19 @@ public class WebRequest {
         }
         HttpHeaders headers = new HttpHeaders(tmpHeaders);
         if (!HttpMethod.isMethodAvailable(method)) {
-            return new WebResponse("", HttpResponseCode.METHOD_NOT_ALLOWED);
+            return WebResponse.create().setResponseCode(HttpResponseCode.METHOD_NOT_ALLOWED).build();
         }
         if (!path.startsWith("/") && !(path.equals("*") && method.equals(HttpMethod.OPTIONS.name()))) {
-            return new WebResponse("", HttpResponseCode.BAD_REQUEST);
+            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
         }
         if (path.length() > 2048) {
-            return new WebResponse("", HttpResponseCode.URI_TOO_LONG);
+            return WebResponse.create().setResponseCode(HttpResponseCode.URI_TOO_LONG).build();
         }
         if (!protocol.equals("HTTP/1.1")) {
-            return new WebResponse("", HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED);
+            return WebResponse.create().setResponseCode(HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED).build();
         }
         if (HttpMethod.valueOf(method).hasBody() && (headers.get("Content-Length") == null || headers.getContentLength() != is.available())) {
-            return new WebResponse("", HttpResponseCode.LENGTH_REQUIRED);
+            return WebResponse.create().setResponseCode(HttpResponseCode.LENGTH_REQUIRED).build();
         }
         return new WebRequest(HttpMethod.valueOf(method), path, protocol, headers, is, webServer);
     }

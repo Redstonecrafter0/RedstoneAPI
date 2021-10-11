@@ -20,8 +20,6 @@ import java.util.function.Consumer;
  */
 public class MCRcon implements Closeable {
 
-    private static final int BUFFER_SIZE = 4110;
-
     private final Socket socket;
     private int lastRequestId = 0;
     private final Map<Integer, Consumer<String>> callbacks = new HashMap<>();
@@ -121,7 +119,7 @@ public class MCRcon implements Closeable {
         return requestId;
     }
 
-    public static int byteArrayToInt(byte[] a) {
+    private static int byteArrayToInt(byte[] a) {
         return ByteBuffer.wrap(a).order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
