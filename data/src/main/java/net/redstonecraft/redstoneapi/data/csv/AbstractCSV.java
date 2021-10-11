@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,7 +22,7 @@ public abstract class AbstractCSV<T> implements Iterable<T> {
         this.delimiter = delimiter;
     }
 
-    public void read(File file) throws IOException, IllegalFormatException {
+    public void read(File file) throws IOException, InvalidFormatException {
         FileReader reader = new FileReader(file);
         StringBuilder sb = new StringBuilder();
         int a;
@@ -33,7 +32,7 @@ public abstract class AbstractCSV<T> implements Iterable<T> {
         read(sb.toString());
     }
 
-    public void read(String string) throws IllegalFormatException {
+    public void read(String string) throws InvalidFormatException {
         data.clear();
         String d = String.valueOf(delimiter);
         for (String i : string.split("\n")) {
@@ -84,5 +83,11 @@ public abstract class AbstractCSV<T> implements Iterable<T> {
     }
 
     public abstract Stream<T> stream();
+
+    public static class InvalidFormatException extends Exception {
+    }
+
+    public static class InvalidFileFormatException extends InvalidFormatException {
+    }
 
 }

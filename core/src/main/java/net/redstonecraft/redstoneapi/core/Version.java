@@ -18,10 +18,10 @@ public class Version implements Comparable<Version> {
         if (major < 0 || minor < 0 || patch < 0) {
             throw new IllegalArgumentException("Version numbers are not allowed to be negative");
         }
-        if (!preRelease.matches("[0-9A-Za-z-.]")) {
+        if (!preRelease.matches("[0-9A-Za-z-.]*")) {
             throw new IllegalArgumentException("Version preRelease data must only contain ASCII alphanumerics, hyphens and dots as separators");
         }
-        if (!buildData.matches("[0-9A-Za-z-.]")) {
+        if (!buildData.matches("[0-9A-Za-z-.]*")) {
             throw new IllegalArgumentException("Version preRelease data must only contain ASCII alphanumerics, hyphens and dots as separators");
         }
         version = new int[]{major, minor, patch};
@@ -83,15 +83,15 @@ public class Version implements Comparable<Version> {
     }
 
     public boolean isAlpha() {
-        return preRelease.contains("alpha");
+        return preRelease.startsWith("alpha");
     }
 
     public boolean isBeta() {
-        return preRelease.contains("beta");
+        return preRelease.startsWith("beta");
     }
 
     public boolean isReleaseCandidate() {
-        return preRelease.contains("rc");
+        return preRelease.startsWith("rc");
     }
 
     public boolean hasBuildData() {
@@ -104,14 +104,48 @@ public class Version implements Comparable<Version> {
                 return true;
             }
         }
-        if (!isPrerelease() && compare.isPrerelease()) {
+        if (isPrerelease() && !compare.isPrerelease()) {
+            return true;
+        } else if (!isPrerelease() && compare.isPrerelease()) {
             return false;
         }
-        // TODO: https://semver.org/
+        for (Pair<String, String> i : IterUtils.zipFillNull(Arrays.asList(preRelease.split("\\.")), Arrays.asList(compare.preRelease.split("\\.")))) {
+            Integer a = NumberUtils.toInt(i.first());
+            Integer b = NumberUtils.toInt(i.second());
+            if (i.first() == null || i.second() == null) {
+                return i.first() == null;
+            } else if ((a == null || b == null) && i.first().compareTo(i.second()) != 0) {
+                return i.first().compareTo(i.second()) < 0;
+            } else if (a != null && b != null && (a < b)) {
+                return true;
+            }
+        }
         return false;
     }
 
     public boolean isNewerThan(Version compare) {
+        for (int i = 0; i < version.length; i++) {
+            if (version[i] > compare.version[i]) {
+                return true;
+            }
+        }
+        if (isPrerelease() && !compare.isPrerelease()) {
+            return false;
+        } else if (!isPrerelease() && compare.isPrerelease()) {
+            return true;
+        }
+        for (Pair<String, String> i : IterUtils.zipFillNull(Arrays.asList(preRelease.split("\\.")), Arrays.asList(compare.preRelease.split("\\.")))) {
+            Integer a = NumberUtils.toInt(i.first());
+            Integer b = NumberUtils.toInt(i.second());
+            if (i.first() == null || i.second() == null) {
+                return i.second() == null;
+            } else if ((a == null || b == null) && i.first().compareTo(i.second()) != 0) {
+                return i.first().compareTo(i.second()) > 0;
+            } else if (a != null && b != null && (a > b)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

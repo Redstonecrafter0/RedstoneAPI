@@ -28,7 +28,7 @@ public class MappedCSV extends AbstractCSV<Map.Entry<String, String>> {
     }
 
     @Override
-    public void read(String string) throws InvalidFileFormatException {
+    public void read(String string) throws InvalidFormatException {
         String i = string.split("\n", 2)[0];
         int quotes = 0;
         StringBuilder stringBuffer = new StringBuilder();
