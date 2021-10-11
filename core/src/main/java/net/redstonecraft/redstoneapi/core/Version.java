@@ -1,6 +1,7 @@
 package net.redstonecraft.redstoneapi.core;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Version class using <a href="https://semver.org/">SemVer version naming convention</a>
@@ -8,12 +9,21 @@ import java.util.Arrays;
  * @author Redstonecrafter0
  * @since 1.1
  * */
+@SuppressWarnings("unused")
 public class Version implements Comparable<Version> {
 
     private final int[] version;
     private final String preRelease;
     private final String buildData;
 
+    /**
+     * @param major major version
+     * @param minor minor version
+     * @param patch version patch
+     * @param preRelease pre-release string
+     * @param buildData buildData like commit hash
+     * @throws IllegalArgumentException if the input is invalid
+     */
     public Version(int major, int minor, int patch, String preRelease, String buildData) throws IllegalArgumentException {
         if (major < 0 || minor < 0 || patch < 0) {
             throw new IllegalArgumentException("Version numbers are not allowed to be negative");
@@ -29,6 +39,11 @@ public class Version implements Comparable<Version> {
         this.buildData = buildData;
     }
 
+    /**
+     * @param version string to parse from
+     * @return version object
+     * @throws IllegalArgumentException if the input is invalid
+     */
     public static Version fromVersionString(String version) throws IllegalArgumentException {
         if (version.startsWith("v")) {
             version = version.substring(1);
@@ -65,38 +80,66 @@ public class Version implements Comparable<Version> {
         return new Version(n[0], n[1], n[2], pre, build);
     }
 
+    /**
+     * @return the major version
+     */
     public int getMajor() {
         return version[0];
     }
 
+    /**
+     * @return the minor version
+     */
     public int getMinor() {
         return version[1];
     }
 
+    /**
+     * @return the version patch
+     */
     public int getPatch() {
         return version[2];
     }
 
+    /**
+     * @return if the version is a pre-release
+     */
     public boolean isPrerelease() {
         return !preRelease.equals("");
     }
 
+    /**
+     * @return if the pre-release is alpha (starts with alpha)
+     */
     public boolean isAlpha() {
         return preRelease.startsWith("alpha");
     }
 
+    /**
+     * @return if the pre-release is beta (starts with beta)
+     */
     public boolean isBeta() {
         return preRelease.startsWith("beta");
     }
 
+    /**
+     * @return if the pre-release is a release candidate (starts with rc)
+     */
     public boolean isReleaseCandidate() {
         return preRelease.startsWith("rc");
     }
 
+    /**
+     * @return if the version has build data
+     */
     public boolean hasBuildData() {
         return !buildData.equals("");
     }
 
+    /**
+     * @param compare the version to compare with
+     * @return true if this version is older than compare
+     */
     public boolean isOlderThan(Version compare) {
         for (int i = 0; i < version.length; i++) {
             if (version[i] < compare.version[i]) {
@@ -122,6 +165,10 @@ public class Version implements Comparable<Version> {
         return false;
     }
 
+    /**
+     * @param compare the version to compare with
+     * @return true if this version is newer than compare
+     */
     public boolean isNewerThan(Version compare) {
         for (int i = 0; i < version.length; i++) {
             if (version[i] > compare.version[i]) {
@@ -160,7 +207,9 @@ public class Version implements Comparable<Version> {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(version);
+        int result = Objects.hash(preRelease, buildData);
+        result = 31 * result + Arrays.hashCode(version);
+        return result;
     }
 
     @Override
