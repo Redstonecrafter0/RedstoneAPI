@@ -1,5 +1,8 @@
 package net.redstonecraft.redstoneapi.core;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
 /**
  * A small utils class for numbers
  *
@@ -20,6 +23,27 @@ public class NumberUtils {
         int min = Math.min(a, b);
         int max = Math.max(a, b);
         return min + (int) (Math.random() * (max - min));
+    }
+
+    /**
+     * Shortcut for a random integer between 2 numbers using {@link SecureRandom}
+     *
+     * @param a a number
+     * @param b b number
+     * @return random number between min and max
+     * */
+    public static int secureRandom(int a, int b) {
+        int min = Math.min(a, b);
+        int max = Math.max(a, b);
+        if (min == max) {
+            return min;
+        }
+        try {
+            SecureRandom random = SecureRandom.getInstanceStrong();
+            return random.nextInt(min, max + 1);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
