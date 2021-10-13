@@ -1,6 +1,7 @@
 package net.redstonecraft.redstoneapi.core;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * HttpHeader record for representation of Http Headers
@@ -20,13 +21,13 @@ public record HttpHeader(String key, String value) implements Comparable<HttpHea
      *
      * @return the header or null if not found
      * */
-    public static HttpHeader getByKey(HttpHeader[] headers, String key) {
+    public static Optional<HttpHeader> getByKey(HttpHeader[] headers, String key) {
         for (HttpHeader i : headers) {
             if (i.key().equalsIgnoreCase(key)) {
-                return i;
+                return Optional.of(i);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -37,13 +38,13 @@ public record HttpHeader(String key, String value) implements Comparable<HttpHea
      *
      * @return the header or null if not found
      * */
-    public static HttpHeader getByKey(List<HttpHeader> headers, String key) {
+    public static Optional<HttpHeader> getByKey(List<HttpHeader> headers, String key) {
         for (HttpHeader i : headers) {
             if (i.key().equalsIgnoreCase(key)) {
-                return i;
+                return Optional.of(i);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -55,7 +56,7 @@ public record HttpHeader(String key, String value) implements Comparable<HttpHea
      * @return if the key exists
      * */
     public static boolean containsKey(HttpHeader[] headers, String key) {
-        return getByKey(headers, key) != null;
+        return getByKey(headers, key).isPresent();
     }
 
     /**

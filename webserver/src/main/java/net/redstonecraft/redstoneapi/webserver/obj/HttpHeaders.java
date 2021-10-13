@@ -2,7 +2,6 @@ package net.redstonecraft.redstoneapi.webserver.obj;
 
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,14 @@ import java.util.Map;
 public record HttpHeaders(List<HttpHeader> headers) {
 
     public String get(String key) {
-        HttpHeader header = HttpHeader.getByKey(headers, key);
-        return header == null ? null : header.value();
+        return HttpHeader.getByKey(headers, key).orElse(new HttpHeader(null, null)).value();
     }
 
-    public long getContentLength() {
+    public String getOrDefault(String key, String defaultValue) {
+        return HttpHeader.getByKey(headers, key).orElse(new HttpHeader("", defaultValue)).value();
+    }
+
+    public int getContentLength() {
         try {
             return Integer.parseInt(get("Content-Length"));
         } catch (NumberFormatException ignored) {
@@ -40,15 +42,6 @@ public record HttpHeaders(List<HttpHeader> headers) {
             }
         }
         return cookies;
-    }
-
-    public byte[] serialize() {
-        StringBuilder sb = new StringBuilder();
-        for (HttpHeader i : headers) {
-            //noinspection StringConcatenationInsideStringBufferAppend
-            sb.append(i.key() + ": " + i.value() + "\r\n");
-        }
-        return sb.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

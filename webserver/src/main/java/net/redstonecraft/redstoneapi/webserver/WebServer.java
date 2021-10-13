@@ -25,7 +25,6 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -84,17 +83,17 @@ public class WebServer {
     private final Jinjava jinjava = new Jinjava(jinjavaConfig);
     private final Selector selector;
     private final ServerSocketChannel serverSocket;
-    private final List<Connection> connections = new CopyOnWriteArrayList<>();
-    private final HandlerManager handlerManager = new HandlerManager();
+    final List<Connection> connections = new CopyOnWriteArrayList<>();
+    final HandlerManager handlerManager = new HandlerManager();
     private final boolean logging;
-    private final ErrorHandlerManager errorHandlerManager;
-    private final WebsocketManager websocketManager = new WebsocketManager();
+    final ErrorHandlerManager errorHandlerManager;
+    final WebsocketManager websocketManager = new WebsocketManager();
     private final File staticDir;
     private final File templateDir;
     private final int port;
     private final long websocketMaxLength;
     private long lastKeepAlive = System.currentTimeMillis();
-    private long lastKeepAliveId = 0;
+    long lastKeepAliveId = 0;
     private boolean run = true;
 
     @Deprecated
@@ -156,6 +155,18 @@ public class WebServer {
         thread.start();
     }
 
+    public static String toServerTime(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(" yyyy HH:mm:ss z", Locale.getDefault());
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[calendar.get(Calendar.DAY_OF_WEEK)] + ", " + String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH)) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[calendar.get(Calendar.MONTH)] + dateFormat.format(date);
+    }
+
+    public static String getServerTime() {
+        return toServerTime(new Date());
+    }
+
     public Jinjava getJinjava() {
         return jinjava;
     }
@@ -184,10 +195,7 @@ public class WebServer {
             long t = time - 60000;
             for (Connection connection : connections) {
                 if (connection.getKeepAlive() < t) {
-                    try {
-                        connection.getChannel().close();
-                    } catch (IOException ignored) {
-                    }
+                    connection.close();
                     connections.remove(connection);
                 }
             }
@@ -225,173 +233,22 @@ public class WebServer {
                         channel.register(selector, channel.validOps(), null);
                     }
                 } else if (key.isReadable()) {
-                    if (websocketManager.containsKey(getWebsocketConnectionBySocketChannel((SocketChannel) key.channel()))) {
-                        WebSocketConnection webSocketConnection = Objects.requireNonNull(getWebsocketConnectionBySocketChannel((SocketChannel) key.channel()));
+                    WebSocketConnection webSocketConnection = getWebsocketConnectionBySocketChannel((SocketChannel) key.channel());
+                    if (webSocketConnection != null) {
                         try {
                             webSocketConnection.handle(websocketManager, websocketMaxLength, threadPool);
                         } catch (Throwable ignored) {
                             webSocketConnection.disconnect();
                         }
                     } else {
-                        try {
-                            Connection connection = getConnectionBySocketChannel((SocketChannel) key.channel());
-                            if (connection == null) {
-                                try {
-                                    key.channel().close();
-                                } catch (IOException ignored) {
-                                }
-                                continue;
-                            }
-                            try {
-                                ByteBuffer buffer = ByteBuffer.allocate(8192);
-                                int len;
-                                if ((len = connection.getChannel().read(buffer)) == -1) {
-                                    try {
-                                        connection.getChannel().close();
-                                    } catch (IOException ignored) {
-                                    }
-                                    connections.remove(connection);
-                                    continue;
-                                }
-                                threadPool.submit(() -> {
-                                    try {
-                                        if (!(new String(buffer.array(), StandardCharsets.UTF_8).contains("\r\n\r\n"))) {
-                                            sendResponseAndClose(connection, null, "UNKNOWN", errorHandlerManager.handle(HttpResponseCode.REQUEST_HEADER_FIELDS_TOO_LARGE, "UNKNOWN", new HashMap<>(), new HttpHeaders(new ArrayList<>())));
-                                            return;
-                                        }
-                                        Object parsed = WebRequest.parseRequest(connection, buffer, len, connections, this);
-                                        if (parsed instanceof WebResponse errorResponse) {
-                                            sendResponseAndClose(connection, null, "UNKNOWN", errorResponse);
-                                        } else if (parsed instanceof WebRequest request) {
-                                            try {
-                                                try {
-                                                    if (request.getMethod().equals(HttpMethod.GET) && request.getProtocol().equals("HTTP/1.1") &&
-                                                            Objects.requireNonNull(request.getHeaders().get("Connection")).equals("Upgrade") &&
-                                                            Objects.requireNonNull(request.getHeaders().get("Upgrade")).equals("websocket") &&
-                                                            request.getHeaders().get("Sec-WebSocket-Version") != null &&
-                                                            request.getHeaders().get("Sec-WebSocket-Key") != null) {
-                                                        if (websocketManager.pathExists(request.getPath())) {
-                                                            String wsKey = Objects.requireNonNull(request.getHeaders().get("Sec-WebSocket-Key"));
-                                                            String accept = Base64.getEncoder().encodeToString(Hashlib.sha1_raw(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
-                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.SWITCHING_PROTOCOLS, new ByteArrayInputStream(new byte[0]), new HttpHeader("Upgrade", "websocket"), new HttpHeader("Connection", "Upgrade"), new HttpHeader("Sec-WebSocket-Accept", accept));
-                                                            WebSocketConnection webSocketConnection = new WebSocketConnection(connection.getChannel(), this, request);
-                                                            websocketManager.registerConnection(webSocketConnection, new WebSocketPing(System.currentTimeMillis(), lastKeepAliveId));
-                                                            try {
-                                                                websocketManager.executeConnectEvent(webSocketConnection);
-                                                            } catch (Throwable e) {
-                                                                e.printStackTrace();
-                                                            }
-                                                        } else {
-                                                            sendResponse(connection.getChannel(), HttpMethod.GET, request.getPath(), HttpResponseCode.NOT_FOUND, new ByteArrayInputStream(new byte[0]));
-                                                        }
-                                                        connections.remove(connection);
-                                                        return;
-                                                    }
-                                                } catch (NullPointerException ignored) {
-                                                }
-                                                if (request.getMethod().equals(HttpMethod.GET) && request.getPath().startsWith("/static/")) {
-                                                    File file = new File(staticDir.getPath(), request.getPath());
-                                                    if (file.getCanonicalPath().startsWith(staticDir.getCanonicalPath())) {
-                                                        try {
-                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), HttpResponseCode.OK, new FileInputStream(file), new HttpHeader("Content-Type", MimeType.getByFilename(file.getCanonicalPath()).getMimetype()));
-                                                        } catch (NoSuchFileException ignored) {
-                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                        } catch (Throwable ignored) {
-                                                            sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                        }
-                                                    } else {
-                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                    }
-                                                    return;
-                                                } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
-                                                    File favicon = new File(new File(staticDir, "static"), "favicon.ico");
-                                                    if (favicon.exists()) {
-                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), WebResponse.create().setContent(new FileInputStream(favicon)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype())).build());
-                                                    } else {
-                                                        sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                    }
-                                                    return;
-                                                }
-                                                if (!request.getMethod().equals(HttpMethod.OPTIONS)) {
-                                                    try {
-                                                        HandlerBundle handlerBundle;
-                                                        if (request.getMethod().equals(HttpMethod.HEAD)) {
-                                                            handlerBundle = handlerManager.getHandler(HttpMethod.HEAD, request.getPath());
-                                                            if (handlerBundle == null) {
-                                                                handlerBundle = handlerManager.getHandler(HttpMethod.GET, request.getPath());
-                                                            }
-                                                        } else {
-                                                            handlerBundle = handlerManager.getHandler(request.getMethod(), request.getPath());
-                                                        }
-                                                        Object response;
-                                                        if (handlerBundle != null) {
-                                                            try {
-                                                                response = handlerBundle.invoke(request);
-                                                            } catch (Throwable e) {
-                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                                return;
-                                                            }
-                                                        } else {
-                                                            if (handlerManager.hasPath(request.getPath())) {
-                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.METHOD_NOT_ALLOWED, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                            } else {
-                                                                sendResponseAndClose(connection, request.getMethod(), request.getPath(), errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
-                                                            }
-                                                            return;
-                                                        }
-                                                        sendResponseAndClose(connection, request.getMethod(), request.getPath(), convertToResponse(request, response));
-                                                    } catch (Throwable ignored) {
-                                                    }
-                                                } else {
-                                                    if (handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()) != null) {
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), convertToResponse(request, handlerManager.getHandler(HttpMethod.OPTIONS, request.getPath()).invoke(request)));
-                                                    } else if (request.getPath().equals("*")) {
-                                                        List<String> list = new ArrayList<>();
-                                                        for (HttpMethod i : handlerManager.getUsedMethods()) {
-                                                            list.add(i.name());
-                                                        }
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), WebResponse.create().setResponseCode(HttpResponseCode.NO_CONTENT).addHeader(new HttpHeader("Allow", String.join(", ", list))).build());
-                                                    } else {
-                                                        Set<String> list = new HashSet<>();
-                                                        list.add("OPTIONS");
-                                                        for (HttpMethod i : HttpMethod.values()) {
-                                                            if (handlerManager.getHandler(i, request.getPath()) != null) {
-                                                                list.add(i.name());
-                                                            }
-                                                        }
-                                                        if (list.contains("GET")) {
-                                                            try {
-                                                                list.add("HEAD");
-                                                            } catch (IllegalStateException ignored) {
-                                                            }
-                                                        }
-                                                        sendResponseAndClose(connection, HttpMethod.OPTIONS, request.getPath(), WebResponse.create().setResponseCode(HttpResponseCode.NO_CONTENT).addHeader(new HttpHeader("Allow", String.join(", ", list))).build());
-                                                    }
-                                                }
-                                            } catch (Throwable ignored) {
-                                                try {
-                                                    connection.getChannel().close();
-                                                } catch (IOException ignored1) {
-                                                }
-                                                connections.remove(connection);
-                                            }
-                                        }
-                                    } catch (IOException | NumberFormatException ignored) {
-                                        try {
-                                            connection.getChannel().close();
-                                        } catch (IOException ignored1) {
-                                        }
-                                        connections.remove(connection);
-                                    }
-                                });
-                            } catch (IndexOutOfBoundsException | IOException ignored) {
-                                try {
-                                    connection.getChannel().close();
-                                } catch (IOException ignored1) {
-                                }
-                                connections.remove(connection);
-                            }
-                        } catch (NullPointerException ignored) {
+                        Connection connection = getConnectionBySocketChannel((SocketChannel) key.channel());
+                        if (connection == null) {
+                            key.channel().close();
+                            continue;
+                        }
+                        if (!connection.isProcessed()) {
+                            connection.markProcessed();
+                            threadPool.submit(new RequestProcessor(connection, this));
                         }
                     }
                 }
@@ -400,20 +257,6 @@ public class WebServer {
             }
         }
         selector.selectedKeys().clear();
-    }
-
-    private WebResponse convertToResponse(WebRequest request, Object response) {
-        return switch (response) {
-            case WebResponse r -> r;
-            case WebResponse.Builder b -> b.build();
-            case String s -> WebResponse.create().setContent(s).build();
-            case byte[] d -> WebResponse.create().setContent(d).build();
-            case ByteBuffer b -> WebResponse.create().setContent(b).build();
-            case InputStream s -> WebResponse.create().setContent(s).build();
-            case null -> WebResponse.create().setContent("null").build();
-            case Throwable throwable -> WebResponse.create().setContent(StringUtils.stringFromError(throwable)).build();
-            default -> errorHandlerManager.handle(HttpResponseCode.INTERNAL_SERVER_ERROR, request.getPath(), request.getArgs(), request.getHeaders());
-        };
     }
 
     void disconnectWebsocket(WebSocketConnection webSocketConnection) {
@@ -454,7 +297,7 @@ public class WebServer {
         websocketManager.broadcast(path, room, payload);
     }
 
-    private void sendResponseAndClose(Connection conn, HttpMethod method, String path, WebResponse response) {
+    void sendResponseAndClose(Connection conn, HttpMethod method, String path, WebResponse response) {
         try {
             sendResponse(conn.getChannel(), method, path, response);
         } catch (IOException ignored) {
@@ -467,7 +310,7 @@ public class WebServer {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
+    void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
             sendResponse(conn.getChannel(), method, path, code, content, headers);
         } catch (IOException ignored) {
@@ -479,22 +322,11 @@ public class WebServer {
         connections.remove(conn);
     }
 
-    private void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
+    void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
         sendResponse(channel, method, path, response.code(), response.content(), response.headers());
     }
 
-    public static String toServerTime(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(" yyyy HH:mm:ss z", Locale.getDefault());
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        //noinspection deprecation
-        return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[date.getDay()] + ", " + String.format("%02d", date.getDate()) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[date.getMonth()] + dateFormat.format(date);
-    }
-
-    public static String getServerTime() {
-        return toServerTime(new Date());
-    }
-
-    private void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
+    void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
         List<String> list = new ArrayList<>();
         list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {

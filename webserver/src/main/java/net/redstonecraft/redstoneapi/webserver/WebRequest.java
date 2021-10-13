@@ -7,6 +7,7 @@ import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
 import net.redstonecraft.redstoneapi.core.HttpHeader;
 import net.redstonecraft.redstoneapi.data.json.parser.ParseException;
 import net.redstonecraft.redstoneapi.webserver.internal.Connection;
+import net.redstonecraft.redstoneapi.webserver.internal.SocketChannelInputStream;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
@@ -130,15 +131,14 @@ public class WebRequest {
                 '}';
     }
 
-    static Object parseRequest(Connection connection, ByteBuffer buffer, int len, List<Connection> connections, WebServer webServer) throws IOException {
-        InputStream is = new ByteArrayInputStream(Arrays.copyOfRange(buffer.array(), 0, len));
+    static Object parseRequest(InputStream is, WebServer webServer) throws IOException {
         StringBuilder sb = new StringBuilder();
         int t;
         while ((t = is.read()) != 32 && t != -1) { // 32 = ' '
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
+            return null;
         }
         String method = sb.toString();
         sb = new StringBuilder();
@@ -146,7 +146,7 @@ public class WebRequest {
             sb.append(new String(new byte[]{(byte) t}, StandardCharsets.UTF_8));
         }
         if (t == -1) {
-            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
+            return null;
         }
         String path = sb.toString();
         sb = new StringBuilder();
@@ -156,7 +156,7 @@ public class WebRequest {
             prev1 = t;
         }
         if (t == -1) {
-            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
+            return null;
         }
         String protocol = sb.toString().trim();
         sb = new StringBuilder();
@@ -179,7 +179,7 @@ public class WebRequest {
             }
         }
         if (!eoh) {
-            return WebResponse.create().setResponseCode(HttpResponseCode.BAD_REQUEST).build();
+            return null;
         }
         List<HttpHeader> tmpHeaders = new LinkedList<>();
         for (String i : sb.toString().split("\r\n")) {
@@ -199,9 +199,10 @@ public class WebRequest {
         if (!protocol.equals("HTTP/1.1")) {
             return WebResponse.create().setResponseCode(HttpResponseCode.HTTP_VERSION_NOT_SUPPORTED).build();
         }
-        if (HttpMethod.valueOf(method).hasBody() && (headers.get("Content-Length") == null || headers.getContentLength() != is.available())) {
+        if (HttpMethod.valueOf(method).hasBody() && headers.get("Content-Length") == null) {
             return WebResponse.create().setResponseCode(HttpResponseCode.LENGTH_REQUIRED).build();
         }
+        ((SocketChannelInputStream) is).setContentLength(headers.getContentLength());
         return new WebRequest(HttpMethod.valueOf(method), path, protocol, headers, is, webServer);
     }
 

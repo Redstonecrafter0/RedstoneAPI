@@ -7,6 +7,7 @@ import net.redstonecraft.redstoneapi.webserver.ws.XORInputStream;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -23,12 +24,14 @@ public class WebSocketConnection {
     private final SocketChannel channel;
     private final WebServer webServer;
     private final WebRequest request;
+    private final InputStream inputStream;
     private String room = null;
 
-    public WebSocketConnection(SocketChannel channel, WebServer webServer, WebRequest request) {
+    public WebSocketConnection(SocketChannel channel, InputStream inputStream, WebServer webServer, WebRequest request) {
         this.channel = channel;
         this.webServer = webServer;
         this.request = request;
+        this.inputStream = inputStream;
     }
 
     void send(byte type, byte[] payload) throws IOException {
@@ -55,11 +58,10 @@ public class WebSocketConnection {
     }
 
     public void handle(WebsocketManager websocketManager, long maxLength, ExecutorService threadPool) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(2);
-        if (channel.read(buffer) != 2) {
+        byte[] arr = new byte[2];
+        if (inputStream.read(arr) != 2) {
             throw new EOFException();
         }
-        byte[] arr = buffer.array();
         byte actionRaw = arr[0];
         boolean fin = getBitByByte(actionRaw, 0);
         actionRaw <<= 4;
@@ -78,11 +80,11 @@ public class WebSocketConnection {
         if (orgLength <= 125) {
             length = orgLength;
         } else if (orgLength == 126) {
-            buffer = ByteBuffer.allocate(2);
-            if (channel.read(buffer) != 2) {
+            arr = new byte[2];
+            if (inputStream.read(arr) != 2) {
                 throw new EOFException();
             }
-            length = getIntByBytes(buffer.array());
+            length = getIntByBytes(arr);
         } else {
             disconnect();
             return;
@@ -90,14 +92,11 @@ public class WebSocketConnection {
         if (length > maxLength) {
             throw new IOException("Message longer than allowed.");
         }
-        buffer = ByteBuffer.allocate(4);
-        if (channel.read(buffer) != 4) {
+        arr = new byte[4];
+        if (inputStream.read(arr) != 4) {
             throw new EOFException();
         }
-        byte[] maskKey = buffer.array();
-        buffer = ByteBuffer.allocate(length);
-        channel.read(buffer);
-        XORInputStream is = new XORInputStream(buffer, maskKey);
+        InputStream is = new XORInputStream(inputStream, arr, length);
         threadPool.submit(() -> {
             try {
                 switch (action) {
@@ -115,8 +114,12 @@ public class WebSocketConnection {
                         websocketManager.executeBinaryEvent(this, is);
                     }
                     case 0x9 -> this.send(is.readAllBytes());
-                    default -> this.disconnect();
+                    default -> {
+                        this.disconnect();
+                        return;
+                    }
                 }
+                is.close();
             } catch (Throwable ignored) {
                 this.disconnect();
             }

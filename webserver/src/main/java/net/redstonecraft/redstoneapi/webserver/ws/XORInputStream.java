@@ -1,57 +1,49 @@
 package net.redstonecraft.redstoneapi.webserver.ws;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 /**
  * RedstoneAPI
  *
  * @author Redstonecrafter0
  */
-public class XORInputStream extends ByteArrayInputStream {
+public class XORInputStream extends InputStream {
 
     private final byte[] maskKey;
+    private final InputStream inputStream;
+    private final int length;
+    private int pos = 0;
+    private boolean closed = false;
 
-    public XORInputStream(ByteBuffer buf, byte[] maskKey) {
-        super(buf.array());
+    public XORInputStream(InputStream inputStream, byte[] maskKey, int length) {
+        this.inputStream = inputStream;
         this.maskKey = maskKey;
+        this.length = length;
     }
 
     @Override
-    public int read() {
-        return super.read() ^ maskKey[pos % 4];
+    public int read() throws IOException {
+        return inputStream.read() ^ maskKey[pos++ % 4];
     }
 
     @Override
-    public int read(byte[] b, int off, int len) {
-        byte[] tmp = new byte[b.length];
-        int len1 = super.read(tmp, off, len);
-        for (int i = off; i < off + len; i++) {
-            b[i] = (byte) (tmp[i] ^ maskKey[i % 4]);
-        }
-        return len1;
-    }
-
-    @Override
-    public long transferTo(OutputStream out) throws IOException {
-        int len = count - pos;
-        byte[] tmp = new byte[len];
-        read(tmp, pos, len);
-        out.write(tmp, pos, len);
-        pos = count;
+    public int read(byte[] b, int off, int len) throws IOException {
+        len = Math.min(len, length - pos);
+        inputStream.read(b, off, len);
         return len;
     }
 
     @Override
-    public byte[] readAllBytes() {
-        int tPos = pos;
-        byte[] tmp = super.readAllBytes();
-        for (int i = tPos; i < tmp.length; i++) {
-            tmp[i] = (byte) (buf[i] ^ maskKey[i % 4]);
+    public void close() throws IOException {
+        if (!closed) {
+            readAllBytes();
         }
-        return tmp;
+        closed = true;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
 }
