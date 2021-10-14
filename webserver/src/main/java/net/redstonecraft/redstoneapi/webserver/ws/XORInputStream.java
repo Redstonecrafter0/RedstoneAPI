@@ -24,14 +24,27 @@ public class XORInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        return inputStream.read() ^ maskKey[pos++ % 4];
+        pos++;
+        return inputStream.read() ^ maskKey[(pos - 1) % 4];
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         len = Math.min(len, length - pos);
-        inputStream.read(b, off, len);
+        byte[] t = new byte[len];
+        inputStream.read(t, off, len);
+        for (int i = 0; i < len; i++) {
+            pos++;
+            b[i] = (byte) (t[i] ^ maskKey[(pos - 1) % 4]);
+        }
         return len;
+    }
+
+    @Override
+    public byte[] readAllBytes() throws IOException {
+        byte[] buf = new byte[length - pos];
+        read(buf);
+        return buf;
     }
 
     @Override

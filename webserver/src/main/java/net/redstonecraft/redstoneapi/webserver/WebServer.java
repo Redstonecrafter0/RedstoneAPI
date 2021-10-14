@@ -235,10 +235,13 @@ public class WebServer {
                 } else if (key.isReadable()) {
                     WebSocketConnection webSocketConnection = getWebsocketConnectionBySocketChannel((SocketChannel) key.channel());
                     if (webSocketConnection != null) {
-                        try {
-                            webSocketConnection.handle(websocketManager, websocketMaxLength, threadPool);
-                        } catch (Throwable ignored) {
-                            webSocketConnection.disconnect();
+                        if (!webSocketConnection.isHandled()) {
+                            try {
+                                webSocketConnection.markHandled();
+                                webSocketConnection.handle(websocketManager, websocketMaxLength, threadPool);
+                            } catch (Throwable ignored) {
+                                webSocketConnection.disconnect();
+                            }
                         }
                     } else {
                         Connection connection = getConnectionBySocketChannel((SocketChannel) key.channel());

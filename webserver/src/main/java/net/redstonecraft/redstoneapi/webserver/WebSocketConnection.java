@@ -26,6 +26,7 @@ public class WebSocketConnection {
     private final WebRequest request;
     private final InputStream inputStream;
     private String room = null;
+    private boolean handled = false;
 
     public WebSocketConnection(SocketChannel channel, InputStream inputStream, WebServer webServer, WebRequest request) {
         this.channel = channel;
@@ -59,7 +60,11 @@ public class WebSocketConnection {
 
     public void handle(WebsocketManager websocketManager, long maxLength, ExecutorService threadPool) throws IOException {
         byte[] arr = new byte[2];
-        if (inputStream.read(arr) != 2) {
+        int len;
+        if ((len = inputStream.read(arr)) != 2) {
+            if (len == 0) {
+                return;
+            }
             throw new EOFException();
         }
         byte actionRaw = arr[0];
@@ -114,6 +119,7 @@ public class WebSocketConnection {
                         websocketManager.executeBinaryEvent(this, is);
                     }
                     case 0x9 -> this.send(is.readAllBytes());
+                    case 0x8 -> this.disconnect();
                     default -> {
                         this.disconnect();
                         return;
@@ -123,12 +129,21 @@ public class WebSocketConnection {
             } catch (Throwable ignored) {
                 this.disconnect();
             }
+            handled = false;
         });
     }
 
     @SuppressWarnings("SameParameterValue")
     private static boolean getBitByByte(byte b, int pos) {
         return (b >> (8 - (pos + 1)) & 0x0001) == 1;
+    }
+
+    public boolean isHandled() {
+        return handled;
+    }
+
+    public void markHandled() {
+        handled = true;
     }
 
     private static int getIntByBytes(byte[] arr) {

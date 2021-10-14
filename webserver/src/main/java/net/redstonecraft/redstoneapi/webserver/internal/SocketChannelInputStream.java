@@ -33,6 +33,14 @@ public class SocketChannelInputStream extends InputStream {
     }
 
     @Override
+    public int read(byte[] b) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(b.length);
+        int len = channel.read(buf);
+        System.arraycopy(buf.array(), 0, b, 0, len);
+        return len;
+    }
+
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(len);
         int l = channel.read(buf);
