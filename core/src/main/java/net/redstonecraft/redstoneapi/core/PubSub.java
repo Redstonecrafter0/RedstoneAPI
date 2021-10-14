@@ -63,7 +63,7 @@ public class PubSub {
         }
         try {
             HttpResponse response = HttpRequest.post(url, sb.toString().getBytes(StandardCharsets.UTF_8), new HttpHeader("Content-Type", "application/x-www-form-urlencoded"));
-            return response != null && response.responseCode() / 100 == 2;
+            return response.responseCode() / 100 == 2;
         } catch (IOException ignored) {
             return false;
         }
