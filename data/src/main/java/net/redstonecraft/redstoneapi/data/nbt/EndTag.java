@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.data.nbt;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.IOException;
 import java.io.InputStream;

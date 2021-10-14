@@ -26,16 +26,20 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
-        <redis.version>3.7.0</redis.version>
-        <memcached.version>2.4.7</memcached.version>
-        <cassandra.version>4.0.0</cassandra.version>
-        <hbase.version>2.4.6</hbase.version>
-        <mongodb.version>2.12.3</mongodb.version>
-        <mysql.version>8.0.23</mysql.version>
-        <hakari.version>4.0.3</hakari.version>
-        <sqlite.version>3.32.3</sqlite.version>
+        <jda.version>4.3.0_334</jda.version>
+
+        <mysql.version>8.0.26</mysql.version>
+        <hakari.version>5.0.0</hakari.version>
         <postgresql.version>42.2.24</postgresql.version>
-        <neo4j.version>3.2.26</neo4j.version>
+        <sqlite.version>3.36.0.3</sqlite.version>
+        <neo4j.version>3.2.27</neo4j.version>
+        <redis.version>3.7.0</redis.version>
+        <mongodb.version>3.12.10</mongodb.version>
+        <cassandra.version>4.13.0</cassandra.version>
+        <memcached.version>2.4.7</memcached.version>
+        <hbase.version>2.4.6</hbase.version>
+        <graphql-java.version>17.3</graphql-java.version>
+        <firebase.version>8.1.0</firebase.version>
     </properties>
 
     <scm>
