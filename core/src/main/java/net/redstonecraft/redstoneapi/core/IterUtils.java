@@ -1,6 +1,9 @@
 package net.redstonecraft.redstoneapi.core;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * A toolkit class for zipping {@link Iterator}s and {@link Iterable}s

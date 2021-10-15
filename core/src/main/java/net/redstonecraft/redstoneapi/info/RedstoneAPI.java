@@ -3,11 +3,11 @@ package net.redstonecraft.redstoneapi.info;
 import com.diogonunes.jcolor.Ansi;
 import com.diogonunes.jcolor.Attribute;
 import com.github.lalyos.jfiglet.FigletFont;
+import net.redstonecraft.redstoneapi.core.HttpHeader;
+import net.redstonecraft.redstoneapi.core.HttpRequest;
 import net.redstonecraft.redstoneapi.core.HttpResponse;
 import net.redstonecraft.redstoneapi.core.Version;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
-import net.redstonecraft.redstoneapi.core.HttpHeader;
-import net.redstonecraft.redstoneapi.core.HttpRequest;
 
 import javax.swing.*;
 import java.awt.*;
