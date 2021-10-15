@@ -26,11 +26,11 @@ public abstract class RequestHandler {
         }
     }
 
-    public WebResponse.Builder redirect(String url) {
+    public static WebResponse.Builder redirect(String url) {
         return redirect(url, false);
     }
 
-    public WebResponse.Builder redirect(String url, boolean permanent) {
+    public static WebResponse.Builder redirect(String url, boolean permanent) {
         return WebResponse.create().setResponseCode(permanent ? HttpResponseCode.MOVED_PERMANENTLY : HttpResponseCode.FOUND).addHeader(new HttpHeader("Location", url));
     }
 
@@ -46,23 +46,23 @@ public abstract class RequestHandler {
         return response.setContent(webServer.getJinjava().render(Files.readString(new File(webServer.getTemplateDir(), template).toPath()), items));
     }
 
-    public WebResponse.Builder jsonify(JSONObject object) {
+    public static WebResponse.Builder jsonify(JSONObject object) {
         return jsonify(WebResponse.create(), object);
     }
 
-    public WebResponse.Builder jsonify(WebResponse.Builder response, JSONObject object) {
+    public static WebResponse.Builder jsonify(WebResponse.Builder response, JSONObject object) {
         return response.setContent(object.toPrettyJsonString());
     }
 
-    public WebResponse.Builder jsonify(JSONArray array) {
+    public static WebResponse.Builder jsonify(JSONArray array) {
         return jsonify(WebResponse.create(), array);
     }
 
-    public WebResponse.Builder jsonify(WebResponse.Builder response, JSONArray array) {
+    public static WebResponse.Builder jsonify(WebResponse.Builder response, JSONArray array) {
         return response.setContent(array.toPrettyJsonString());
     }
 
-    public WebResponse.Builder sendfile(File file) throws IOException {
+    public static WebResponse.Builder sendfile(File file) throws IOException {
         return WebResponse.create().setContent(new FileInputStream(file)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(file.getName()).getMimetype()));
     }
 

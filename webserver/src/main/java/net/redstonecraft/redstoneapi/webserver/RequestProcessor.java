@@ -63,9 +63,17 @@ record RequestProcessor(Connection connection, WebServer webServer) implements R
                         }
                         return;
                     } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/favicon.ico")) {
-                        File favicon = new File(webServer.getStaticDir(), "favicon.ico");
+                        File favicon = new File(webServer.getStaticDir().getParent(), "favicon.ico");
                         if (favicon.exists()) {
                             webServer.sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), WebResponse.create().setContent(new FileInputStream(favicon)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(favicon.getName()).getMimetype())).build());
+                        } else {
+                            webServer.sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), webServer.errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
+                        }
+                        return;
+                    } else if (request.getMethod().equals(HttpMethod.GET) && request.getPath().equals("/robots.txt")) {
+                        File robots = new File(webServer.getStaticDir().getParent(), "robots.txt");
+                        if (robots.exists()) {
+                            webServer.sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), WebResponse.create().setContent(new FileInputStream(robots)).addHeader(new HttpHeader("Content-Type", MimeType.getByFilename(robots.getName()).getMimetype())).build());
                         } else {
                             webServer.sendResponseAndClose(connection, HttpMethod.GET, request.getPath(), webServer.errorHandlerManager.handle(HttpResponseCode.NOT_FOUND, request.getPath(), request.getArgs(), request.getHeaders()));
                         }
