@@ -5,6 +5,7 @@ import net.redstonecraft.redstoneapi.core.HttpHeader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * RedstoneAPI
@@ -15,6 +16,11 @@ public record HttpHeaders(List<HttpHeader> headers) {
 
     public String get(String key) {
         return HttpHeader.getByKey(headers, key).orElse(new HttpHeader(null, null)).value();
+    }
+
+    public Optional<String> getOptional(String key) {
+        String value = get(key);
+        return value == null ? Optional.empty() : Optional.of(value);
     }
 
     public String getOrDefault(String key, String defaultValue) {
