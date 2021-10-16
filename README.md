@@ -1,4 +1,8 @@
 # RedstoneAPI
+
+This is the development branch for version 2.0.
+Nothing here will stay the same.
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Redstonecrafter0/RedstoneAPI?label=latest%20release&style=for-the-badge)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/Redstonecrafter0/RedstoneAPI?color=E67233&include_prereleases&label=latest%20pre-release&style=for-the-badge)
 
