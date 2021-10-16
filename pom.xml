@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.redstonecraft</groupId>
+    <groupId>net.redstonecraft.redstoneapi</groupId>
     <artifactId>redstoneapi</artifactId>
     <packaging>pom</packaging>
     <version>2.0</version>
@@ -74,13 +74,17 @@
     </developers>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/java/net/redstonecraft/redstoneapi</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -97,7 +101,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -106,73 +110,9 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>net.redstonecraft.redstoneapi.info.RedstoneAPI</mainClass>
-                                    <manifestEntries>
-                                        <Built-By>Redstonecrafter0</Built-By>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-                            <finalName>${project.parent.artifactId}-${project.artifactId}-${project.version}-dep</finalName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>nodep</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <artifactSet>
-                                <includes>
-                                    <include>net.redstonecraft:redstoneapi</include>
-                                </includes>
-                            </artifactSet>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Built-By>Redstonecrafter0</Built-By>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-                            <minimizeJar>true</minimizeJar>
-                            <finalName>${project.parent.artifactId}-${project.artifactId}-${project.version}-nodep</finalName>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <additionalOptions>--enable-preview</additionalOptions>
+                </configuration>
             </plugin>
         </plugins>
     </build>

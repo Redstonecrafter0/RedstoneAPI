@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>redstoneapi</artifactId>
-        <groupId>net.redstonecraft</groupId>
+        <groupId>net.redstonecraft.redstoneapi</groupId>
         <version>2.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -18,58 +18,139 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>discord</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>bukkit</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>webserver</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>network</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>terminal</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>bungeecord</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>data</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.redstonecraft</groupId>
+            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>database</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>net.redstonecraft.redstoneapi.info.RedstoneAPI</mainClass>
+                                    <manifestEntries>
+                                        <Built-By>Redstonecrafter0</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <finalName>${project.parent.artifactId}-${project.artifactId}-${project.version}-full</finalName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>nodep</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <includes>
+                                    <include>net.redstonecraft.redstoneapi:bukkit</include>
+                                    <include>net.redstonecraft.redstoneapi:bungeecord</include>
+                                    <include>net.redstonecraft.redstoneapi:core</include>
+                                    <include>net.redstonecraft.redstoneapi:data</include>
+                                    <include>net.redstonecraft.redstoneapi:database</include>
+                                    <include>net.redstonecraft.redstoneapi:discord</include>
+                                    <include>net.redstonecraft.redstoneapi:full</include>
+                                    <include>net.redstonecraft.redstoneapi:network</include>
+                                    <include>net.redstonecraft.redstoneapi:terminal</include>
+                                    <include>net.redstonecraft.redstoneapi:webserver</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Built-By>Redstonecrafter0</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <minimizeJar>true</minimizeJar>
+                            <finalName>${project.parent.artifactId}-${project.artifactId}-${project.version}-nodep</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
