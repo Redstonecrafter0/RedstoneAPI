@@ -3,6 +3,7 @@ package net.redstonecraft.redstoneapi.webserver.obj;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
+import net.redstonecraft.redstoneapi.webserver.annotations.HeaderParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
 
 import java.lang.reflect.InvocationTargetException;
@@ -29,6 +30,8 @@ public class HandlerBundle {
         for (int i = 1; i < parameters.length; i++) {
             if (parameters[i].isAnnotationPresent(QueryParam.class)) {
                 params.add(request.getArgs().get(parameters[i].getAnnotation(QueryParam.class).value()));
+            } else if (parameters[i].isAnnotationPresent(HeaderParam.class)) {
+                params.add(request.getHeaders().get(parameters[i].getAnnotation(HeaderParam.class).value()));
             } else {
                 params.add(request.getFormData().get(parameters[i].getAnnotation(FormParam.class).value()));
             }

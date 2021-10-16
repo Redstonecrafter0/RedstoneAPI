@@ -160,7 +160,7 @@ public class WebServer {
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[calendar.get(Calendar.DAY_OF_WEEK)] + ", " + String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH)) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[calendar.get(Calendar.MONTH)] + dateFormat.format(date);
+        return new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[calendar.get(Calendar.DAY_OF_WEEK) - 1] + ", " + String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH)) + " " + new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}[calendar.get(Calendar.MONTH)] + dateFormat.format(date);
     }
 
     public static String getServerTime() {
@@ -300,9 +300,9 @@ public class WebServer {
         websocketManager.broadcast(path, room, payload);
     }
 
-    void sendResponseAndClose(Connection conn, HttpMethod method, String path, WebResponse response) {
+    void sendResponseAndClose(Connection conn, WebRequest request, WebResponse response) {
         try {
-            sendResponse(conn.getChannel(), method, path, response);
+            sendResponse(conn.getChannel(), request, response);
         } catch (IOException ignored) {
         }
         try {
@@ -313,9 +313,9 @@ public class WebServer {
     }
 
     @SuppressWarnings("SameParameterValue")
-    void sendResponseAndClose(Connection conn, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) {
+    void sendResponseAndClose(Connection conn, WebRequest request, HttpResponseCode code, InputStream content, HttpHeader... headers) {
         try {
-            sendResponse(conn.getChannel(), method, path, code, content, headers);
+            sendResponse(conn.getChannel(), request, code, content, headers);
         } catch (IOException ignored) {
         }
         try {
@@ -325,11 +325,11 @@ public class WebServer {
         connections.remove(conn);
     }
 
-    void sendResponse(SocketChannel channel, HttpMethod method, String path, WebResponse response) throws IOException {
-        sendResponse(channel, method, path, response.code(), response.content(), response.headers());
+    void sendResponse(SocketChannel channel, WebRequest request, WebResponse response) throws IOException {
+        sendResponse(channel, request, response.code(), response.content(), response.headers());
     }
 
-    void sendResponse(SocketChannel channel, HttpMethod method, String path, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
+    void sendResponse(SocketChannel channel, WebRequest request, HttpResponseCode code, InputStream content, HttpHeader... headers) throws IOException {
         List<String> list = new ArrayList<>();
         list.add("Content-Length: " + (code.equals(HttpResponseCode.NO_CONTENT) ? 0 : content.available()));
         for (HttpHeader i : headers) {
@@ -343,7 +343,7 @@ public class WebServer {
         byte[] resp = ("HTTP/1.1 " + code.getCode() + " " + code.getDescription() + "\r\n" + String.join("\r\n", list) + "\r\n\r\n").getBytes(StandardCharsets.UTF_8);
         channel.write(ByteBuffer.wrap(resp));
         int datalen = resp.length;
-        if (!code.equals(HttpResponseCode.NO_CONTENT) || (method != null && method.hasBodyResponse())) {
+        if (!code.equals(HttpResponseCode.NO_CONTENT) || (request != null && request.getMethod().hasBodyResponse())) {
             while (content.available() > 0) {
                 byte[] chunk = new byte[Math.min(1024, content.available())];
                 //noinspection ResultOfMethodCallIgnored
@@ -356,7 +356,7 @@ public class WebServer {
             content.close();
         }
         if (logging) {
-            logger.info("[" + channel.socket().getInetAddress().getHostAddress() + "] " + (method != null ? method : "UNKNOWN") + " " + path + " " + code.getCode() + " " + code.getDescription() + " " + datalen);
+            logger.info("[" + channel.socket().getInetAddress().getHostAddress() + "] " + (request != null ? request.getMethod() : "UNKNOWN") + " " + (request != null ? request.getPath() : "null") + " " + code.getCode() + " " + code.getDescription() + " " + datalen);
         }
     }
 
@@ -407,19 +407,17 @@ public class WebServer {
     }
 
     private void internalRegisterHandler(RequestHandler handler, Method i, Route j) {
-        if (j.value().startsWith("/")) {
-            Parameter[] parameterTypes = i.getParameters();
-            if (!Arrays.stream(parameterTypes).skip(1).allMatch(k -> k.getType().equals(String.class) && (k.isAnnotationPresent(QueryParam.class) || k.isAnnotationPresent(FormParam.class) || k.isAnnotationPresent(RouteParam.class)))) {
-                return;
-            }
-            if (WebRequest.class.equals(parameterTypes[0].getType())) {
-                for (HttpMethod k : HttpMethod.getFromMethod(i)) {
-                    try {
-                        handlerManager.setHandler(k, j.value(), new DynamicHandlerBundle(handler, i, j.value()));
-                    } catch (NoRouteParamException ignored) {
-                        handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
-                    } catch (IndexOutOfBoundsException ignored) {
-                    }
+        Parameter[] parameterTypes = i.getParameters();
+        if (!Arrays.stream(parameterTypes).skip(1).allMatch(k -> k.getType().equals(String.class) && (k.isAnnotationPresent(QueryParam.class) || k.isAnnotationPresent(FormParam.class) || k.isAnnotationPresent(RouteParam.class) || k.isAnnotationPresent(HeaderParam.class)))) {
+            return;
+        }
+        if (WebRequest.class.equals(parameterTypes[0].getType())) {
+            for (HttpMethod k : HttpMethod.getFromMethod(i)) {
+                try {
+                    handlerManager.setHandler(k, j.value(), new DynamicHandlerBundle(handler, i, j.value()));
+                } catch (NoRouteParamException ignored) {
+                    handlerManager.setHandler(k, j.value(), new HandlerBundle(handler, i));
+                } catch (IndexOutOfBoundsException ignored) {
                 }
             }
         }

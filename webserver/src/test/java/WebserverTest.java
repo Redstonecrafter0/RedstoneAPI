@@ -1,10 +1,7 @@
 import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
-import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
-import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
-import net.redstonecraft.redstoneapi.webserver.annotations.Route;
+import net.redstonecraft.redstoneapi.webserver.annotations.*;
 import net.redstonecraft.redstoneapi.webserver.WebServer;
-import net.redstonecraft.redstoneapi.webserver.annotations.RouteParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.methods.Get;
 import net.redstonecraft.redstoneapi.webserver.annotations.methods.Post;
 import net.redstonecraft.redstoneapi.webserver.ext.forms.FormValidator;
@@ -38,8 +35,8 @@ public class WebserverTest extends RequestHandler {
     }
 
     @Route("/")
-    public String root(WebRequest request) {
-        return "root";
+    public String root(WebRequest request, @HeaderParam("Accept") String c) {
+        return c;
     }
 
     @Get
@@ -92,6 +89,11 @@ public class WebserverTest extends RequestHandler {
 
     @Websocket("/ws")
     public void onConnect(WebsocketConnectedEvent event) {
+        try {
+            event.getWebSocketConnection().send("hi");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println(event.getWebSocketConnection().getChannel().socket().getInetAddress().getHostAddress() + " connected.");
     }
 

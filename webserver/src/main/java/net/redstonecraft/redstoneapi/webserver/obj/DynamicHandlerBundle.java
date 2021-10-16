@@ -4,6 +4,7 @@ import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;
+import net.redstonecraft.redstoneapi.webserver.annotations.HeaderParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.QueryParam;
 import net.redstonecraft.redstoneapi.webserver.annotations.RouteParam;
 import net.redstonecraft.redstoneapi.webserver.internal.exceptions.NoRouteParamException;
@@ -52,6 +53,8 @@ public class DynamicHandlerBundle extends HandlerBundle {
         for (int i = 1; i < parameters.length; i++) {
             if (parameters[i].isAnnotationPresent(QueryParam.class)) {
                 params.add(request.getArgs().get(parameters[i].getAnnotation(QueryParam.class).value()));
+            } else if (parameters[i].isAnnotationPresent(HeaderParam.class)) {
+                params.add(request.getHeaders().get(parameters[i].getAnnotation(HeaderParam.class).value()));
             } else if (parameters[i].isAnnotationPresent(FormParam.class)) {
                 params.add(request.getFormData().get(parameters[i].getAnnotation(FormParam.class).value()));
             } else {
