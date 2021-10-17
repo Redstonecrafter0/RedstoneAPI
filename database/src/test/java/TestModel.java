@@ -1,4 +1,4 @@
-import net.redstonecraft.redstoneapi.db.Model;
+import net.redstonecraft.redstoneapi.db.paradigms.relational.Model;
 
 /**
  * RedstoneAPI

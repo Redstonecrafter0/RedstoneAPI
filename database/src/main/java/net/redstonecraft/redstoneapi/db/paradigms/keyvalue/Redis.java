@@ -1,6 +1,5 @@
-package net.redstonecraft.redstoneapi.db.connections.internal;
+package net.redstonecraft.redstoneapi.db.paradigms.keyvalue;
 
-import net.redstonecraft.redstoneapi.db.connections.KeyValueConnection;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 
@@ -12,7 +11,7 @@ import java.util.Collection;
  *
  * @author Redstonecrafter0
  */
-public class Redis implements KeyValueConnection {
+public class Redis extends KeyValueDB {
 
     private final Jedis jedis;
     private final String name;
@@ -32,42 +31,52 @@ public class Redis implements KeyValueConnection {
 
     @Override
     public void set(String key, String data) {
+        jedis.set(name + key, data);
     }
 
     @Override
     public void set(String key, Boolean data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Character data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Byte data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Short data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Integer data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Long data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Float data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, Double data) {
+        jedis.set(name + key, String.valueOf(data));
     }
 
     @Override
     public void set(String key, byte[] data) {
+        jedis.set((name + key).getBytes(StandardCharsets.UTF_8), data);
     }
 
     @Override

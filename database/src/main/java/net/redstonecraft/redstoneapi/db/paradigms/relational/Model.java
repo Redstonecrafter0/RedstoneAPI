@@ -1,4 +1,4 @@
-package net.redstonecraft.redstoneapi.db;
+package net.redstonecraft.redstoneapi.db.paradigms.relational;
 
 import net.redstonecraft.redstoneapi.core.Pair;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
