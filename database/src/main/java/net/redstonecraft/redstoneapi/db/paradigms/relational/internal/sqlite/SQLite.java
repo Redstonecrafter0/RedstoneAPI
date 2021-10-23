@@ -34,22 +34,27 @@ public class SQLite extends RelationalDB {
 
     @Override
     public <T extends Model> StatementBuilder<T> createStatement(Class<T> clazz) {
+        return null;
     }
 
     @Override
     public FilterBuilder createFilter() {
+        return null;
     }
 
     @Override
     public FilterChainBuilder createFilterChainBuilder(Filter filter) {
+        return null;
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
+        return null;
     }
 
     @Override
     public int update(String sql) throws SQLException {
+        return 0;
     }
 
 }
