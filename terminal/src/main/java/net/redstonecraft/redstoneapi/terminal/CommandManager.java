@@ -1,7 +1,7 @@
 package net.redstonecraft.redstoneapi.terminal;
 
-import net.redstonecraft.redstoneapi.core.Pair;
-import net.redstonecraft.redstoneapi.core.StringUtils;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
+import net.redstonecraft.redstoneapi.core.utils.StringUtils;
 import net.redstonecraft.redstoneapi.terminal.abs.Command;
 import net.redstonecraft.redstoneapi.terminal.abs.TabCompleter;
 import org.jline.reader.Candidate;

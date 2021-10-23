@@ -7,7 +7,7 @@ import net.redstonecraft.redstoneapi.discord.abs.PrivateCommand;
 import net.redstonecraft.redstoneapi.discord.abs.ServerCommand;
 import net.redstonecraft.redstoneapi.discord.obj.PrivateContext;
 import net.redstonecraft.redstoneapi.discord.obj.ServerContext;
-import net.redstonecraft.redstoneapi.core.StringUtils;
+import net.redstonecraft.redstoneapi.core.utils.StringUtils;
 
 import java.awt.*;
 import java.util.HashMap;

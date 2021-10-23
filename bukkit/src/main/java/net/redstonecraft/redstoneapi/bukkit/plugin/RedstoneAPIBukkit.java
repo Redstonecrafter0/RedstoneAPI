@@ -5,7 +5,7 @@ import net.redstonecraft.redstoneapi.bukkit.BukkitPlugin;
 import net.redstonecraft.redstoneapi.bukkit.listeners.JumpListener;
 import net.redstonecraft.redstoneapi.bukkit.listeners.UpdateListener;
 import net.redstonecraft.redstoneapi.bukkit.manager.GuiInventoryManager;
-import net.redstonecraft.redstoneapi.core.StringUtils;
+import net.redstonecraft.redstoneapi.core.utils.StringUtils;
 import org.bukkit.Bukkit;
 
 import java.io.File;

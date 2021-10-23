@@ -1,8 +1,9 @@
 package net.redstonecraft.redstoneapi.webserver.ext.pubsub;
 
-import net.redstonecraft.redstoneapi.core.HttpResponseCode;
-import net.redstonecraft.redstoneapi.core.NumberUtils;
-import net.redstonecraft.redstoneapi.core.Pair;
+import net.redstonecraft.redstoneapi.core.http.HttpResponseCode;
+import net.redstonecraft.redstoneapi.core.tools.PubSub;
+import net.redstonecraft.redstoneapi.core.utils.NumberUtils;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
 import net.redstonecraft.redstoneapi.webserver.HttpMethod;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
@@ -22,7 +23,7 @@ import java.util.function.Predicate;
 /**
  * RedstoneAPI
  *
- * @see net.redstonecraft.redstoneapi.core.PubSub to subscribe/unsubscribe
+ * @see PubSub to subscribe/unsubscribe
  * @author Redstonecrafter0
  */
 @SuppressWarnings("unused")

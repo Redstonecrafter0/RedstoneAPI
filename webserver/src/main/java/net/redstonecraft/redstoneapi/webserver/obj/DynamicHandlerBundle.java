@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver.obj;
 
-import net.redstonecraft.redstoneapi.core.Pair;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
 import net.redstonecraft.redstoneapi.webserver.RequestHandler;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.annotations.FormParam;

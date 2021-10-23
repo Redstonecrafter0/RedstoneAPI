@@ -6,8 +6,8 @@ import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.redstonecraft.redstoneapi.discord.abs.DiscordEvent;
 import net.redstonecraft.redstoneapi.discord.abs.DiscordEventListener;
-import net.redstonecraft.redstoneapi.core.Hashlib;
-import net.redstonecraft.redstoneapi.core.Pair;
+import net.redstonecraft.redstoneapi.core.tools.Hashlib;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
 
 import java.util.*;
 import java.util.function.Consumer;

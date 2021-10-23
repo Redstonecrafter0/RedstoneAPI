@@ -8,8 +8,8 @@ import net.redstonecraft.redstoneapi.discord.abs.*;
 import net.redstonecraft.redstoneapi.discord.converter.*;
 import net.redstonecraft.redstoneapi.discord.obj.PrivateContext;
 import net.redstonecraft.redstoneapi.discord.obj.ServerContext;
-import net.redstonecraft.redstoneapi.core.Bucket;
-import net.redstonecraft.redstoneapi.core.StringUtils;
+import net.redstonecraft.redstoneapi.core.tools.Bucket;
+import net.redstonecraft.redstoneapi.core.utils.StringUtils;
 
 import java.awt.*;
 import java.lang.reflect.Method;

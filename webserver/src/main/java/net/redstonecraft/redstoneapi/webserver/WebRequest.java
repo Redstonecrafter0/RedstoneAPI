@@ -1,21 +1,18 @@
 package net.redstonecraft.redstoneapi.webserver;
 
-import net.redstonecraft.redstoneapi.core.HttpResponseCode;
+import net.redstonecraft.redstoneapi.core.http.HttpResponseCode;
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
 import net.redstonecraft.redstoneapi.data.json.parser.JSONParser;
-import net.redstonecraft.redstoneapi.core.HttpHeader;
+import net.redstonecraft.redstoneapi.core.http.HttpHeader;
 import net.redstonecraft.redstoneapi.data.json.parser.ParseException;
-import net.redstonecraft.redstoneapi.webserver.internal.Connection;
 import net.redstonecraft.redstoneapi.webserver.internal.SocketChannelInputStream;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 

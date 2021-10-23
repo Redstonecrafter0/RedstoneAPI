@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.terminal;
 
-import net.redstonecraft.redstoneapi.core.Pair;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
 import net.redstonecraft.redstoneapi.terminal.internal.CustomPrintStream;
 import net.redstonecraft.redstoneapi.terminal.internal.TerminalHandler;
 import org.jline.reader.LineReader;

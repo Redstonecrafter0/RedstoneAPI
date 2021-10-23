@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.network.util;
 
-import net.redstonecraft.redstoneapi.core.ArrayUtils;
+import net.redstonecraft.redstoneapi.core.utils.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -6,10 +6,8 @@ import net.redstonecraft.redstoneapi.bungeecord.BungeecordPlugin;
 import net.redstonecraft.redstoneapi.bungeecord.listeners.UpdateListener;
 import net.redstonecraft.redstoneapi.bungeecord.listeners.UserListener;
 import net.redstonecraft.redstoneapi.bungeecord.manager.UserManager;
-import net.redstonecraft.redstoneapi.core.StringUtils;
+import net.redstonecraft.redstoneapi.core.utils.StringUtils;
 
-import java.io.File;
-import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 /**

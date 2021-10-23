@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver;
 
-import net.redstonecraft.redstoneapi.core.HttpResponseCode;
+import net.redstonecraft.redstoneapi.core.http.HttpResponseCode;
 import net.redstonecraft.redstoneapi.webserver.obj.HttpHeaders;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 

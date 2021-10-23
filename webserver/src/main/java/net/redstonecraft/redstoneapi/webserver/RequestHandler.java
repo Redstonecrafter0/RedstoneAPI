@@ -2,9 +2,9 @@ package net.redstonecraft.redstoneapi.webserver;
 
 import net.redstonecraft.redstoneapi.data.json.JSONArray;
 import net.redstonecraft.redstoneapi.data.json.JSONObject;
-import net.redstonecraft.redstoneapi.core.HttpHeader;
-import net.redstonecraft.redstoneapi.core.HttpResponseCode;
-import net.redstonecraft.redstoneapi.core.MimeType;
+import net.redstonecraft.redstoneapi.core.http.HttpHeader;
+import net.redstonecraft.redstoneapi.core.http.HttpResponseCode;
+import net.redstonecraft.redstoneapi.core.enums.MimeType;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;
 
 import java.io.File;

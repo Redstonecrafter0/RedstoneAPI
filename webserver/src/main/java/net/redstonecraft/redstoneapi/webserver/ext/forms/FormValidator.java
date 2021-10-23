@@ -1,8 +1,7 @@
 package net.redstonecraft.redstoneapi.webserver.ext.forms;
 
-import net.redstonecraft.redstoneapi.core.Hashlib;
-import net.redstonecraft.redstoneapi.core.HttpHeader;
-import net.redstonecraft.redstoneapi.core.Pair;
+import net.redstonecraft.redstoneapi.core.tools.Hashlib;
+import net.redstonecraft.redstoneapi.core.tuple.Pair;
 import net.redstonecraft.redstoneapi.webserver.WebRequest;
 import net.redstonecraft.redstoneapi.webserver.obj.Cookie;
 import net.redstonecraft.redstoneapi.webserver.obj.WebResponse;

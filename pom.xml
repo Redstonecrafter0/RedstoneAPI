@@ -16,7 +16,6 @@
         <module>network</module>
         <module>terminal</module>
         <module>bungeecord</module>
-        <module>data</module>
         <module>database</module>
         <module>full</module>
     </modules>

@@ -1,7 +1,7 @@
 package net.redstonecraft.redstoneapi.webserver.obj;
 
-import net.redstonecraft.redstoneapi.core.HttpHeader;
-import net.redstonecraft.redstoneapi.core.HttpResponseCode;
+import net.redstonecraft.redstoneapi.core.http.HttpHeader;
+import net.redstonecraft.redstoneapi.core.http.HttpResponseCode;
 import net.redstonecraft.redstoneapi.webserver.WebServer;
 
 import java.io.ByteArrayInputStream;

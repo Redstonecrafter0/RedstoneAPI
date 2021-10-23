@@ -61,12 +61,6 @@
 
         <dependency>
             <groupId>net.redstonecraft.redstoneapi</groupId>
-            <artifactId>data</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.redstonecraft.redstoneapi</groupId>
             <artifactId>database</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -128,7 +122,6 @@
                                     <include>net.redstonecraft.redstoneapi:bukkit</include>
                                     <include>net.redstonecraft.redstoneapi:bungeecord</include>
                                     <include>net.redstonecraft.redstoneapi:core</include>
-                                    <include>net.redstonecraft.redstoneapi:data</include>
                                     <include>net.redstonecraft.redstoneapi:database</include>
                                     <include>net.redstonecraft.redstoneapi:discord</include>
                                     <include>net.redstonecraft.redstoneapi:full</include>
@@ -149,6 +142,15 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
             </plugin>
         </plugins>
     </build>

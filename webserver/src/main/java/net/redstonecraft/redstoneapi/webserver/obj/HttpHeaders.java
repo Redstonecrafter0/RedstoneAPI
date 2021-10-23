@@ -1,6 +1,6 @@
 package net.redstonecraft.redstoneapi.webserver.obj;
 
-import net.redstonecraft.redstoneapi.core.HttpHeader;
+import net.redstonecraft.redstoneapi.core.http.HttpHeader;
 
 import java.util.HashMap;
 import java.util.List;
