@@ -81,52 +81,56 @@ public class Redis extends KeyValueDB {
 
     @Override
     public String getString(String key) {
-        return null;
+        return jedis.get(name + key);
     }
 
     @Override
     public Boolean getBoolean(String key) {
-        return null;
+        return Boolean.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Character getCharacter(String key) {
-        return null;
+        try {
+            return jedis.get(name + key).toCharArray()[0];
+        } catch (NullPointerException | ArrayIndexOutOfBoundsException ignored) {
+            return null;
+        }
     }
 
     @Override
     public Byte getByte(String key) {
-        return null;
+        return Byte.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Short getShort(String key) {
-        return null;
+        return Short.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Integer getInteger(String key) {
-        return null;
+        return Integer.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Long getLong(String key) {
-        return null;
+        return Long.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Float getFloat(String key) {
-        return null;
+        return Float.valueOf(jedis.get(name + key));
     }
 
     @Override
     public Double getDouble(String key) {
-        return null;
+        return Double.valueOf(jedis.get(name + key));
     }
 
     @Override
     public byte[] getData(String key) {
-        return new byte[0];
+        return jedis.get((name + key).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
